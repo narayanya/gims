@@ -1,0 +1,224 @@
+/*# sourceMappingURL=custom.min.css.map */
+/*.navbar-brand-box{background-color: #a5cccd;}
+.navbar-menu{background-color: #a5cccd;}*/
+body{
+    font-family: 'roboto', sans-serif;
+}
+.navbar-menu .navbar-nav .nav-link:hover{background-color: #5a9163;}
+.navbar-menu .navbar-nav .nav-link.active {
+    background-color: #5a9163;
+}
+:root, [data-bs-theme=light] {
+      --vz-primary: #20592E;
+      --vz-vertical-menu-width: 190px;
+}
+
+html[data-theme-colors="default"][data-bs-theme="light"][data-theme="default"] .navbar-menu .navbar-nav .nav-link  {
+    color: #ffffff;
+    border-bottom: 1px solid #416a48;
+  }
+  .navbar-menu .navbar-nav .nav-link{
+    font-size: 10px;
+    
+   padding: 8px 20px !important;
+  }
+
+  .navbar-menu .navbar-nav .nav-sm .nav-link{
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 20px;
+  }
+  .navbar-brand-box{
+    padding: 0;
+  }
+  .company-name{
+    line-height: 27px;
+    float: left;
+    margin-top: 21px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-right: 10px;
+  }
+  .card-title{
+    font-size: 13px;
+    font-family: 'roboto', sans-serif;
+  }
+  .m-menu-side{
+    padding-left:0px ;
+  }
+  .m-menu-side li{
+    list-style: none;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 1px;
+    padding-top: 1px;
+    font-size: 12px;
+    position: relative;
+  }
+  .m-menu-side li ul li.nav-item a:hover{
+    background-color: #c4e0e1;
+  }
+  .m-menu-side li ul li.nav-item a{
+    padding: 1px;
+    color: #565454;
+  }
+  .m-menu-side li .menu-dropdown{
+    margin-left: 10px;
+  }
+  .m-navbar-menu .navbar-nav .nav-link[data-bs-toggle=collapse]:after{
+    display: block;
+    content: "\f0142";
+    font-family: "Material Design Icons";
+    margin-left: auto;
+    -webkit-transition: -webkit-transform .2s;
+    transition: -webkit-transform .2s;
+    transition: transform .2s;
+    transition: transform .2s, -webkit-transform .2s;
+    font-size: 1.05rem;
+    position: absolute;
+    right: 18px;
+    color: #625e5e;
+    top: -3px;
+  }
+  .m-navbar-menu .navbar-nav .nav-link[data-bs-toggle=collapse][aria-expanded=true]:after {
+    -webkit-transform: rotate(90deg);
+    transform: rotate(90deg);
+    color: #625e5e;
+  }
+  .table{
+    font-size:12px;
+  }
+  .table>thead {
+    background-color: #cfdce1;
+  }
+  .table-striped>tbody>tr:nth-of-type(odd)>*{
+    background-color: #ECF5F5;
+  }
+
+
+.card-box{
+    border-radius:12px;
+    background:#ffffff;
+    padding:15px;
+    box-shadow:0 0 5px rgba(0,0,0,0.08);
+    margin-bottom:20px;
+}
+
+.section-title{
+    font-weight:600;
+    font-size:16px;
+}
+
+.view-all{
+    font-size:13px;
+    color:#7ab530;
+    text-decoration:none;
+}
+
+.seed-card{
+    background:#f7f7f7;
+    border-radius:10px;
+    padding:10px 6px;
+    margin-top:10px;
+}
+
+.seed-name{
+    font-weight:600;
+    font-size:14px;
+}
+
+.entry{
+    font-size:12px;
+    color:#2db14a;
+}
+
+.expire{
+    font-size:12px;
+    color:#e63946;
+}
+
+.code{
+    font-size:12px;
+    text-align:right;
+    color:#6c757d;
+}
+
+.request-card{
+    background:#f7f7f7;
+    border-radius:10px;
+    padding:10px 6px;
+    margin-top:10px;
+}
+
+.pending{
+    background:#f5e3b0;
+    padding:3px 10px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:600;
+}
+
+.hybrid{
+    color:#b68d00;
+    font-size:12px;
+}
+
+.qty{
+    font-size:12px;
+    font-weight:500;
+}
+.navbar-menu .navbar-nav .nav-sm .nav-link{
+  padding:10px 3px 10px 20px !important;
+}
+
+.text-primary {
+    --vz-text-opacity: 1;
+    color: rgb(39 88 47) !important;
+}
+.bg-primary\/20{
+  background-color: #9edbb9;
+}
+.page-content {
+    padding: calc(36px + var(--vz-grid-gutter-width)) calc(var(--vz-grid-gutter-width) * .5) 60px calc(var(--vz-grid-gutter-width) * .5);
+}
+.total-box-msg{color: #4dab5d;}
+
+.bg-light {
+    --vz-bg-opacity: 1;
+    background-color: rgb(220 239 224) !important;
+}
+
+h3{
+  font-size: 17px;
+}
+.table>:not(caption)>*>*{
+  padding: 6px 6px;
+}
+#cropModal .nav-item .nav-link, #varietyModal .nav-item .nav-link, #viewVarietyModal .nav-item .nav-link, #viewCropModal .nav-item .nav-link{
+
+color: #6a6e6b;
+}
+
+/* Fix Laravel pagination arrows */
+.pagination svg {
+    width: 14px !important;
+    height: 14px !important;
+}
+
+/* Prevent stretching */
+.page-link svg {
+    width: 14px !important;
+    height: 14px !important;
+}
+
+/* Align properly */
+.pagination .page-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    font-size: 13px;
+}     
+svg {
+    max-width: 20px;
+    height: auto;
+}       
