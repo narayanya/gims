@@ -68,6 +68,7 @@
                                                 data-dept="{{ $emp->emp_department }}"
                                                 data-code="{{ $emp->emp_code }}"
                                                 data-reporting="{{ $emp->emp_reporting }}"
+                                                data-empId="{{ $emp->employee_id }}"
                                                 data-mobile="{{ $emp->emp_contact }}"
                                             >
                                                 {{ $emp->emp_name }}
@@ -90,11 +91,33 @@
                                     @enderror
                                 </div>
                             </div>
+
+                            {{-- Reporting Manager Details --}}
+                            <div id="reportingManagerCard" class="card border bg-light mb-3 d-none">
+                                <div class="card-header py-2 bg-white d-flex align-items-center gap-2">
+                                    <i class="ri-user-star-line text-primary"></i>
+                                    <strong class="small">Reporting Manager</strong>
+                                </div>
+                                <div class="card-body py-2 small">
+                                    <div class="row g-1">
+                                        <div class="col-6"><span class="text-muted">Name:</span> <span id="rm_name">—</span></div>
+                                        <div class="col-6"><span class="text-muted">Code:</span> <span id="rm_code">—</span></div>
+                                        <div class="col-6"><span class="text-muted">Email:</span> <span id="rm_email">—</span></div>
+                                        <div class="col-6"><span class="text-muted">Mobile:</span> <span id="rm_mobile">—</span></div>
+                                        <div class="col-6"><span class="text-muted">Dept:</span> <span id="rm_dept">—</span></div>
+                                        <div class="col-6"><span class="text-muted">Designation:</span> <span id="rm_desig">—</span></div>
+                                        <div class="col-12 mt-1">
+                                            <span id="rm_user_badge"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                                 
                                 <div class="mb-3 d-none">
                                     <label class="form-label">Full Name <span class="text-danger">*</span></label>
                                     <input type="text" id="name" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" required readonly>
                                     <input type="text" id="emp_reporting" name="emp_reporting" value="{{ old('emp_reporting') }}" hidden>
+                                    <input type="text" id="employee_id" name="employee_id" value="{{ old('employee_id') }}" hidden>
                                     @error('name')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -373,13 +396,44 @@
         let mobile = selected.getAttribute('data-mobile');
         let code = selected.getAttribute('data-code');
         let reporting = selected.getAttribute('data-reporting');
+        let empId = selected.getAttribute('data-empId');
 
         document.getElementById('name').value = name || '';
         document.getElementById('email').value = email || '';
         document.getElementById('mobile_number').value = mobile || '';
         document.getElementById('emp_code').value = code || '';
         document.getElementById('emp_reporting').value = reporting || '';
+        document.getElementById('employee_id').value = empId || '';
         document.getElementById('password').value = mobile || '';
+
+        // Load reporting manager details
+        const card = document.getElementById('reportingManagerCard');
+        if (reporting && reporting !== '0' && reporting !== '') {
+            fetch(`/employee/${reporting}`)
+                .then(r => r.json())
+                .then(m => {
+                    if (!m) { card.classList.add('d-none'); return; }
+                    document.getElementById('rm_name').textContent   = m.emp_name        || '—';
+                    document.getElementById('rm_code').textContent   = m.emp_code        || '—';
+                    document.getElementById('rm_email').textContent  = m.emp_email       || '—';
+                    document.getElementById('rm_mobile').textContent = m.emp_contact     || '—';
+                    document.getElementById('rm_dept').textContent   = m.emp_department  || '—';
+                    document.getElementById('rm_desig').textContent  = m.emp_designation || '—';
+                    // Check if manager is already a user
+                    fetch(`/check-user?emp_code=${m.emp_code}`)
+                        .then(r => r.json())
+                        .then(u => {
+                            const badge = document.getElementById('rm_user_badge');
+                            badge.innerHTML = u.exists
+                                ? '<span class="badge bg-success"><i class="ri-check-line me-1"></i>Already a User</span>'
+                                : '<span class="badge bg-warning text-dark"><i class="ri-user-add-line me-1"></i>Will be created as User</span>';
+                        });
+                    card.classList.remove('d-none');
+                })
+                .catch(() => card.classList.add('d-none'));
+        } else {
+            card.classList.add('d-none');
+        }
     });
 document.querySelectorAll('.role-checkbox').forEach(function(checkbox) {
     checkbox.addEventListener('change', function() {

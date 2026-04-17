@@ -215,12 +215,26 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     ]);
     
     Route::put('/requests/{id}/approve', [RequestController::class,'approve'])->name('requests.approve');
+    Route::put('/requests/{id}/reject',  [RequestController::class,'reject'])->name('requests.reject');
     Route::post('/requests/{id}/receive', [RequestController::class,'receive'])->name('requests.receive');
     Route::post('/requests/{id}/return', [RequestController::class,'return'])->name('requests.return');
     Route::get('/get-accessions/{variety_id}', [App\Http\Controllers\RequestController::class,'getAccessions'])->name('get.accessions');
     Route::get('/get-varieties/{id}', [RequestController::class, 'getVarieties'])->name('get.varieties');
     Route::get('/get-accessions/{id}', [RequestController::class, 'getAccessions'])->name('get.accessions');
     
+    Route::get('/employee/{id}', function ($id) {
+        $emp = \Illuminate\Support\Facades\DB::table('core_employee')
+            ->where('employee_id', $id)
+            ->first(['emp_name','emp_code','emp_email','emp_contact','emp_department','emp_designation']);
+        if (!$emp) return response()->json(null);
+        return response()->json($emp);
+    });
+
+    Route::get('/check-user', function (\Illuminate\Http\Request $request) {
+        $exists = \App\Models\User::where('emp_code', $request->emp_code)->exists();
+        return response()->json(['exists' => $exists]);
+    });
+
     Route::get('/settings', function () {
         return view('settings.index');
     })->name('settings');

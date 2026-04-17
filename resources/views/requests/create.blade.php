@@ -83,12 +83,15 @@ $role = optional(auth()->user()->role)->slug;
                             <option value="">Select User</option>
                             @foreach($users as $user)
                                 <option value="{{ $user->id }}"
+                                    data-emp-reporting="{{ $user->emp_reporting }}"
                                     {{ old('user_id', $seedRequest->user_id ?? '') == $user->id ? 'selected' : '' }}>
                                     {{ $user->name }} ({{ $user->email }})
                                 </option>
                             @endforeach
                         </select>
                     </div>
+
+                    
                     <div class="col-md-4 mb-3">
                         <label for="request_date" class="form-label">Request Date <span class="text-danger">*</span></label>
                         <input type="date" name="request_date" id="request_date" 
@@ -99,26 +102,21 @@ $role = optional(auth()->user()->role)->slug;
                         @enderror
                     </div>
                     <div class="co-md-12">
-                        <div id="ReportingDetailsBox" class="card border bg-light mb-3 ">
-                            <div class="card-header py-2 bg-white d-flex justify-content-between align-items-center">
-                                <span class="fw-semibold small"><i class="ri-information-line me-1"></i>Reporting Details</span>
+                        {{-- Reporting Manager Details --}}
+                        <div id="userReportingCard" class="card border bg-light d-none">
+                            <div class="card-header py-2 bg-white d-flex align-items-center gap-2">
+                                <i class="ri-user-star-line text-primary"></i>
+                                <strong class="small">Reporting Manager</strong>
+                                <span id="rm_user_badge_req" class="ms-auto"></span>
                             </div>
-                            <div class="card-body py-2">
-                                <div class="row g-2 small">
-                                    <div class="col-md-3">
-                                        <span class="text-muted">Reporting Name:</span><br>
-                                        <strong id="rep_name">—</strong>
-                                    </div>
-
-                                    <div class="col-md-3">
-                                        <span class="text-muted">Reporting Email:</span><br>
-                                        <strong id="rep_email">—</strong>
-                                    </div>
-
-                                    <div class="col-md-3">
-                                        <span class="text-muted">Department:</span><br>
-                                        <strong id="rep_department">—</strong>
-                                    </div>
+                            <div class="card-body py-2 small">
+                                <div class="row g-1">
+                                    <div class="col-4"><span class="text-muted">Name:</span> <span id="req_rm_name">—</span></div>
+                                    <div class="col-4"><span class="text-muted">Email:</span> <span id="req_rm_email">—</span></div>
+                                    <div class="col-4"><span class="text-muted">Mobile:</span> <span id="req_rm_mobile">—</span></div>
+                                    <div class="col-4"><span class="text-muted">Code:</span> <span id="req_rm_code">—</span></div>
+                                    <div class="col-4"><span class="text-muted">Dept:</span> <span id="req_rm_dept">—</span></div>
+                                    <div class="col-4"><span class="text-muted">Designation:</span> <span id="req_rm_desig">—</span></div>
                                 </div>
                             </div>
                         </div>
@@ -290,16 +288,36 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (userSelect) {
         userSelect.addEventListener('change', function () {
-            let id = this.value;
-            if (!id) return;
+            const card = document.getElementById('userReportingCard');
+            const selected = this.options[this.selectedIndex];
+            const reportingEmpId = selected.getAttribute('data-emp-reporting');
 
-            fetch(`/employee/${id}`)
-                .then(res => res.json())
-                .then(d => {
-                    document.getElementById('rep_department').textContent = d.emp_department || '—';
-                    document.getElementById('rep_name').textContent = d.reporting_name || '—';
-                    document.getElementById('rep_email').textContent = d.reporting_email || '—';
-                });
+            if (!this.value || !reportingEmpId || reportingEmpId === '0' || reportingEmpId === '') {
+                card.classList.add('d-none');
+                return;
+            }
+
+            fetch(`/employee/${reportingEmpId}`)
+                .then(r => r.json())
+                .then(m => {
+                    if (!m) { card.classList.add('d-none'); return; }
+                    document.getElementById('req_rm_name').textContent   = m.emp_name        || '—';
+                    document.getElementById('req_rm_code').textContent   = m.emp_code        || '—';
+                    document.getElementById('req_rm_email').textContent  = m.emp_email       || '—';
+                    document.getElementById('req_rm_mobile').textContent = m.emp_contact     || '—';
+                    document.getElementById('req_rm_dept').textContent   = m.emp_department  || '—';
+                    document.getElementById('req_rm_desig').textContent  = m.emp_designation || '—';
+                    // Check if manager is a user
+                    fetch(`/check-user?emp_code=${m.emp_code}`)
+                        .then(r => r.json())
+                        .then(u => {
+                            document.getElementById('rm_user_badge_req').innerHTML = u.exists
+                                ? '<span class="badge bg-success"><i class="ri-check-line me-1"></i>User</span>'
+                                : '<span class="badge bg-secondary">Not a User</span>';
+                        });
+                    card.classList.remove('d-none');
+                })
+                .catch(() => card.classList.add('d-none'));
         });
     }
 

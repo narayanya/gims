@@ -45,7 +45,7 @@ class  SeedRequest extends Model
 
     public function user()
 {
-    return $this->belongsTo(User::class);
+    return $this->belongsTo(User::class, 'user_id');
 }
 
     public function crop(): BelongsTo
@@ -70,8 +70,8 @@ class  SeedRequest extends Model
 
     public static function generateRequestNumber(): string
     {
-        $lastRequest = self::latest('id')->first();
-        $number = $lastRequest ? intval(substr($lastRequest->request_number, 4)) + 1 : 1;
+        $last = self::orderByDesc('id')->value('request_number');
+        $number = $last ? ((int) substr($last, 4)) + 1 : 1;
         return 'REQ-' . str_pad($number, 5, '0', STR_PAD_LEFT);
     }
     public function dispatches()

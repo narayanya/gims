@@ -15,31 +15,57 @@ use Illuminate\Validation\Rule;
 class RequestController extends Controller
 {
     
-    public function index(HttpRequest $request)
-    {
-        $query = SeedRequest::with(['user', 'crop', 'unit', 'approvedBy']);
+   public function index(HttpRequest $request)
+{
+    $query = SeedRequest::with(['user', 'crop', 'unit', 'approvedBy']);
 
-        // Crop Filter
-        if ($request->crop) {
-            $query->where('crop_id', $request->crop);
+    $user = auth()->user();
+
+    // Super Admin and Admin → all data
+    if ($user->hasRole(['super-admin', 'admin'])) {
+        // no filter — see all
+    } else {
+        // Find the logged-in user's employee_id from core_employee
+        $empRecord = \Illuminate\Support\Facades\DB::table('core_employee')
+            ->where('emp_code', $user->emp_code)
+            ->value('employee_id');
+
+        // Team members = users whose emp_reporting = this user's employee_id
+        $teamUserIds = collect();
+        if ($empRecord) {
+            $teamUserIds = User::where('emp_reporting', $empRecord)->pluck('id');
         }
 
-        // User Filter
-        if ($request->user) {
-            $query->where('user_id', $request->user);
-        }
-
-        $requests = $query->latest()->paginate(15)->withQueryString();
-
-        $crops = Crop::where([
-                ['is_active', 1],
-                ['update_status', 1]
-            ])->select('id', 'crop_name')->get(); 
-        $units = Unit::all();
-        $users = User::all();   // IMPORTANT (for user filter)
-
-        return view('requests.index', compact('requests', 'crops', 'units', 'users'));
+        $query->where(function ($q) use ($user, $teamUserIds) {
+            $q->where('user_id', $user->id);       // own requests
+            if ($teamUserIds->isNotEmpty()) {
+                $q->orWhereIn('user_id', $teamUserIds); // team requests
+            }
+        });
     }
+
+    // ✅ Filters
+    if ($request->crop) {
+        $query->where('crop_id', $request->crop);
+    }
+
+    if ($request->user && $user->hasRole('super-admin')) {
+        $query->where('user_id', $request->user);
+    }
+
+    $requests = $query->latest()->paginate(15)->withQueryString();
+
+    $crops = Crop::where([
+        ['is_active', 1],
+        ['update_status', 1]
+    ])->select('id', 'crop_name')->get();
+
+    $units = Unit::all();
+
+    $users = $user->hasRole('super-admin') ? User::all() : collect();
+
+    return view('requests.index', compact('requests', 'crops', 'units', 'users'));
+}
 
     public function return(HttpRequest $request, $id)
     {
@@ -75,6 +101,24 @@ class RequestController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Request marked as received.');
+    }
+
+    public function reject(HttpRequest $request, $id)
+    {
+        $req = SeedRequest::findOrFail($id);
+        $req->status   = 'rejected';
+        $req->remarks  = $request->remarks;
+        $req->approved_by = auth()->id();
+        $req->approved_at = now();
+        $req->save();
+
+        Notification::create([
+            'user_id' => $req->user_id,
+            'title'   => 'Request Rejected',
+            'message' => 'Your seed request ' . $req->request_number . ' has been rejected. Reason: ' . ($request->remarks ?? 'N/A'),
+        ]);
+
+        return redirect()->back()->with('success', 'Request Rejected.');
     }
 
     public function approve(HttpRequest $request, $id)
@@ -139,17 +183,7 @@ class RequestController extends Controller
                 'notes' => 'nullable|string',
             ]);
 
-            // Check requested qty does not exceed accession's available qty
-            if ($httpRequest->accession_id) {
-                $accession = Accession::find($httpRequest->accession_id);
-                if ($accession && $accession->quantity_show !== null) {
-                    if ((float)$httpRequest->quantity > (float)$accession->quantity_show) {
-                        return back()->withInput()->withErrors([
-                            'quantity' => 'Request quantity (' . $httpRequest->quantity . ') cannot exceed available quantity (' . $accession->quantity_show . ').',
-                        ]);
-                    }
-                }
-            }
+            // Per-row quantity check is done inside the foreach loop below
 
             // If admin selected user
             $user = Auth::user();
@@ -164,29 +198,29 @@ class RequestController extends Controller
 
                 $accession = Accession::find($accessionId);
 
-                // ✅ Quantity check per row
-                if ($accession && $accession->quantity_show !== null) {
-                    if ((float)$httpRequest->quantity[$i] > (float)$accession->quantity_show) {
+                // ✅ Quantity check per row — use seed_quantities latest or accession.quantity_show
+                if ($accession) {
+                    $sq = \App\Models\SeedQuantity::where('accession_id', $accessionId)->latest()->first();
+                    $availableQty = $sq?->quantity_show ?? $accession->quantity_show ?? null;
+                    if ($availableQty !== null && (float)$httpRequest->quantity[$i] > (float)$availableQty) {
                         return back()->withInput()->withErrors([
-                            'quantity.' . $i => 'Row '.($i+1).': Request qty exceeds available qty.'
+                            'quantity.' . $i => 'Row '.($i+1).': Request qty ('.($httpRequest->quantity[$i]).') exceeds available qty ('.$availableQty.').'
                         ]);
                     }
                 }
 
                 SeedRequest::create([
                     'crop_id'          => $httpRequest->crop_id[$i],
+                    'variety_id'       => $httpRequest->variety_id[$i] ?? null,
                     'accession_id'     => $accessionId,
                     'quantity'         => $httpRequest->quantity[$i],
                     'unit_id'          => $httpRequest->unit_id[$i],
-
                     'request_date'     => $httpRequest->request_date,
                     'required_date'    => $httpRequest->required_date,
-
                     'user_id'          => $user->id,
                     'requester_name'   => $user->name,
                     'requester_email'  => $user->email,
-
-                    'request_number'   => $requestNumber, // 🔥 same group number
+                    'request_number'   => $requestNumber,
                     'status'           => 'pending',
                     'purpose'          => $httpRequest->purpose,
                     'purpose_details'  => $httpRequest->purpose_details,
@@ -196,7 +230,7 @@ class RequestController extends Controller
             }
 
             $admins = User::whereHas('role', function ($q) {
-            $q->whereIn('slug',['admin','super-admin']);
+            $q->whereIn('slug',['admin']);
             })->get();
 
             foreach ($admins as $admin) {

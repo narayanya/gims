@@ -154,21 +154,41 @@
                                         </form>
 
                                     @endif
-                                    @if(auth()->user()->hasRole(['super-admin','admin','manager']) && $request->status == 'pending')
-                                    <button 
-                                        class="btn btn-sm btn-success approveBtn"
-                                        data-id="{{ $request->id }}"
-                                        data-number="{{ $request->request_number }}"
-                                    >
-                                        <i class="ri-check-line"></i> Approve
-                                    </button>
-                                    <button 
-                                        class="btn btn-sm btn-danger rejectBtn"
-                                        data-id="{{ $request->id }}"
-                                        data-number="{{ $request->request_number }}"
-                                    >
-                                        <i class="ri-delete-bin-line"></i> Reject
-                                    </button>
+                                    
+                                    @php
+    $authUser = auth()->user();
+    // Check if logged-in user is the reporting manager of the requester
+    $requesterUser = $request->user;
+    $isManager = false;
+    if ($requesterUser && $authUser->emp_code) {
+        // Find auth user's employee_id
+        $authEmpId = \Illuminate\Support\Facades\DB::table('core_employee')
+            ->where('emp_code', $authUser->emp_code)
+            ->value('employee_id');
+        $isManager = $authEmpId && (string)$requesterUser->emp_reporting === (string)$authEmpId;
+    }
+    $canApprove = $request->status == 'pending' && (
+        $authUser->hasRole(['super-admin','admin','manager']) || $isManager
+    );
+@endphp
+
+@if($canApprove)
+
+                                    
+                                        <button 
+                                            class="btn btn-sm btn-success approveBtn"
+                                            data-id="{{ $request->id }}"
+                                            data-number="{{ $request->request_number }}"
+                                        >
+                                            <i class="ri-check-line"></i> Approve
+                                        </button>
+                                        <button 
+                                            class="btn btn-sm btn-danger rejectBtn"
+                                            data-id="{{ $request->id }}"
+                                            data-number="{{ $request->request_number }}"
+                                        >
+                                            <i class="ri-delete-bin-line"></i> Reject
+                                        </button>
                                     @endif
                                     @if($request->status == 'approved')
 <button 
