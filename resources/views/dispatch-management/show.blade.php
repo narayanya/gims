@@ -65,6 +65,10 @@
                                 <span class="badge bg-{{ $sc }}">{{ ucfirst($request->status) }}</span>
                             </div>
                             <div class="col-md-4">
+                                <small class="text-muted d-block">Request Qty.</small>
+                                <strong>{{ $request->quantity ?? 'N/A' }} {{ $request->unit?->name ?? 'N/A' }}</strong>
+                            </div>
+                            <div class="col-md-4">
                                 <small class="text-muted d-block">Purpose</small>
                                 <strong>{{ $request->purpose ?? 'N/A' }}</strong>
                             </div>
@@ -99,9 +103,13 @@
                                 <small class="text-muted d-block">Destination</small>
                                 <strong>{{ $request->destination ?? 'N/A' }}</strong>
                             </div>
+                            
                             <div class="col-md-4">
                                 <small class="text-muted d-block">Requester- Reporting/Status</small>
-                                <strong>{{ $request->destination ?? 'N/A' }} <span class="badge bg-success">Approved</span></strong>
+                               <strong>
+                                    {{ $request->user?->reportingUser?->email ?? 'N/A' }}
+                                    <span class="badge bg-success">Approved</span>
+                                </strong>
                             </div>
                         </div>
                     </div>
@@ -126,12 +134,68 @@
                                 <small class="text-muted d-block">Accession No.</small>
                                 <strong>{{ $request->accession?->accession_number ?? 'N/A' }}</strong>
                             </div>
+                            
                             <div class="col-md-4">
-                                <small class="text-muted d-block">Quantity</small>
-                                <strong>{{ $request->quantity }} {{ $request->unit?->name ?? '' }}</strong>
+                                <small class="text-muted d-block">Expiry Date</small>
+                                <strong>
+                                    {{ optional($request->accession?->expiry_date)->format('d M Y') ?? 'N/A' }}
+                                </strong>
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {{-- Lots & Seed Quantities --}}
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="ri-stack-line me-2"></i>Lots & Seed Quantities</h6>
+                    </div>
+                    @if(isset($lots) && $lots->count())
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Lot No.</th>
+                                        <th>Storage</th>
+                                        <th>Total Qty</th>
+                                        <th>Available (User)</th>
+                                        <th>Min Stock</th>
+                                        <th>Unit</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($lots as $lot)
+                                    @php
+                                        $sqs = isset($seedQuantities) ? ($seedQuantities->get($lot->id) ?? $seedQuantities->get('unlinked') ?? collect()) : collect();
+                                        $sq  = $sqs->sortByDesc('id')->first();
+                                    @endphp
+                                    <tr>
+                                        <td><span class="badge bg-primary">{{ $lot->lot_number }}</span></td>
+                                        <td>{{ $lot->storage?->name ?? '—' }}</td>
+                                        <td>{{ $sq ? number_format($sq->quantity, 2) : number_format($lot->quantity ?? 0, 2) }}</td>
+                                        <td><strong class="text-success">{{ $sq ? number_format($sq->quantity_show, 2) : '—' }}</strong></td>
+                                        <td>{{ $sq?->min_quantity ? number_format($sq->min_quantity, 2) : '—' }}</td>
+                                        <td>{{ $sq?->unit?->name ?? $request->accession?->capacityUnit?->name ?? '—' }}</td>
+                                        <td><span class="badge {{ $lot->status == 'active' ? 'bg-success' : 'bg-secondary' }}">{{ ucfirst($lot->status) }}</span></td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot class="table-light fw-semibold">
+                                    <tr>
+                                        <td colspan="2">Total</td>
+                                        <td>{{ number_format(isset($seedQuantities) ? $seedQuantities->flatten()->sum('quantity') : 0, 2) }}</td>
+                                        <td class="text-success">{{ number_format(isset($seedQuantities) ? $seedQuantities->flatten()->sum('quantity_show') : 0, 2) }}</td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    @else
+                    <div class="card-body text-muted small">No lots found for this accession.</div>
+                    @endif
                 </div>
 
                 {{-- Approval Info --}}
@@ -199,10 +263,29 @@
                                 <input type="text" name="tracking_number" class="form-control"
                                        placeholder="e.g. 1Z999AA10123456784">
                             </div>
-                            <div class="mb-3">
+                            <div class="mb-3 col-md-6">
                                 <label class="form-label">Upload Photo</label>
                                 <input type="file" name="dispatchUpload" class="form-control" >
                                 <small class="text-muted">Max 5 images (JPG, PNG, GIF — max 2MB each)</small>
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label class="form-label">Select Lot Number <span class="text-danger">*</span></label>
+                                <select name="lot_id" class="form-select" required>
+                                    <option value="">Select Lot</option>
+
+                                    @foreach($lots as $lot)
+                                        @php
+                                            $sqs = isset($seedQuantities) ? ($seedQuantities->get($lot->id) ?? collect()) : collect();
+                                            $sq  = $sqs->sortByDesc('id')->first();
+                                        @endphp
+
+                                        <option value="{{ $lot->id }}">
+                                            {{ $lot->lot_number }} 
+                                            (Avail: {{ $sq ? number_format($sq->quantity_show, 2) : 0 }})
+                                        </option>
+                                    @endforeach
+
+                                </select>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Remarks</label>

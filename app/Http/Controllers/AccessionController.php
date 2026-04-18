@@ -34,7 +34,7 @@ class AccessionController extends Controller
 {
     public function index()
     {
-        $query = Accession::with(['crop', 'variety', 'warehouse', 'storageLocation', 'storageTime', 'capacityUnit'])
+        $query = Accession::with(['crop', 'warehouse', 'storageLocation', 'storageTime', 'capacityUnit'])
             ->orderBy('created_at', 'desc');
 
         // Users and researchers only see accessions marked as visible to requesters

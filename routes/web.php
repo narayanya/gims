@@ -294,12 +294,21 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
             return response()->json(['error' => 'Not found'], 404);
         }
 
-        // Get latest quantity from seed_quantities if available
+        // Aggregate from seed_quantities table
         $sq = \App\Models\SeedQuantity::where('accession_id', $id)
-            ->latest()->first();
+            ->selectRaw('SUM(quantity) as total_quantity, SUM(quantity_show) as total_quantity_show, MAX(capacity_unit_id) as capacity_unit_id')
+            ->first();
 
-        $quantityShow = $sq?->quantity_show ?? $acc->quantity_show ?? 0;
-        $unit = $acc->capacityUnit?->name ?? $acc->capacityUnit?->code ?? '';
+        $unit = null;
+        if ($sq?->capacity_unit_id) {
+            $unit = \App\Models\Unit::find($sq->capacity_unit_id);
+        }
+        if (!$unit) {
+            $unit = $acc->capacityUnit;
+        }
+
+        $totalQty     = $sq?->total_quantity     ?? $acc->quantity       ?? 0;
+        $totalQtyShow = $sq?->total_quantity_show ?? $acc->quantity_show  ?? 0;
 
         return response()->json([
             'id'               => $acc->id,
@@ -307,10 +316,11 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
             'accession_number' => $acc->accession_number,
             'crop'             => optional($acc->crop)->crop_name,
             'scientific_name'  => $acc->scientific_name,
-            'quantity'         => $quantityShow,
-            'quantity_show'    => $quantityShow,
-            'unit'             => $unit,
-            'unit_id'          => $acc->capacity_unit_id,
+            'quantity'         => $totalQtyShow,       // available for user
+            'quantity_show'    => $totalQtyShow,
+            'total_quantity'   => $totalQty,           // actual total
+            'unit'             => $unit?->name ?? $unit?->code ?? '',
+            'unit_id'          => $unit?->id ?? $acc->capacity_unit_id,
             'expiry_date'      => $acc->expiry_date,
             'barcode'          => $acc->barcode,
         ]);

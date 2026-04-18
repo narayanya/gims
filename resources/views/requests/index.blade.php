@@ -571,7 +571,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 <div class="modal-body" id="invoiceContent">
 
-<h5>Germplasm Request Dispatch</h5>
+<h5>Germplasm Request Dispatch List</h5>
 <hr>
 
 <p><strong>Request No:</strong> <span id="inv_request_no"></span></p>
@@ -585,8 +585,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </div>
 
 <div class="modal-footer">
-<button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-<button class="btn btn-success" onclick="printInvoice()">Print Now</button>
+<button class="btn btn-light" data-bs-dismiss="modal">Close</button>
 </div>
 
 </div>
@@ -611,15 +610,15 @@ document.addEventListener("DOMContentLoaded", function () {
                     <p>Approve Request: <strong id="approveRequestNumber"></strong></p>
 
                     <div class="mb-3">
-                        <label class="form-label">Remarks</label>
+                        <label class="form-label">Remarks <span class="text-danger">*</span></label>
                         <textarea name="remarks" class="form-control" required></textarea>
                     </div>
 
                 </div>
 
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button class="btn btn-success">Approve</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Approve</button>
                 </div>
 
             </form>
@@ -646,15 +645,15 @@ document.addEventListener("DOMContentLoaded", function () {
                     <p>Reject Request: <strong id="rejectRequestNumber"></strong></p>
 
                     <div class="mb-3">
-                        <label class="form-label">Remarks</label>
+                        <label class="form-label">Remarks <span class="text-danger">*</span></label>
                         <textarea name="remarks" class="form-control" required></textarea>
                     </div>
 
                 </div>
 
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button class="btn btn-success">Rejected</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Rejected</button>
                 </div>
 
             </form>

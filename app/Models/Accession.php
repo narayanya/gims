@@ -85,13 +85,6 @@ class Accession extends Model
         return $this->belongsTo(\App\Models\Crop::class);
     }
 
-    /**
-     * Get the variety associated with this accession.
-     */
-    public function variety(): BelongsTo
-    {
-        return $this->belongsTo(\App\Models\Variety::class);
-    }
     public function country()
     {
         return $this->belongsTo(Country::class);
@@ -275,7 +268,15 @@ class Accession extends Model
     {
         return $this->hasMany(SeedQuantity::class);
     }
-    
+    public function lots()
+    {
+        return $this->hasOne(Lot::class, 'accession_id');
+    }
+    public function seedQuantity()
+    {
+        return $this->hasOne(SeedQuantity::class, 'lot_id')
+            ->whereColumn('accession_id', 'lots.accession_id');
+    }
    /* public static function generateAccessionNumber(string $cropCode)
     {
         do {

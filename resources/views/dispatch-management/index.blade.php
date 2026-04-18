@@ -30,13 +30,13 @@
         {{-- Lot List --}}
         <div class="card">
             <div class="card-body">
-             
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Accession Number</th>
                                 <th>Request Number</th>
+                                <th>Accession Number</th>
+                                <th>Lot Number</th>
                                 <th>Requester Name</th>
                                 <th>Crop</th>
                                 <th>Quantity</th>
@@ -51,8 +51,17 @@
                             @if($requests->count() > 0)
                             @foreach($requests as $req)
                             <tr>
-                                <td>{{ $req->accession->accession_number ?? '' }} </td>
                                 <td>{{ $req->request_number }}</td>
+                                <td>{{ $req->accession?->accession_number ?? '—' }}</td>
+                                <td>
+                                    @php
+                                        $lotNums = \App\Models\Lot::where('accession_id', $req->accession_id)
+                                            ->whereNotNull('lot_number')
+                                            ->pluck('lot_number');
+                                    @endphp
+                                    {{ $lotNums->isNotEmpty() ? $lotNums->implode(', ') : '—' }}
+                                </td>
+                                
                                 <td>{{ $req->requester_name }}</td>
                                 <td>{{ $req->crop->crop_name ?? '' }}</td>
                                 <td>{{ $req->quantity }}</td>
@@ -90,6 +99,7 @@
                                 <th>Dispatch Number</th>
                                 <th>Request Number</th>
                                 <th>Accession Number</th>
+                                <th>Lot Number</th>
                                 <th>MRN Number</th>
                                 <th>Quantity</th>
                                 <th>Courier name</th>
@@ -102,9 +112,21 @@
                             @if ($dispatches->count() > 0)
                                 @foreach($dispatches as $dispatch)
                                 <tr>
-                                    <td>{{ $dispatch->accession->accession_number ?? 'N/A' }}</td>
-                                    <td>{{ $dispatch->request->request_number }}</td>
-                                    <td>{{ $dispatch->accession->accession_number ?? 'N/A' }}</td>
+                                    <td>{{ $dispatch->dispatch_number }}</td>
+                                    <td>{{ $dispatch->request?->request_number }}</td>
+                                    <td>{{ $dispatch->accession?->accession_number ?? 'N/A' }}</td>
+                                    <td>
+                                        @if($dispatch->lot_id)
+                                            @php $dLot = \App\Models\Lot::find($dispatch->lot_id); @endphp
+                                            <span class="badge bg-primary">{{ $dLot?->lot_number ?? '—' }}</span>
+                                        @else
+                                            @php
+                                                $dLotNums = \App\Models\Lot::where('accession_id', $dispatch->accession_id)
+                                                    ->whereNotNull('lot_number')->pluck('lot_number');
+                                            @endphp
+                                            {{ $dLotNums->isNotEmpty() ? $dLotNums->implode(', ') : '—' }}
+                                        @endif
+                                    </td>
                                     <td>{{ $dispatch->mrn_number }}</td>
                                     <td>{{ $dispatch->quantity }}</td>
                                     <td>{{ $dispatch->courier_name }}</td>

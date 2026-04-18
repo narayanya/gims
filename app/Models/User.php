@@ -66,4 +66,8 @@ class User extends Authenticatable
             $this->roles()->detach($role);
         }
     }
+    public function reportingUser()
+    {
+        return $this->belongsTo(User::class, 'emp_reporting');
+    }
 }

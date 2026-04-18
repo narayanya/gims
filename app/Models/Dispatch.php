@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 class Dispatch extends Model
 {
     protected $fillable = [
-        'dispatch_number',    
-    'request_id',
+        'dispatch_number',
+        'request_id',
         'accession_id',
+        'lot_id',
         'mrn_number',
         'quantity',
         'courier_name',
@@ -17,7 +18,7 @@ class Dispatch extends Model
         'contact_number',
         'tracking_number',
         'remarks',
-        'dispatched_at'
+        'dispatched_at',
     ];
 
     public function request()
@@ -25,17 +26,23 @@ class Dispatch extends Model
         return $this->belongsTo(SeedRequest::class);
     }
 
+
     public static function generateDispatchNumber()
     {
-        $last = self::latest()->first();
+        $prefix = 'DISP-' . date('Ymd') . '-';
 
-        if (!$last) {
-            return 'DISP-00001';
+        $last = self::where('dispatch_number', 'like', $prefix . '%')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($last) {
+            $lastNumber = (int) str_replace($prefix, '', $last->dispatch_number);
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1;
         }
 
-        $number = intval(substr($last->dispatch_number, 5)) + 1;
-
-        return 'DISP-' . str_pad($number, 5, '0', STR_PAD_LEFT);
+        return $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
     }
 
     public function accession()

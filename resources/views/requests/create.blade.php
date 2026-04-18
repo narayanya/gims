@@ -224,13 +224,10 @@ $role = optional(auth()->user()->role)->slug;
                             <div class="col-md-3"><span class="text-muted">Accession Name:</span><br><strong id="acc_name">—</strong></div>
                             <div class="col-md-3"><span class="text-muted">Crop:</span><br><strong id="acc_crop">—</strong></div>
                             <div class="col-md-3"><span class="text-muted">Scientific Name:</span><br><strong id="acc_scientific">—</strong></div>
-                            <div class="col-md-3"><span class="text-muted">Available Qty:</span><br><strong id="acc_qty">—</strong></div>
-                            <div class="col-md-3"><span class="text-muted">Warehouse:</span><br><strong id="acc_warehouse">—</strong></div>
-                            <div class="col-md-3"><span class="text-muted">Status:</span><br><strong id="acc_status">—</strong></div>
+                            <div class="col-md-3"><span class="text-muted">Total Quantity:</span><br><strong id="acc_total_qty" class="text-info">—</strong></div>
+                            <div class="col-md-3"><span class="text-muted">Available Qty (User):</span><br><strong id="acc_qty" class="text-success">—</strong></div>
+                            <div class="col-md-3"><span class="text-muted">Unit:</span><br><strong id="acc_unit">—</strong></div>
                             <div class="col-md-3"><span class="text-muted">Expiry Date:</span><br><strong id="acc_expiry">—</strong></div>
-                            <div class="col-md-3"><span class="text-muted">Biological Status:</span><br><strong id="acc_bio">—</strong></div>
-                            <div class="col-md-3"><span class="text-muted">Sample Type:</span><br><strong id="acc_sample">—</strong></div>
-                            <div class="col-md-3"><span class="text-muted">Collection Site:</span><br><strong id="acc_site">—</strong></div>
                             <div class="col-md-3"><span class="text-muted">Barcode:</span><br><strong id="acc_barcode">—</strong></div>
                         </div>
                     </div>
@@ -433,8 +430,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('acc_name').textContent = d.accession_name || '—';
                 document.getElementById('acc_crop').textContent = d.crop || '—';
                 document.getElementById('acc_scientific').textContent = d.scientific_name || '—';
+                document.getElementById('acc_total_qty').textContent =
+                    d.total_quantity ? d.total_quantity + ' ' + (d.unit || '') : '—';
                 document.getElementById('acc_qty').textContent =
                     (d.quantity_show ?? d.quantity) ? (d.quantity_show ?? d.quantity) + ' ' + (d.unit || '') : '—';
+                document.getElementById('acc_unit').textContent = d.unit || '—';
+                document.getElementById('acc_expiry').textContent = d.expiry_date || '—';
+                document.getElementById('acc_barcode').textContent = d.barcode || '—';
 
                 document.getElementById('acc_expiry').textContent = d.expiry_date || '—';
                 document.getElementById('acc_barcode').textContent = d.barcode || '—';

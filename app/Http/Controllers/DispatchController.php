@@ -11,8 +11,8 @@ class DispatchController extends Controller
     // ✅ List all approved requests (ready for dispatch)
     public function index()
     {
-        $dispatches = Dispatch::with(['request', 'accession'])->latest()->get();   
-        $requests = SeedRequest::with(['user','crop','unit','accession'])
+        $dispatches = Dispatch::with(['request','accession'])->latest()->get();   
+        $requests = SeedRequest::with(['user','crop','unit','accession.lots'])
             ->where('status', 'approved')
             ->latest()
             ->get();
@@ -23,6 +23,7 @@ class DispatchController extends Controller
     public function store(Request $req, $id)
     {
         $req->validate([
+            'lot_id'          => 'required|exists:lots,id',
             'dispatched_at'   => 'nullable|date',
             'mrn_number'      => 'nullable|string|max:100',
             'courier_name'    => 'nullable|string|max:255',
@@ -39,6 +40,7 @@ class DispatchController extends Controller
             'dispatch_number' => Dispatch::generateDispatchNumber(),
             'request_id'      => $request->id,
             'accession_id'    => $request->accession_id,
+            'lot_id'          => $req->lot_id, // ✅ FIXED
             'mrn_number'      => $req->mrn_number ?: 'MRN-' . now()->format('YmdHis'),
             'quantity'        => $req->quantity ?? $request->quantity,
             'courier_name'    => $req->courier_name,
@@ -51,12 +53,28 @@ class DispatchController extends Controller
 
         $request->update(['status' => 'dispatched']);
 
-        // Deduct dispatched quantity from accession's quantity_show
+        // Deduct dispatched quantity from seed_quantities for this lot
+        if ($req->lot_id) {
+            $sq = \App\Models\SeedQuantity::where('lot_id', $req->lot_id)
+                ->orWhere(function($q) use ($request, $req) {
+                    $q->where('accession_id', $request->accession_id)
+                      ->whereNull('lot_id');
+                })
+                ->orderByDesc('id')
+                ->first();
+
+            if ($sq) {
+                $sq->quantity_show = max(0, (float)$sq->quantity_show - (float)$dispatch->quantity);
+                $sq->save();
+            }
+        }
+
+        // Also deduct from accession.quantity_show
         if ($request->accession_id) {
             $accession = \App\Models\Accession::find($request->accession_id);
             if ($accession) {
-                $newQty = max(0, (float)$accession->quantity_show - (float)$dispatch->quantity);
-                $accession->update(['quantity_show' => $newQty]);
+                $accession->quantity_show = max(0, (float)$accession->quantity_show - (float)$dispatch->quantity);
+                $accession->save();
             }
         }
 
@@ -77,10 +95,28 @@ class DispatchController extends Controller
     // 👉 Show dispatch form
     public function show($id)
     {
-        $request = SeedRequest::with(['crop','unit','user','accession'])
-            ->findOrFail($id);
+        $request = SeedRequest::with([
+            'crop', 'unit', 'user.reportingUser', 'approvedBy',
+            'accession.capacityUnit',
+        ])->findOrFail($id);
 
-        return view('dispatch-management.show', compact('request'));
+        // Load lots by accession_id
+        $lots = collect();
+        $seedQuantities = collect();
+        if ($request->accession_id) {
+            $lots = \App\Models\Lot::with(['storage', 'unit'])
+                ->where('accession_id', $request->accession_id)
+                ->whereNotNull('lot_number')
+                ->get();
+
+            // Group seed quantities by lot_id (null lot_id goes to key '')
+            $seedQuantities = \App\Models\SeedQuantity::with('unit')
+                ->where('accession_id', $request->accession_id)
+                ->get()
+                ->groupBy(fn($sq) => $sq->lot_id ?? 'unlinked');
+        }
+
+        return view('dispatch-management.show', compact('request', 'lots', 'seedQuantities'));
     }
     
 
