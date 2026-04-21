@@ -869,11 +869,30 @@ document.addEventListener("DOMContentLoaded", function () {
                 @csrf
                 <div class="modal-body">
                     <p>Mark request <strong id="receiveRequestNumber"></strong> as <span class="badge bg-success">Received</span>?</p>
-                    <div class="mb-3">
-                        <label class="form-label">Receive Date</label>
-                        <input type="date" name="receive_date" class="form-control"
-                               value="{{ now()->format('Y-m-d') }}">
+                    
+                    <div class="row">
+                        <div class="mb-3 col-md-6">
+                            <label class="form-label">Receive Date</label>
+                            <input type="date" name="receive_date" class="form-control"
+                                value="{{ now()->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}">
+                        </div>
+                        <div class="mb-3 col-md-6">
+                            <label class="form-label">Receiving Condition <span class="text-danger">*</span></label>
+                            <select name="receiving_condition" class="form-select" required>
+                                <option value="">Select Condition</option>
+                                <option value="good">Good</option>
+                                <option value="damaged">Damaged</option>
+                                <option value="partial">Partially Damaged</option>
+                                <option value="expired">Expired</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-md-12">
+                            <label class="form-label">Upload Photo</label>
+                            <input class="form-control" name="receiving_file" type="file" >
+                            <small class="text-muted">Max 5 images (JPG, PNG, GIF — max 2MB each)</small>
+                        </div>
                     </div>
+
                     <div class="mb-3">
                         <label class="form-label">Receive Note / Remarks</label>
                         <textarea name="receive_remarks" class="form-control" rows="3"

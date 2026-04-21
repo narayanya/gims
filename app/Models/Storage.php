@@ -158,5 +158,20 @@ class Storage extends Model
         return round(($this->current_usage / $this->capacity) * 100, 2);
     }
 
+    public function type()
+{
+    return $this->belongsTo(StorageType::class, 'storage_type_id');
+}
+
+public function condition()
+{
+    return $this->belongsTo(StorageCondition::class, 'storage_condition_id');
+}
+
+public function time()
+{
+    return $this->belongsTo(StorageTime::class, 'storage_time_id');
+}
+
 
 }

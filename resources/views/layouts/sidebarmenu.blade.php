@@ -236,6 +236,11 @@
                                                     Lot List
                                                 </a>
                                             </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link menu-link {{ request()->routeIs('lot-transfer.*') ? 'active' : '' }}" href="{{ route('lot-transfer.index') }}" >
+                                                    Lot Inter-Transfer
+                                                </a>
+                                            </li>
                                             <li class="nav-item d-none">
                                                 <a href="{{ route('lots.index') }}" class="nav-link {{ request()->routeIs('lots.*') ? 'active' : '' }}">
                                                 Lot Master

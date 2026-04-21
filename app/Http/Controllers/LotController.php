@@ -55,8 +55,8 @@ class LotController extends Controller
 
     public function managementCreate()
     {
-       $lastRef = \App\Models\SeedQuantity::latest('id')->value('reference_number'); 
-    return view('lot-management.create', array_merge($this->formData(), [
+        $lastRef = \App\Models\SeedQuantity::latest('id')->value('reference_number'); 
+        return view('lot-management.create', array_merge($this->formData(), [
             'nextLotNo' => Lot::generateLotNumber(
                 'REF', 'REJUV', 'PFX', 'SMPID', 0
             ),
@@ -76,7 +76,7 @@ class LotController extends Controller
             'reference_number.*' => [
                 'required',
                 'distinct', // ✅ no duplicate in same form
-                Rule::unique('seed_quantities', 'reference_number') // ✅ DB check
+                Rule::unique('lots', 'reference_number') // ✅ DB check
                 //->where(function ($query) use ($lot) {
                   //  return $query->where('lot_id', '!=', $lot->id);
                 //}),
@@ -189,7 +189,6 @@ class LotController extends Controller
                 'description'   => $request->description,
                 'status'        => $request->status,
                 'crop_id'       => $accession->crop_id,
-                'name'          => $lotNumber,
             ]);
 
             // ✅ Save child data per lot
@@ -252,8 +251,8 @@ class LotController extends Controller
             'rack_id'       => $request->rack_id,
             'bin_id'        => $request->bin_id,
             'container_id'  => $request->container_id,
-            'quantity'      => $newQty,
-            'unit_id'       => $request->unit_id,
+            //'quantity'      => $newQty,
+            //'unit_id'       => $request->unit_id,
             'expiry_date'   => $request->expiry_date,
             'description'   => $request->description,
             'status'        => $request->status,
@@ -458,4 +457,68 @@ class LotController extends Controller
     public function destroy($id) {
         return app(LotMasterController::class)->destroy(\App\Models\LotMaster::findOrFail($id));
     }
+
+    public function interTransfer()
+    {
+        $storages = Storage::all();  
+        $sections = \App\Models\Section::all();  
+        $racks = \App\Models\Rack::all();  
+            $bins       = \App\Models\Bin::where('status',1)->orderBy('name')->get();
+            $containers = \App\Models\Container::where('status',1)->orderBy('name')->get();
+
+        return view('lot-management.inter-transfer', compact('storages', 'sections', 'racks', 'bins', 'containers')
+        );
+
+    }
+
+
+
+/*public function processInterTransfer(Request $request)
+    {
+        $request->validate([
+            'lot_id'         => 'required|exists:lots,id',
+            'to_storage_id'  => 'required|exists:storages,id',
+            'to_section_id'  => 'nullable|exists:sections,id',
+            'to_rack_id'     => 'nullable|exists:racks,id',
+            'remarks'        => 'nullable|string|max:500',
+        ]);
+
+        $lot = Lot::findOrFail($request->lot_id);
+        
+        // 1. Check Capacity at Destination
+        $destinationStorage = Storage::findOrFail($request->to_storage_id);
+        $used = Lot::where('storage_id', $destinationStorage->id)->sum('quantity');
+        $available = (float)$destinationStorage->capacity - $used;
+
+        if ($lot->quantity > $available) {
+            return back()->withErrors(['error' => "Destination storage is full! Available: $available"]);
+        }
+
+        DB::transaction(function () use ($request, $lot) {
+            // 2. Create History Record
+            \App\Models\LotTransfer::create([
+                'lot_id'          => $lot->id,
+                'from_storage_id' => $lot->storage_id,
+                'from_section_id' => $lot->section_id,
+                'from_rack_id'    => $lot->rack_id,
+                'to_storage_id'   => $request->to_storage_id,
+                'to_section_id'   => $request->to_section_id,
+                'to_rack_id'      => $request->to_rack_id,
+                'quantity'        => $lot->quantity,
+                'remarks'         => $request->remarks,
+                'transferred_by'  => auth()->id(),
+            ]);
+
+            // 3. Update the Lot Location
+            $lot->update([
+                'storage_id' => $request->to_storage_id,
+                'section_id' => $request->to_section_id,
+                'rack_id'    => $request->to_rack_id,
+                // Add bin/container updates here if needed
+            ]);
+        });
+
+        return redirect()->route('lot-management')->with('success', 'Lot transferred and history logged.');
+    }*/
+
 }

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Lot extends Model
 {
     protected $fillable = [
-        'lot_number', 'lot_master_id', 'name', 'code', 'lot_type_id',
+        'lot_number', 'lot_master_id', 'code', 'lot_type_id', 'reference_number', 'rejuvenation_program', 'prefix', 'sample_id',
         'accession_id', 'crop_id',
         'storage_id', 'warehouse_id', 'storage_location_id',
         'section_id', 'rack_id', 'bin_id', 'container_id',
@@ -36,5 +36,24 @@ class Lot extends Model
                       ->orderByDesc('lot_number')->first();
         $seq = $last ? ((int) substr($last->lot_number, -5)) + 1 : 1;
         return $prefix . str_pad($seq, 5, '0', STR_PAD_LEFT);
+    }
+    public function section()
+    {
+        return $this->belongsTo(Section::class);
+    }
+
+    public function rack()
+    {
+        return $this->belongsTo(Rack::class);
+    }
+
+    public function bin()
+    {
+        return $this->belongsTo(Bin::class);
+    }
+
+    public function container()
+    {
+        return $this->belongsTo(Container::class);
     }
 }

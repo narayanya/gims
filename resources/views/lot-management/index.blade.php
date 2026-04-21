@@ -9,9 +9,14 @@
                 <h3 class="text-xl font-bold">Lot Management</h3>
                 <p class="text-muted mb-0" style="font-size:13px">Create and manage germplasm lots</p>
             </div>
-             <a href="{{ route('lot-management.create') }}" class="btn btn-primary btn-sm">
-                <i class="ri-add-line me-1"></i> Add New Lot
-            </a>
+            <div>
+                <a href="{{ route('lot-management.create') }}" class="btn btn-primary btn-sm">
+                    <i class="ri-add-line me-1"></i> Add New Lot
+                </a>
+                <a href="{{ route('inter.transfer') }}" class="btn btn-primary btn-sm">
+                    <i class="ri-add-line me-1"></i> Inter Transfer Location
+                </a>
+            </div>
             <!--<a href="{{ route('lot-management.create') }}" class="btn btn-primary btn-sm">
                 <i class="ri-add-line me-1"></i> Add New Lot
             </a>-->
@@ -125,7 +130,7 @@
                                         title="View">
                                         <i class="ri-eye-line"></i>
                                     </button>
-                                    <a href="{{ route('lot-management.edit', $lot->id) }}" class="btn btn-sm btn-outline-warning" title="Edit">
+                                    <a href="{{ route('lot-management.edit', $lot->id) }}" class="btn btn-sm btn-outline-warning d-none" title="Edit">
                                         <i class="ri-edit-line"></i>
                                     </a>
                                 </td>
