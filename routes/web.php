@@ -144,6 +144,8 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::post('/lot-transfer', [App\Http\Controllers\LotTransferController::class, 'transfer'])->name('lot-transfer.store');
     Route::get('/get-storage-lots/{id}', [App\Http\Controllers\LotTransferController::class, 'getStorageLots'])->name('lot-transfer.storage-lots');
     Route::get('/get-storage-hierarchy/{id}', [App\Http\Controllers\LotTransferController::class, 'getStorageHierarchy'])->name('lot-transfer.hierarchy');
+    Route::get('/get-accessions/{cropId}', [App\Http\Controllers\LotTransferController::class, 'getAccessions']);
+    Route::get('/get-accession-storages/{accessionId}', [App\Http\Controllers\LotTransferController::class, 'getAccessionStorages']);
 
     // Lot Master
     Route::resource('lots', App\Http\Controllers\LotMasterController::class)->except(['show', 'create', 'edit']);

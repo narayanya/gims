@@ -258,6 +258,119 @@ Regeneration
             </div>
         </div>
         @endif
+
+        <div class="card">
+            <div class="card-header">
+                TAT (Turnaround Time) Report
+            </div>
+             <div class="card-body">
+                <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Request #</th>
+                                <th>Request By</th>
+                                <th>Request Date</th>
+                                <th>Required Date</th>
+                                <th>Status</th>
+                                <th>No. of Days</th>
+
+                                <th>Approved Date</th>
+                                <th>Approved By</th>
+                                <th>Status</th>
+                                <th>No. of Days</th>
+
+                                <th>Dispatch Date</th>
+                                <th>Dispatch By</th>
+                                <th>Status</th>
+                                <th>No. of Days</th>
+
+                                <th>Receiver Date</th>
+                                <th>Receiver By</th>
+                                <th>No. of Days</th>
+
+                                <th>Return</th>
+                                <th>Receiver By</th>
+                                <th>No. of Days</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($requests as $request)
+                            <tr>
+                                <td>{{ $request->request_number }}</td>
+                                <td>{{ $request->user->name ?? '-' }}</td>
+                                <td>{{ $request->request_date->format('d M Y') }}</td>
+                                <td>{{ $request->required_date->format('d M Y') }}</td>
+                                <td>
+                                    <span class="badge bg-warning">{{ ucfirst($request->status) }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        {{ $request->req_to_approve_days }} Days
+                                    </span>
+                                </td>
+
+                                <!-- Approval -->
+                                <td>{{ $request->approved_at?->format('d M Y') ?? '-' }}</td>
+                                <td>{{ $request->approvedBy->name ?? '-' }}</td>
+                                <td></td>
+                                <td>
+                                    @if($request->approved_at)
+                                        <span class="badge bg-success">
+                                            {{ $request->req_to_approve_days }} Days
+                                        </span>
+                                    @else
+                                        <span class="text-danger">
+                                            {{ now()->diffInDays($request->request_date) }} Days Pending
+                                        </span>
+                                    @endif
+                                </td>
+
+                                <!-- Dispatch -->
+                                <td>{{ $request->dispatch_date ? \Carbon\Carbon::parse($request->dispatch_date)->format('d M Y') : '-' }}</td>
+
+                                <td>{{ $request->dispatch->contact_person ?? '-' }}</td>
+                                <td></td>
+                                <td>
+                                    @if($request->approve_to_dispatch_days !== null)
+                                        <span class="badge bg-primary">
+                                            {{ $request->approve_to_dispatch_days }} Days
+                                        </span>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+
+                                <!-- Receive -->
+                                <td>{{ $request->receive_date?->format('d M Y') ?? '-' }}</td>
+                                <td>{{ $request->received_by ?? '-' }}</td>
+                                <td>
+                                    @if($request->dispatch_to_receive_days !== null)
+                                        <span class="badge bg-info">
+                                            {{ $request->dispatch_to_receive_days }} Days
+                                        </span>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+
+                                <!-- Return -->
+                                <td>{{ $request->return_date?->format('d M Y') ?? '-' }}</td>
+                                <td>{{ $request->returned_by ?? '-' }}</td>
+                                <td>
+                                    @if($request->receive_to_return_days !== null)
+                                        <span class="badge bg-warning">
+                                            {{ $request->receive_to_return_days }} Days
+                                        </span>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                            </tbody>
+                    </table>
+             </div>
+        </div>
     </div>
 </div>
 

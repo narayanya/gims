@@ -79,6 +79,21 @@
                                 <th>Status</th>
                                 <th>Date</th>
                             </tr>
+                            @elseif($type === 'change')
+                            <tr>
+                                <th>#</th>
+                                <th>Lot Number</th>
+                                <th>Crop</th>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Section</th>
+                                <th>Rack</th>
+                                <th>Bin</th>
+                                <th>Container</th>
+                                <th>Quantity</th>
+                                <th>User</th>
+                                <th>Date</th>
+                            </tr>
                             @endif
                         </thead>
                         <tbody>
@@ -117,6 +132,24 @@
                                 <td>{{ number_format($r->quantity ?? 0, 2) }}</td>
                                 <td>{{ $r->storage?->name ?? '—' }}</td>
                                 <td><span class="badge bg-{{ $r->status == 'active' ? 'success' : 'secondary' }}">{{ ucfirst($r->status) }}</span></td>
+                                <td>{{ $r->created_at?->format('d M Y') }}</td>
+                            </tr>
+                            @elseif($type === 'change')
+                            <tr>   
+                                <td>{{ $i + 1 }}</td>
+                                <td><span class="badge bg-primary">{{ $r->lot->lot_number }}</span></td>
+                                <td>{{ $r->lot->accession->crop->name ?? '-' }}</td>
+
+                                <td>{{ $r->fromStorage->name ?? '-' }}</td>
+                                <td>{{ $r->toStorage->name ?? '-' }}</td>
+
+                                <td>{{ $r->toSection->name ?? '-' }}</td>
+                                <td>{{ $r->toRack->name ?? '-' }}</td>
+                                <td>{{ $r->toBin->name ?? '-' }}</td>
+                                <td>{{ $r->toContainer->name ?? '-' }}</td>
+
+                                <td>{{ $r->quantity }}</td>
+                                <td>{{ $r->user->name ?? '-' }}</td>
                                 <td>{{ $r->created_at?->format('d M Y') }}</td>
                             </tr>
                             @endif

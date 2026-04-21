@@ -16,56 +16,85 @@ class RequestController extends Controller
 {
     
    public function index(HttpRequest $request)
-{
-    $query = SeedRequest::with(['user', 'crop', 'unit', 'approvedBy']);
+    {
+        $query = SeedRequest::with(['user', 'crop', 'unit', 'approvedBy', 'dispatch']);
 
-    $user = auth()->user();
+        $user = auth()->user();
 
-    // Super Admin and Admin → all data
-    if ($user->hasRole(['super-admin', 'admin'])) {
-        // no filter — see all
-    } else {
-        // Find the logged-in user's employee_id from core_employee
-        $empRecord = \Illuminate\Support\Facades\DB::table('core_employee')
-            ->where('emp_code', $user->emp_code)
-            ->value('employee_id');
+        // Super Admin and Admin → all data
+        if ($user->hasRole(['super-admin', 'admin'])) {
+            // no filter — see all
+        } else {
+            // Find the logged-in user's employee_id from core_employee
+            $empRecord = \Illuminate\Support\Facades\DB::table('core_employee')
+                ->where('emp_code', $user->emp_code)
+                ->value('employee_id');
 
-        // Team members = users whose emp_reporting = this user's employee_id
-        $teamUserIds = collect();
-        if ($empRecord) {
-            $teamUserIds = User::where('emp_reporting', $empRecord)->pluck('id');
+            // Team members = users whose emp_reporting = this user's employee_id
+            $teamUserIds = collect();
+            if ($empRecord) {
+                $teamUserIds = User::where('emp_reporting', $empRecord)->pluck('id');
+            }
+
+            $query->where(function ($q) use ($user, $teamUserIds) {
+                $q->where('user_id', $user->id);       // own requests
+                if ($teamUserIds->isNotEmpty()) {
+                    $q->orWhereIn('user_id', $teamUserIds); // team requests
+                }
+            });
         }
 
-        $query->where(function ($q) use ($user, $teamUserIds) {
-            $q->where('user_id', $user->id);       // own requests
-            if ($teamUserIds->isNotEmpty()) {
-                $q->orWhereIn('user_id', $teamUserIds); // team requests
-            }
+        // ✅ Filters
+        if ($request->crop) {
+            $query->where('crop_id', $request->crop);
+        }
+
+        if ($request->user && $user->hasRole('super-admin')) {
+            $query->where('user_id', $request->user);
+        }
+
+        $requests = $query->latest()->paginate(15)->withQueryString();
+
+        $crops = Crop::where([
+            ['is_active', 1],
+            ['update_status', 1]
+        ])->select('id', 'crop_name')->get();
+
+        $units = Unit::all();
+
+        $users = $user->hasRole('super-admin') ? User::all() : collect();
+
+        $requests->getCollection()->transform(function ($req) {
+            $dispatchDate = optional($req->dispatch)->dispatched_at;
+
+            // Request → Approval
+        $req->req_to_approve_days = $req->approved_at
+            ? $req->request_date->diffInDays($req->approved_at)
+            : now()->diffInDays($req->request_date);
+
+        // Approval → Dispatch
+        $req->approve_to_dispatch_days = ($req->approved_at && $dispatchDate)
+            ? $req->approved_at->diffInDays($dispatchDate)
+            : null;
+
+        // Dispatch → Receive
+        $req->dispatch_to_receive_days = ($dispatchDate && $req->receive_date)
+            ? \Carbon\Carbon::parse($dispatchDate)->diffInDays($req->receive_date)
+            : null;
+
+        // Receive → Return
+        $req->receive_to_return_days = ($req->receive_date && $req->return_date)
+            ? $req->receive_date->diffInDays($req->return_date)
+            : null;
+
+        // Save for blade
+        $req->dispatch_date = $dispatchDate;
+
+            return $req;
         });
+
+        return view('requests.index', compact('requests', 'crops', 'units', 'users'));
     }
-
-    // ✅ Filters
-    if ($request->crop) {
-        $query->where('crop_id', $request->crop);
-    }
-
-    if ($request->user && $user->hasRole('super-admin')) {
-        $query->where('user_id', $request->user);
-    }
-
-    $requests = $query->latest()->paginate(15)->withQueryString();
-
-    $crops = Crop::where([
-        ['is_active', 1],
-        ['update_status', 1]
-    ])->select('id', 'crop_name')->get();
-
-    $units = Unit::all();
-
-    $users = $user->hasRole('super-admin') ? User::all() : collect();
-
-    return view('requests.index', compact('requests', 'crops', 'units', 'users'));
-}
 
     public function return(HttpRequest $request, $id)
     {
@@ -372,5 +401,7 @@ class RequestController extends Controller
             'barcode' => $acc->barcode,
         ]);
     }
+
+    
     
 }

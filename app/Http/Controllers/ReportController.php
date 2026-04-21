@@ -5,6 +5,7 @@ use App\Models\SeedRequest;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Carbon\Carbon;
 use App\Models\Accession;
+use App\Models\LotTransfer;
 
 use Illuminate\Http\Request;
 use  Illuminate\Support\Facades\DB;
@@ -21,7 +22,7 @@ class ReportController extends Controller
     // View Request Report
     public function requestReport(Request $request)
     {
-        $query = SeedRequest::with(['user', 'crop', 'variety', 'unit']);
+        $query = SeedRequest::with(['user', 'crop', 'unit']);
         
 
         if ($request->date_from) {
@@ -42,7 +43,7 @@ class ReportController extends Controller
     {
         $fileName = 'request_report.csv';
 
-        $requests = SeedRequest::with(['user', 'crop', 'variety', 'unit'])->get();
+        $requests = SeedRequest::with(['user', 'crop', 'unit'])->get();
 
         $headers = [
             "Content-type" => "text/csv",
@@ -53,7 +54,6 @@ class ReportController extends Controller
             'Request No',
             'User',
             'Crop',
-            'Variety',
             'Quantity',
             'Unit',
             'Status',
@@ -70,7 +70,6 @@ class ReportController extends Controller
                     $row->request_number,
                     $row->user->name ?? '',
                     $row->crop->name ?? '',
-                    $row->variety->name ?? '',
                     $row->quantity,
                     $row->unit->name ?? '',
                     $row->status,
@@ -194,6 +193,27 @@ class ReportController extends Controller
                 if ($dateFrom) $query->whereDate('updated_at', '>=', $dateFrom);
                 if ($dateTo)   $query->whereDate('updated_at', '<=', $dateTo);
                 return $query->latest()->get();
+
+            case 'change':
+                $query = \App\Models\LotTransfer::with([
+        'lot.accession.crop',
+        'fromStorage',
+        'toStorage',
+        'toSection',
+        'toRack',
+        'toBin',
+        'toContainer',
+        'user'
+    ]);
+                if ($dateFrom) {
+        $query->whereDate('created_at', '>=', $dateFrom);
+    }
+
+    if ($dateTo) {
+        $query->whereDate('created_at', '<=', $dateTo);
+    }
+
+    return $query->latest()->get();
         }
         return collect();
     }
@@ -208,6 +228,7 @@ class ReportController extends Controller
             'return'        => 'Return Transaction',
             'regeneration'  => 'Regeneration Transaction',
             'disposal'      => 'Disposal Transaction',
+            'change'      => 'Lot Inter Change Transaction',
         ];
 
         if (!array_key_exists($type, $titles)) abort(404);

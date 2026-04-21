@@ -111,7 +111,7 @@
                                     </span>
                                 </div>
                                 <div class="">
-                                    <h5 class="card-title mb-2 ms-3">Batch Management</h5>
+                                    <h5 class="card-title mb-2 ms-3">Lot Management</h5>
                                     <div class="d-flex gap-2 ms-3">
                                         <a class="fs-15" href="" title="View Report">
                                             <i class="ri-eye-line text-info"></i>
@@ -282,6 +282,7 @@
                                     ['label' => 'Return Transaction',        'type' => 'return',       'badge' => 'warning'],
                                     ['label' => 'Regeneration Transaction',  'type' => 'regeneration', 'badge' => 'dark'],
                                     ['label' => 'Disposal Transaction',      'type' => 'disposal',     'badge' => 'danger'],
+                                    ['label' => 'Lot Inter Change Transaction',      'type' => 'change',     'badge' => 'danger'],
                                 ];
                             @endphp
                             @foreach($txnReports as $r)

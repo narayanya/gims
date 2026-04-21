@@ -35,6 +35,26 @@
                             <h6 class="mb-0"><i class="ri-map-pin-line me-1"></i>Pick From</h6>
                         </div>
                         <div class="card-body">
+                            <div class="row">
+                                <div class="mb-3 col-md-6">
+                                    <label class="form-label">Crop </label>
+                                    <select id="from_crop" class="form-select">
+                                        <option value="">Select Crop</option>
+                                        @foreach($crops as $c)
+                                            <option value="{{ $c->id }}">{{ $c->crop_name }}-{{ $c->crop_code }} </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="mb-3 col-md-6">
+                                    <label class="form-label">Accession </label>
+                                    <select id="from_accesstion" class="form-select">
+                                        <option value="">Select Accession</option>
+                                        @foreach($accessions as $ac)
+                                            <option value="{{ $ac->id }}">{{ $ac->accession_number }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Storage <span class="text-danger">*</span></label>
@@ -57,7 +77,7 @@
                                         <div class="col-6"><span class="text-muted">Humidity:</span> <span id="from_humidity">—</span></div>
 
                                         <div class="col-6"><span class="text-muted">Capacity:</span> <span id="from_capacity">—</span></div>
-                                        <div class="col-6"><span class="text-muted">Available:</span> <span id="from_available">—</span></div>
+                                        <div class="col-6"><span class="text-muted">Available Capacity:</span> <span id="from_available">—</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -93,7 +113,7 @@
 
                 {{-- ── Arrow ── --}}
                 <div class="col-md-1 d-flex align-items-center justify-content-center">
-                    <div class="bg-light rounded-circle p-3 shadow-sm">
+                    <div class="bg-light rounded-circle shadow-sm" style="padding: 11px 18px;">
                         <i class="ri-arrow-right-line fs-4 text-primary"></i>
                     </div>
                 </div>
@@ -127,7 +147,7 @@
                                         <div class="col-6"><span class="text-muted">Humidity:</span> <span id="to_humidity">—</span></div>
 
                                         <div class="col-6"><span class="text-muted">Capacity:</span> <span id="to_capacity">—</span></div>
-                                        <div class="col-6"><span class="text-muted">Available:</span> <span id="to_available">—</span></div>
+                                        <div class="col-6"><span class="text-muted">Available Capacity:</span> <span id="to_available">—</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -169,6 +189,10 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                <div class="col-md-12">
+                                    <label class="form-label">Other Remark</label>
+                                    <textarea name="remarks" id="remarks" class="form-control"></textarea>
+                                </div>
                             </div>
 
                         </div>
@@ -194,14 +218,19 @@
             <thead>
                 <tr>
                     <th>Date</th>
+                    <th>Crop</th>
+                    <th>Accession No.</th>
                     <th>Lot</th>
-                    <th>From</th>
-                    <th>To</th>
+                    <th>Storage From</th>
+                    <th>Storage To</th>
+                    <th>Available Capacity</th>
+                    <th>Trf Qty</th>
+                    <th>Balance Capacity</th>
                     <th>Section</th>
                     <th>Rack</th>
                     <th>Bin</th>
                     <th>Container</th>
-                    <th>Qty</th>
+                    
                     <th>User</th>
                 </tr>
             </thead>
@@ -209,14 +238,21 @@
                 @forelse($transfers as $t)
                     <tr>
                         <td>{{ $t->created_at->format('d-m-Y H:i') }}</td>
+                        <td>{{ $t->lot->crop->crop_name ?? '-' }}</td>
+                        <td>{{ $t->lot->accession->accession_number ?? '-' }}</td>
                         <td>{{ $t->lot->lot_number ?? '-' }}</td>
                         <td>{{ $t->fromStorage->name ?? '-' }}</td>
+                        
+
                         <td>{{ $t->toStorage->name ?? '-' }}</td>
+                        <td>{{ $t->available_capacity }}</td>
+                        <td>{{ $t->quantity }}</td>
+                        <td>{{ $t->balance_capacity }}</td>
                         <td>{{ $t->toSection->name ?? '-' }}</td>
                         <td>{{ $t->toRack->name ?? '-' }}</td>
                         <td>{{ $t->toBin->name ?? '-' }}</td>
                         <td>{{ $t->toContainer->name ?? '-' }}</td>
-                        <td>{{ $t->quantity }}</td>
+                        
                         <td>{{ $t->user->name ?? '-' }}</td>
                     </tr>
                 @empty
@@ -235,6 +271,54 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    document.getElementById('from_crop').addEventListener('change', function () {
+        let cropId = this.value;
+        let accessionSelect = document.getElementById('from_accesstion');
+
+        accessionSelect.innerHTML = '<option value="">Loading...</option>';
+
+        if (!cropId) {
+            accessionSelect.innerHTML = '<option value="">Select Accession</option>';
+            return;
+        }
+
+        fetch(`/get-accessions/${cropId}`)
+            .then(res => res.json())
+            .then(data => {
+                accessionSelect.innerHTML = '<option value="">Select Accession</option>';
+
+                data.forEach(ac => {
+                    accessionSelect.innerHTML += `<option value="${ac.id}">
+                        ${ac.accession_number}
+                    </option>`;
+                });
+            });
+    });
+
+    document.getElementById('from_accesstion').addEventListener('change', function () {
+        let accessionId = this.value;
+        let storageSelect = document.getElementById('from_storage');
+
+        storageSelect.innerHTML = '<option value="">Loading...</option>';
+
+        if (!accessionId) {
+            storageSelect.innerHTML = '<option value="">Select Storage</option>';
+            return;
+        }
+
+        fetch(`/get-accession-storages/${accessionId}`)
+            .then(res => res.json())
+            .then(data => {
+                storageSelect.innerHTML = '<option value="">Select Storage</option>';
+
+                data.forEach(s => {
+                    storageSelect.innerHTML += `<option value="${s.id}">
+                        ${s.name}
+                    </option>`;
+                });
+            });
+    });
 
     // ── FROM: Storage → load lots ─────────────────────────────────────────
     document.getElementById('from_storage').addEventListener('change', function () {
@@ -261,8 +345,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('from_humidity').textContent =
                     d.storage.humidity ? `${d.storage.humidity} ` : '—';
 
-                document.getElementById('from_capacity').textContent  = d.storage.capacity ?? '—';
-                document.getElementById('from_available').textContent = d.available ?? '—';
+                document.getElementById('from_capacity').textContent  = d.storage.capacity ? `${d.storage.capacity} ${d.unit||''}` : '—';
+                document.getElementById('from_available').textContent = d.available ? `${d.available} ${d.unit||''}` : '—';
                 infoBox.classList.remove('d-none');
 
                 lotSel.innerHTML = '<option value="">Select Lot</option>';
@@ -279,9 +363,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         data-qty_show="${qtyShow}"
                         data-unit="${unit}"
                         data-section="${lot.section?.name || '—'}"
-data-rack="${lot.rack?.name || '—'}"
-data-bin="${lot.bin?.name || '—'}"
-data-container="${lot.container?.name || '—'}">
+                        data-rack="${lot.rack?.name || '—'}"
+                        data-bin="${lot.bin?.name || '—'}"
+                        data-container="${lot.container?.name || '—'}">
                         ${lot.lot_number} (Avail: ${qtyShow} ${unit})
                     </option>`;
                 });
@@ -312,18 +396,22 @@ data-container="${lot.container?.name || '—'}">
         const box = document.getElementById('to_storageInfo');
         if (!id) { box.classList.add('d-none'); return; }
 
-        fetch(`/lot-management/storage/${id}`)
+        fetch(`/get-storage-lots/${id}`)
             .then(r => r.json())
             .then(d => {
-                document.getElementById('to_warehouse').textContent  = d.warehouse || '—';
-                document.getElementById('to_type').textContent       = d.storage_type || '—';
-                document.getElementById('to_condition').textContent  = d.storage_condition || '—';
-                document.getElementById('to_time').textContent       = d.storage_time || '—';
-                document.getElementById('to_temp').textContent       = d.temperature || '—';
-                document.getElementById('to_humidity').textContent       = d.humidity || '—';
 
+                document.getElementById('to_warehouse').textContent  = d.storage.warehouse || '—';
+                document.getElementById('to_type').textContent       = d.storage.storage_type || '—';
+                document.getElementById('to_condition').textContent  = d.storage.storage_condition || '—';
+                document.getElementById('to_time').textContent       = d.storage.storage_time || '—';
 
-                document.getElementById('to_capacity').textContent  = d.capacity  ? `${d.capacity} ${d.unit||''}` : '—';
+                document.getElementById('to_temp').textContent =
+                    d.storage.temperature ? `${d.storage.temperature} ` : '—';
+
+                document.getElementById('to_humidity').textContent =
+                    d.storage.humidity ? `${d.storage.humidity} ` : '—';
+
+                document.getElementById('to_capacity').textContent  = d.storage.capacity ? `${d.storage.capacity} ${d.unit||''}` : '—';
                 document.getElementById('to_available').textContent = d.available ? `${d.available} ${d.unit||''}` : '—';
                 box.classList.remove('d-none');
             });

@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class LotTransfer extends Model
 {
     protected $fillable = [
-        'lot_id',
+        'lot_id', 'crop_id', 'accession_id',
         'from_storage_id', 'to_storage_id',
         'from_section_id', 'to_section_id',
         'from_rack_id',    'to_rack_id',
         'from_bin_id',     'to_bin_id',
         'from_container_id','to_container_id',
+        'available_capacity', 'balance_capacity',
         'quantity', 'remarks', 'transferred_by',
     ];
 
@@ -20,7 +21,15 @@ class LotTransfer extends Model
     public function fromStorage() { return $this->belongsTo(Storage::class, 'from_storage_id'); }
     public function toStorage()   { return $this->belongsTo(Storage::class, 'to_storage_id'); }
 
+public function crop()
+{
+    return $this->belongsTo(\App\Models\Crop::class, 'crop_id');
+}
 
+public function accession()
+{
+    return $this->belongsTo(\App\Models\Accession::class, 'accession_id');
+}
 // ✅ THIS WAS MISSING
 public function fromSection()
 {
