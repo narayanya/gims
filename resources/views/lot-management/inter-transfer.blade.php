@@ -36,6 +36,14 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Search Lot Number </label>
+                                    <input type="text" id="lot_search" class="form-control" placeholder="Search lot number" />
+                                    <small class="text-muted">e.g.: 1564-2017-2018/2-MB-1483-02</small>
+                                </div>
+                                <div class="col-md-12 mb-3 text-center">
+                                    or
+                                </div>
                                 <div class="mb-3 col-md-6">
                                     <label class="form-label">Crop </label>
                                     <select id="from_crop" class="form-select">
@@ -209,8 +217,27 @@
     </div>
     <div class="col-md-12">
         <div class="card mt-4">
-    <div class="card-header">
+    <div class="card-header d-flex justify-content-between">
         <h5 class="mb-0">Last 10 Transfers</h5>
+        <div class="d-flex gap-2 align-items-center">
+
+            {{-- FILTER FORM --}}
+            <form method="GET" action="{{ route('lot-transfer.index') }}" class="d-flex gap-2">
+                <input type="date" name="date_from" class="form-control form-control-sm"
+                    value="{{ request('date_from') }}" style="width:140px">
+
+                <input type="date" name="date_to" class="form-control form-control-sm"
+                    value="{{ request('date_to') }}" style="width:140px">
+
+                <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+            </form>
+
+            {{-- EXPORT --}}
+            <a href="{{ route('lot-transfer.export', request()->all()) }}" class="btn btn-sm btn-success">
+                <i class="ri-file-download-line me-1"></i> Export Report
+            </a>
+
+        </div>
     </div>
 
     <div class="card-body table-responsive">
@@ -222,15 +249,17 @@
                     <th>Accession No.</th>
                     <th>Lot</th>
                     <th>Storage From</th>
+                    <th>Avlb. Capacity</th>
+                    <th>Pick Qty.</th>
+                    <th>Bal. Capacity</th>
                     <th>Storage To</th>
-                    <th>Available Capacity</th>
-                    <th>Trf Qty</th>
-                    <th>Balance Capacity</th>
+                    <th>Avlb. Capacity</th>
+                    <th>Tnf Qty.</th>
+                    <th>Bal. Capacity</th>
                     <th>Section</th>
                     <th>Rack</th>
                     <th>Bin</th>
                     <th>Container</th>
-                    
                     <th>User</th>
                 </tr>
             </thead>
@@ -242,8 +271,9 @@
                         <td>{{ $t->lot->accession->accession_number ?? '-' }}</td>
                         <td>{{ $t->lot->lot_number ?? '-' }}</td>
                         <td>{{ $t->fromStorage->name ?? '-' }}</td>
-                        
-
+                        <td>{{ $t->f_available_capacity }}</td>
+                        <td>{{ $t->f_quantity }}</td>
+                        <td>{{ $t->f_balance_capacity }}</td>
                         <td>{{ $t->toStorage->name ?? '-' }}</td>
                         <td>{{ $t->available_capacity }}</td>
                         <td>{{ $t->quantity }}</td>
@@ -434,6 +464,68 @@ document.addEventListener('DOMContentLoaded', function () {
             o.hidden = rid && o.value && o.dataset.rack != rid;
         });
         document.getElementById('to_bin').value = '';
+    });
+
+    document.getElementById('lot_search').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+
+            let keyword = this.value;
+
+            if (!keyword) return;
+
+            fetch(`/get-lot-by-number?lot_number=${keyword}`)
+                .then(res => res.json())
+                .then(data => {
+
+                    if (!data.status) {
+                        alert('Lot not found');
+                        return;
+                    }
+
+                    let lot = data.lot;
+
+                    // ✅ AUTO SELECT STORAGE
+                    document.getElementById('from_storage').value = lot.storage_id;
+                    document.getElementById('from_storage').dispatchEvent(new Event('change'));
+
+                    // ✅ WAIT STORAGE LOAD THEN SET LOT
+                    setTimeout(() => {
+                        let lotSelect = document.getElementById('from_lot');
+
+                        // add option if not exists
+                        let option = new Option(lot.lot_number, lot.id, true, true);
+                        lotSelect.append(option);
+
+                        lotSelect.value = lot.id;
+                        lotSelect.dispatchEvent(new Event('change'));
+                    }, 500);
+
+                });
+        }
+    });
+
+    document.getElementById('from_lot').addEventListener('change', function () {
+
+        fetch(`/lot-details/${this.value}`)
+            .then(res => res.json())
+            .then(data => {
+
+                document.getElementById('from_lotInfo').classList.remove('d-none');
+
+                document.getElementById('fl_lot_number').innerText = data.lot_number;
+                document.getElementById('fl_crop').innerText = data.crop;
+                document.getElementById('fl_accession').innerText = data.accession;
+                document.getElementById('fl_qty').innerText = data.quantity;
+                document.getElementById('fl_unit').innerText = data.unit;
+
+                document.getElementById('fl_section').innerText = data.section;
+                document.getElementById('fl_rack').innerText = data.rack;
+                document.getElementById('fl_bin').innerText = data.bin;
+                document.getElementById('fl_container').innerText = data.container;
+
+            });
+
     });
 
 });

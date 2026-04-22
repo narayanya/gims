@@ -161,7 +161,7 @@
             </div>
             <div class="card-body p-0">
                 <table class="table table-hover mb-0">
-                    <thead class="table-light"><tr><th>Name</th><th>Code</th><th>Type</th><th>Capacity</th><th>Status</th><th width="100">Actions</th></tr></thead>
+                    <thead class="table-light"><tr><th>Name</th><th>Code</th><th>Type</th><th>Capacity</th><th>Unit</th><th>Status</th><th width="100">Actions</th></tr></thead>
                     <tbody>
                         @forelse($containers as $row)
                         <tr>
@@ -169,12 +169,13 @@
                             <td>{!! $row->code ? '<span class="badge bg-info">'.$row->code.'</span>' : '—' !!}</td>
                             <td>{{ $row->container_type ?? '—' }}</td>
                             <td>{{ $row->capacity ?? '—' }}</td>
+                            <td>{{ $row->unit->name ?? '—' }}</td>
                             <td><span class="badge {{ $row->status ? 'bg-success' : 'bg-danger' }}">{{ $row->status ? 'Active' : 'Inactive' }}</span></td>
                             <td>
                                 <button class="btn btn-sm btn-outline-warning editBtn"
                                     data-type="container" data-id="{{ $row->id }}" data-name="{{ $row->name }}"
                                     data-code="{{ $row->code }}" data-container_type="{{ $row->container_type }}"
-                                    data-capacity="{{ $row->capacity }}" data-description="{{ $row->description }}" data-status="{{ $row->status }}">
+                                    data-capacity="{{ $row->capacity }}" data-description="{{ $row->description }}" data-status="{{ $row->status }}" data-unit_id="{{ $row->unit_id }}">
                                     <i class="ri-edit-line"></i>
                                 </button>
                                 <form action="{{ route('containers.destroy',$row->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Deactivate?')">
@@ -274,12 +275,41 @@ document.addEventListener('DOMContentLoaded', function () {
         return `<div class="mb-3"><label class="form-label">Rack</label><select class="form-select" name="rack_id">${opts}</select></div>`;
     }
 
-    function containerTypeField(val='') {
+    function containerTypeField(d = {}) {
         const types = ['Packet','Pouch','Box','Jar','Envelope','Bag'];
+
         let opts = '<option value="">— Select —</option>';
-        types.forEach(t => opts += `<option value="${t}" ${t==val?'selected':''}>${t}</option>`);
-        return `<div class="mb-3"><label class="form-label">Container Type</label><select class="form-select" name="container_type">${opts}</select></div>
-                <div class="mb-3"><label class="form-label">Capacity</label><input type="number" class="form-control" name="capacity" step="0.01" value="${val.capacity||''}"></div>`;
+
+        types.forEach(t => {
+            opts += `<option value="${t}" ${t == d.container_type ? 'selected' : ''}>${t}</option>`;
+        });
+
+        return `
+        <div class="mb-3">
+            <label class="form-label">Container Type</label>
+            <select class="form-select" name="container_type">
+                ${opts}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Capacity</label>
+            <div class="row">
+                <div class="col-md-8">
+                    <input type="number" class="form-control" name="capacity" step="0.01" value="${d.capacity || ''}">
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select" name="unit_id">
+                        <option value="">Unit</option>
+                        ${units.map(u => `
+                            <option value="${u.id}" ${u.id == d.unitId ? 'selected' : ''}>
+                                ${u.name} (${u.code})
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+            </div>
+        </div>`;
     }
 
     function openModal(type, label, action, method, d = {}) {

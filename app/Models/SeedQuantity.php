@@ -13,6 +13,7 @@ class SeedQuantity extends Model
         'lot_id',
         'reference_number',
         'number_of_seeds',
+        'number_of_bags',
         'per_seed_weight',
         'quantity',
         'capacity_unit_id',

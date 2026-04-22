@@ -8,12 +8,13 @@ use App\Models\Storage;
 use App\Models\Crop;
 use App\Models\SeedQuantity;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LotTransferController extends Controller
 {
-    public function index()
+   public function index(Request $request)
 {
-    $transfers = \App\Models\LotTransfer::with([
+     $query = \App\Models\LotTransfer::with([
         'lot',
         'lot.crop',
         'lot.accession',
@@ -24,11 +25,19 @@ class LotTransferController extends Controller
         'toBin',
         'toContainer',
         'user'
-    ])
-    ->latest()
-    ->take(10)
-    ->get();
+    ]);
 
+    // ✅ DATE FILTER
+    if ($request->date_from) {
+        $query->whereDate('created_at', '>=', $request->date_from);
+    }
+
+    if ($request->date_to) {
+        $query->whereDate('created_at', '<=', $request->date_to);
+    }
+
+    $transfers = $query->latest()->paginate(10);
+ 
     return view('lot-management.inter-transfer', [
         'crops' => Crop::where('update_status', 1)->orderBy('crop_name')->get(['id','crop_code','crop_name']),
         'accessions' => Accession::where('status', 1)->orderBy('accession_number')->get(['id','crop_id','accession_number']),
@@ -44,7 +53,8 @@ class LotTransferController extends Controller
     ]);
 }
 
-    public function transfer(Request $request)
+
+public function transfer(Request $request)
     {
         $request->validate([
             'from_lot_id'   => 'required|exists:lots,id',
@@ -53,86 +63,115 @@ class LotTransferController extends Controller
             'rack_id'       => 'nullable|exists:racks,id',
             'bin_id'        => 'nullable|exists:bins,id',
             'container_id'  => 'nullable|exists:containers,id',
-             'remarks' => 'nullable|string|max:255',
+            'remarks'       => 'nullable|string|max:255',
         ]);
 
         $lot = Lot::with('seedQuantities')->findOrFail($request->from_lot_id);
-        $fromStorage = Storage::find($lot->storage_id);
+        $fromStorage = Storage::findOrFail($lot->storage_id);
         $toStorage   = Storage::findOrFail($request->to_storage_id);
-        $storageId = $request->to_storage_id;
 
-        // ❌ Same storage check
-        if ($lot->storage_id == $request->to_storage_id) {
+        // ❌ Prevent same storage
+        if ($fromStorage->id == $toStorage->id) {
             return back()->withInput()->withErrors([
                 'error' => 'Source and destination storage cannot be the same.'
             ]);
         }
 
-        // ✅ Get correct quantity from seed_quantities
+        // ✅ Lot Quantity
         $lotQty = (float) $lot->seedQuantities->sum('quantity');
 
-        // 🔽 UPDATE STORAGE USAGE
+        // ✅ REAL USAGE (same as UI)
+        $fromUsed = \App\Models\SeedQuantity::whereHas('lot', function ($q) use ($fromStorage) {
+            $q->where('storage_id', $fromStorage->id);
+        })->sum('quantity');
 
-        if ($fromStorage) {
-            $fromStorage->decrement('current_usage', $lotQty);
-        }
-
-        $toStorage->increment('current_usage', $lotQty);
-
-        // ✅ Correct destination usage calculation
         $toUsed = \App\Models\SeedQuantity::whereHas('lot', function ($q) use ($toStorage) {
             $q->where('storage_id', $toStorage->id);
         })->sum('quantity');
 
-        $currentUsed = \App\Models\SeedQuantity::whereHas('lot', function ($q) use ($storageId) {
-            $q->where('storage_id', $storageId);
-        })->sum('quantity');
+        // ✅ BEFORE TRANSFER (MATCHES UI 🔥)
+        $favailableCapacity = $fromStorage->capacity - $fromUsed;
+        $availableCapacity  = $toStorage->capacity - $toUsed;
 
-        $currentAvailable = $toStorage->capacity - $currentUsed;
-
-        $toAvailable = (float) $toStorage->capacity - $toUsed;
-
-        // ❌ Capacity check
-        if ($toStorage->capacity && $lotQty > $toAvailable) {
+        // ❌ Capacity check (TO)
+        if ($lotQty > $availableCapacity) {
             return back()->withInput()->withErrors([
-                'error' => "Not enough space in destination. Available: {$toAvailable}"
+                'error' => "Not enough space in destination. Available: {$availableCapacity}"
             ]);
         }
-        $availableCapacity = $currentAvailable;
-        $balanceCapacity   = $toAvailable - $lotQty;
 
-        
+        // ❌ Safety check (FROM)
+        if ($lotQty > $fromUsed) {
+            return back()->withInput()->withErrors([
+                'error' => "Invalid quantity in source storage."
+            ]);
+        }
 
-        // ✅ Log transfer
-        \App\Models\LotTransfer::create([
-            'lot_id'            => $lot->id,
-            'crop_id'            => $lot->crop_id,
-            'accession_id'       => $lot->accession_id,
-            'from_storage_id'   => $lot->storage_id,
-            'to_storage_id'     => $request->to_storage_id,
-            'from_section_id'   => $lot->section_id,
-            'to_section_id'     => $request->section_id,
-            'from_rack_id'      => $lot->rack_id,
-            'to_rack_id'        => $request->rack_id,
-            'from_bin_id'       => $lot->bin_id,
-            'to_bin_id'         => $request->bin_id,
-            'from_container_id' => $lot->container_id,
-            'to_container_id'   => $request->container_id,
-            'available_capacity' => $availableCapacity,
-            'balance_capacity'   => $balanceCapacity,
-            'quantity'          => $lotQty,
-            'remarks'           => $request->remarks ?? null,
-            'transferred_by'    => auth()->id(),
-        ]);
+        // ✅ AFTER TRANSFER
+        $fbalanceCapacity = $favailableCapacity + $lotQty; // FROM → space increases
+        $balanceCapacity  = $availableCapacity - $lotQty;  // TO → space decreases
 
-        // ✅ Update lot location
-        $lot->update([
-            'storage_id'   => $request->to_storage_id,
-            'section_id'   => $request->section_id,
-            'rack_id'      => $request->rack_id,
-            'bin_id'       => $request->bin_id,
-            'container_id' => $request->container_id,
-        ]);
+        DB::beginTransaction();
+
+        try {
+
+            // ✅ LOG TRANSFER (before updating lot)
+            \App\Models\LotTransfer::create([
+                'lot_id'              => $lot->id,
+                'crop_id'             => $lot->crop_id,
+                'accession_id'        => $lot->accession_id,
+
+                'from_storage_id'     => $fromStorage->id,
+                'to_storage_id'       => $toStorage->id,
+
+                'from_section_id'     => $lot->section_id,
+                'to_section_id'       => $request->section_id,
+
+                'from_rack_id'        => $lot->rack_id,
+                'to_rack_id'          => $request->rack_id,
+
+                'from_bin_id'         => $lot->bin_id,
+                'to_bin_id'           => $request->bin_id,
+
+                'from_container_id'   => $lot->container_id,
+                'to_container_id'     => $request->container_id,
+
+                // ✅ FROM
+                'f_available_capacity' => $favailableCapacity,
+                'f_quantity'           => $lotQty,
+                'f_balance_capacity'   => $fbalanceCapacity,
+
+                // ✅ TO
+                'available_capacity'   => $availableCapacity,
+                'quantity'             => $lotQty,
+                'balance_capacity'     => $balanceCapacity,
+
+                'remarks'              => $request->remarks,
+                'transferred_by'       => auth()->id(),
+            ]);
+
+            // 2. Update storage usage ✅
+            $fromStorage->decrement('current_usage', $lotQty);
+            $toStorage->increment('current_usage', $lotQty);
+
+            // ✅ MOVE LOT (this updates storage logically)
+            $lot->update([
+                'storage_id'   => $toStorage->id,
+                'section_id'   => $request->section_id,
+                'rack_id'      => $request->rack_id,
+                'bin_id'       => $request->bin_id,
+                'container_id' => $request->container_id,
+            ]);
+
+            DB::commit();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return back()->withErrors([
+                'error' => 'Transfer failed: ' . $e->getMessage()
+            ]);
+        }
 
         return redirect()->route('lot-transfer.index')
             ->with('success', "Lot {$lot->lot_number} transferred successfully.");
@@ -207,5 +246,55 @@ class LotTransferController extends Controller
         ->get(['id', 'name']);
 
         return response()->json($storages);
+    }
+
+    public function export(Request $request)
+    {
+        $query = \App\Models\LotTransfer::with(['fromStorage', 'toStorage', 'lot']);
+
+        // same filter apply
+        if ($request->date_from) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->date_to) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $data = $query->get();
+
+        $filename = "lot_transfers_" . now()->format('Ymd') . ".csv";
+
+        $headers = [
+            "Content-Type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=$filename",
+        ];
+
+        $callback = function () use ($data) {
+            $file = fopen('php://output', 'w');
+
+            // header
+            fputcsv($file, [
+                'Lot No',
+                'From Storage',
+                'To Storage',
+                'Quantity',
+                'Date'
+            ]);
+
+            foreach ($data as $row) {
+                fputcsv($file, [
+                    $row->lot->lot_number ?? '',
+                    $row->fromStorage->name ?? '',
+                    $row->toStorage->name ?? '',
+                    $row->quantity,
+                    $row->created_at
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

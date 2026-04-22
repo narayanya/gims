@@ -225,7 +225,7 @@
                                     <div class="collapse menu-dropdown 
                                         {{ request()->is(
                                             'lot-management',
-                                            'lot-types',
+                                            'lot-transfer',
                                             'lots*'
                                         ) ? 'show' : '' }}"
                                         
@@ -239,6 +239,11 @@
                                             <li class="nav-item">
                                                 <a class="nav-link menu-link {{ request()->routeIs('lot-transfer.*') ? 'active' : '' }}" href="{{ route('lot-transfer.index') }}" >
                                                     Lot Inter-Transfer
+                                                </a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link menu-link {{ request()->routeIs('warehouse-transfer.*') ? 'active' : '' }}" href="{{ route('warehouse-transfer.index') }}" >
+                                                    Warehouse Inter-Transfer
                                                 </a>
                                             </li>
                                             <li class="nav-item d-none">

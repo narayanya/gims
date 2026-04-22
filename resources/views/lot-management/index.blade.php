@@ -214,6 +214,7 @@
                             <div class="col-md-4"><span class="text-muted d-block">Unit</span><strong id="vl_capacity_unit_id"></strong></div>
                             <div class="col-md-4"><span class="text-muted d-block">Quantity Last Updated</span><strong id="vl_qty_updated"></strong></div>
                             <div class="col-md-4"><span class="text-muted d-block">Number of Seeds</span><strong id="vl_number_of_seeds"></strong></div>
+                            <div class="col-md-4"><span class="text-muted d-block">Number of Seeds</span><strong id="vl_number_of_bags"></strong></div>
                             <div class="col-md-4"><span class="text-muted d-block">Per Seed Weight</span><strong id="vl_per_seed_weight"></strong>
 
                         </div>
@@ -331,6 +332,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(q => {
                     set('vl_quantity', q.quantity ? q.quantity + ' ' + (q.unit || '') : null);
                     set('vl_number_of_seeds', q.number_of_seeds);
+                    set('vl_number_of_bags', q.number_of_bags);
                     set('vl_per_seed_weight', q.per_seed_weight ? q.per_seed_weight + ' g' : null);
                     set('vl_capacity_unit_id', q.unit);
                     set('vl_quantity_show', q.quantity_show ? q.quantity_show + ' ' + (q.unit || '') : null);

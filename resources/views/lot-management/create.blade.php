@@ -231,6 +231,7 @@
                                     'unit_id' => old('unit_id.' . $i),
                                     'reference_number' => old('reference_number.' . $i),
                                     'number_of_seeds' => old('number_of_seeds.' . $i),
+                                    'number_of_bags' => old('number_of_bags.' . $i),
                                     'per_seed_weight' => old('per_seed_weight.' . $i),
                                 ];
                             });
@@ -258,6 +259,7 @@
                                             <tr>
                                                 <th>Reference No.</th>
                                                 <th>Number of Seeds</th>
+                                                <th>Number of Bag</th>
                                                 <th>Per Seed Weight (avg)</th>
                                                 <th>Quantity </th>
                                                 <th>Unit</th>
@@ -279,6 +281,11 @@
     <td>
         <input type="number" name="number_of_seeds[]" class="form-control" placeholder="e.g. 100"
             value="{{ $row->number_of_seeds ?? '' }}">
+    </td>
+
+    <td>
+        <input type="number" name="number_of_bags[]" class="form-control" placeholder="e.g. 100"
+            value="{{ $row->number_of_bags ?? '' }}">
     </td>
 
     <td>

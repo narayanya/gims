@@ -19,6 +19,9 @@ use App\Http\Controllers\SeedReturnController;
 use App\Http\Controllers\SeedQuantityController;
 use App\Http\Controllers\StorageController;
 use App\Http\Controllers\LotController;
+use App\Http\Controllers\LotTransferController;
+use App\Http\Controllers\WarehouseTransferController;
+
 use App\Http\Controllers\CropRequestController;
 use App\Http\Controllers\EmployeeController;
 use Illuminate\Support\Facades\DB;
@@ -102,6 +105,9 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::get('/lot-management/{id}/quality', [LotController::class, 'getQualityDetails']);
     Route::get('/inter-transfer-location', [LotController::class, 'interTransfer'])
     ->name('inter.transfer');
+    Route::get('/get-lot-by-number', [LotController::class, 'getLotByNumber']);
+    Route::get('/lot-transfer-export', [LotTransferController::class, 'export'])
+    ->name('lot-transfer.export');
     
 
     // Crop Master
@@ -146,6 +152,12 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::get('/get-storage-hierarchy/{id}', [App\Http\Controllers\LotTransferController::class, 'getStorageHierarchy'])->name('lot-transfer.hierarchy');
     Route::get('/get-accessions/{cropId}', [App\Http\Controllers\LotTransferController::class, 'getAccessions']);
     Route::get('/get-accession-storages/{accessionId}', [App\Http\Controllers\LotTransferController::class, 'getAccessionStorages']);
+
+    // Lot Inter-Transfer
+    Route::get('/warehouse-transfer', [App\Http\Controllers\WarehouseTransferController::class, 'index'])->name('warehouse-transfer.index');
+    Route::post('/warehouse-transfer', [WarehouseTransferController::class, 'store'])
+    ->name('warehouse-transfer.store');
+    Route::get('/get-lots-by-warehouse', [WarehouseTransferController::class, 'getLotsByWarehouse']);
 
     // Lot Master
     Route::resource('lots', App\Http\Controllers\LotMasterController::class)->except(['show', 'create', 'edit']);

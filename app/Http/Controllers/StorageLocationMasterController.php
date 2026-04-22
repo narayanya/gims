@@ -87,14 +87,14 @@ class StorageLocationMasterController extends Controller
     // ── Container ────────────────────────────────────────────────────────
     public function containerStore(Request $request)
     {
-        $request->validate(['name'=>'required|string|max:255|unique:containers,name','code'=>'nullable|string|max:50|unique:containers,code']);
-        Container::create($request->only('name','code','container_type','capacity','description','status'));
+        $request->validate(['name'=>'required|string|max:255|unique:containers,name','code'=>'nullable|string|max:50|unique:containers,code', 'unit_id' => 'nullable|exists:units,id',]);
+        Container::create($request->only('name','code','container_type','capacity', 'unit_id','description','status'));
         return back()->with('success','Container added.');
     }
     public function containerUpdate(Request $request, Container $container)
     {
         $request->validate(['name'=>'required|string|max:255|unique:containers,name,'.$container->id,'code'=>'nullable|string|max:50|unique:containers,code,'.$container->id]);
-        $container->update($request->only('name','code','container_type','capacity','description','status'));
+        $container->update($request->only('name','code','container_type','capacity', 'unit_id', 'description','status'));
         return back()->with('success','Container updated.');
     }
     public function containerDestroy(Container $container)

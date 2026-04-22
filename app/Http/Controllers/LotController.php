@@ -30,7 +30,7 @@ class LotController extends Controller
             'bins'       => \App\Models\Bin::where('status',1)->orderBy('name')->get(),
             'containers' => \App\Models\Container::where('status',1)->orderBy('name')->get(),
             'users'      => User::orderBy('name')->get(['id','name']),
-            'seedQuantities' => SeedQuantity::orderBy('id')->get(['id','number_of_seeds','per_seed_weight','quantity','capacity_unit_id','quantity_show', 'reference_number','min_quantity','in_seed','out_seed','return_seed']),
+            'seedQuantities' => SeedQuantity::orderBy('id')->get(['id','number_of_seeds', 'number_of_bags','per_seed_weight','quantity','capacity_unit_id','quantity_show', 'reference_number','min_quantity','in_seed','out_seed','return_seed']),
 
         ];
     }
@@ -85,6 +85,9 @@ class LotController extends Controller
 
             'number_of_seeds'    => 'nullable|array',
             'number_of_seeds.*'  => 'nullable|numeric|min:0',
+
+            'number_of_bags'    => 'nullable|array',
+            'number_of_bags.*'  => 'nullable|numeric|min:0',
 
             'per_seed_weight'    => 'nullable|array',
             'per_seed_weight.*'  => 'nullable|numeric|min:0',
@@ -330,6 +333,7 @@ class LotController extends Controller
             'accession_id'     => $accessionId,
             'reference_number' => $request->reference_number[$i] ?? null,
             'number_of_seeds'  => $request->number_of_seeds[$i] ?? null,
+            'number_of_bags'  => $request->number_of_bags[$i] ?? null,
             'per_seed_weight'  => $request->per_seed_weight[$i] ?? null,
             'quantity'         => $qty,
             'capacity_unit_id' => $request->unit_id[$i] ?? null,
@@ -417,6 +421,7 @@ class LotController extends Controller
             'quantity'         => $q->quantity,
             'quantity_show'    => $q->quantity_show,
             'number_of_seeds'  => $q->number_of_seeds,
+            'number_of_bags'  => $q->number_of_bags,
             'per_seed_weight'  => $q->per_seed_weight,
             'capacity_unit_id' => $q->capacity_unit_id,
             'unit' => $q->unit 
@@ -471,54 +476,43 @@ class LotController extends Controller
 
     }
 
-
-
-/*public function processInterTransfer(Request $request)
+    public function getLotByNumber(Request $request)
     {
-        $request->validate([
-            'lot_id'         => 'required|exists:lots,id',
-            'to_storage_id'  => 'required|exists:storages,id',
-            'to_section_id'  => 'nullable|exists:sections,id',
-            'to_rack_id'     => 'nullable|exists:racks,id',
-            'remarks'        => 'nullable|string|max:500',
-        ]);
+        $lot = \App\Models\Lot::with([
+            'crop',
+            'accession',
+            'storage',
+            'section',
+            'rack',
+            'bin',
+            'container',
+            'seedQuantities.unit'
+        ])
+        ->where('lot_number', $request->lot_number)
+        ->first();
 
-        $lot = Lot::findOrFail($request->lot_id);
-        
-        // 1. Check Capacity at Destination
-        $destinationStorage = Storage::findOrFail($request->to_storage_id);
-        $used = Lot::where('storage_id', $destinationStorage->id)->sum('quantity');
-        $available = (float)$destinationStorage->capacity - $used;
-
-        if ($lot->quantity > $available) {
-            return back()->withErrors(['error' => "Destination storage is full! Available: $available"]);
+        if (!$lot) {
+            return response()->json(['status' => false]);
         }
 
-        DB::transaction(function () use ($request, $lot) {
-            // 2. Create History Record
-            \App\Models\LotTransfer::create([
-                'lot_id'          => $lot->id,
-                'from_storage_id' => $lot->storage_id,
-                'from_section_id' => $lot->section_id,
-                'from_rack_id'    => $lot->rack_id,
-                'to_storage_id'   => $request->to_storage_id,
-                'to_section_id'   => $request->to_section_id,
-                'to_rack_id'      => $request->to_rack_id,
-                'quantity'        => $lot->quantity,
-                'remarks'         => $request->remarks,
-                'transferred_by'  => auth()->id(),
-            ]);
+        $qty = $lot->seedQuantities->sum('quantity');
 
-            // 3. Update the Lot Location
-            $lot->update([
-                'storage_id' => $request->to_storage_id,
-                'section_id' => $request->to_section_id,
-                'rack_id'    => $request->to_rack_id,
-                // Add bin/container updates here if needed
-            ]);
-        });
-
-        return redirect()->route('lot-management')->with('success', 'Lot transferred and history logged.');
-    }*/
+        return response()->json([
+            'status' => true,
+            'lot' => [
+                'id' => $lot->id,
+                'lot_number' => $lot->lot_number,
+                'storage_id' => $lot->storage_id,
+                'crop' => $lot->crop->crop_name ?? '',
+                'accession' => $lot->accession->accession_number ?? '',
+                'quantity' => $qty,
+                'unit' => $lot->seedQuantities->first()->unit->name ?? '',
+                'section' => $lot->section->name ?? '',
+                'rack' => $lot->rack->name ?? '',
+                'bin' => $lot->bin->name ?? '',
+                'container' => $lot->container->name ?? '',
+            ]
+        ]);
+    }
 
 }
