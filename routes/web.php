@@ -158,6 +158,10 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::post('/warehouse-transfer', [WarehouseTransferController::class, 'store'])
     ->name('warehouse-transfer.store');
     Route::get('/get-lots-by-warehouse', [WarehouseTransferController::class, 'getLotsByWarehouse']);
+    Route::get('/get-storages-by-warehouse', [WarehouseTransferController::class, 'getStoragesByWarehouse']);
+    Route::get('/get-warehouse-by-storage', [WarehouseTransferController::class, 'getWarehouseByStorage']);
+    Route::get('/warehouse-transfer-export', [WarehouseTransferController::class, 'export'])
+    ->name('warehouse-transfer.export');
 
     // Lot Master
     Route::resource('lots', App\Http\Controllers\LotMasterController::class)->except(['show', 'create', 'edit']);

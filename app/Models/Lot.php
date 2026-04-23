@@ -9,7 +9,7 @@ class Lot extends Model
     protected $fillable = [
         'lot_number', 'lot_master_id', 'code', 'lot_type_id', 'reference_number', 'rejuvenation_program', 'prefix', 'sample_id',
         'accession_id', 'crop_id',
-        'storage_id', 'warehouse_id', 'storage_location_id',
+        'storage_id', 'storage_location_id',
         'section_id', 'rack_id', 'bin_id', 'container_id',
         'batch_number', 'expiry_date',
         'quantity', 'unit_id',
@@ -20,8 +20,11 @@ class Lot extends Model
     public function accession()     { return $this->belongsTo(Accession::class); }
     public function lotMaster()     { return $this->belongsTo(LotMaster::class, 'lot_master_id'); }
     public function lotType()       { return $this->belongsTo(LotType::class); }
-    public function storage()       { return $this->belongsTo(Storage::class); }
-    public function warehouse()     { return $this->belongsTo(Warehouse::class); }
+    public function storage()
+{
+    return $this->belongsTo(Storage::class, 'storage_id');
+}
+
     public function crop()          { return $this->belongsTo(Crop::class); }
     public function variety()       { return $this->belongsTo(Variety::class); }
     public function unit()          { return $this->belongsTo(Unit::class); }
@@ -56,4 +59,6 @@ class Lot extends Model
     {
         return $this->belongsTo(Container::class);
     }
+
+    
 }
