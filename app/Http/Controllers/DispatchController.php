@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Dispatch;
 use App\Models\SeedRequest;
+use App\Models\Itn;
 use Illuminate\Http\Request;
+
+use function Laravel\Prompts\alert;
 
 class DispatchController extends Controller
 {
@@ -16,8 +19,15 @@ class DispatchController extends Controller
             ->where('status', 'approved')
             ->latest()
             ->get();
+        $itns = \App\Models\Itn::with([
+            'lot',
+            'crop',
+            'accession',
+            'fromWarehouse',
+            'toWarehouse'
+        ])->latest()->get();
 
-        return view('dispatch-management.index', compact('requests', 'dispatches'));
+        return view('dispatch-management.index', compact('requests', 'dispatches' , 'itns'));
     }
 
     public function store(Request $req, $id)
@@ -81,6 +91,46 @@ class DispatchController extends Controller
         return redirect()->route('dispatch.print', $dispatch->id);
     }
 
+    public function itnStore(Request $req, $id)
+    {   
+    $req->validate([
+            'lot_id'          => 'nullable',
+            'dispatched_at'   => 'nullable|date',
+            'mrn_number'      => 'nullable|string|max:100',
+            'courier_name'    => 'nullable|string|max:255',
+            'contact_person'  => 'nullable|string|max:255',
+            'contact_number'  => 'nullable|string|max:50',
+            'tracking_number' => 'nullable|string|max:255',
+            'quantity'        => 'nullable|numeric|min:0.01',
+            'remarks'         => 'nullable|string',
+        ]);
+
+        $itn = SeedRequest::findOrFail($id);
+
+        $dispatch = Dispatch::create([
+            'dispatch_number' => Dispatch::generateDispatchNumber(),
+            'request_id'      => $itn->id,
+            'accession_id'    => $itn->accession_id,
+            'lot_id'          => $req->lot_id, // ✅ FIXED
+            'mrn_number'      => $req->mrn_number ?: 'MRN-' . now()->format('YmdHis'),
+            'quantity'        => $req->quantity ?? $itn->quantity,
+            'courier_name'    => $req->courier_name,
+            'contact_person'  => $req->contact_person,
+            'contact_number'  => $req->contact_number,
+            'tracking_number' => $req->tracking_number,
+            'remarks'         => $req->remarks,
+            'dispatched_at'   => $req->dispatched_at ?? now(),
+        ]);
+
+        $itn->update(['status' => 'dispatched']);
+
+        // Deduct dispatched quantity from seed_quantities for this lot
+    
+
+
+        return redirect()->route('dispatch.print', $dispatch->id);
+    }
+
     // ✅ Mark as dispatched
     public function dispatch($id)
     {
@@ -118,6 +168,21 @@ class DispatchController extends Controller
 
         return view('dispatch-management.show', compact('request', 'lots', 'seedQuantities'));
     }
+
+    public function showITN($id)
+{
+     $lots = collect();
+        $seedQuantities = collect();    
+$itn = Itn::with([
+        'lot',
+        'crop',
+        'accession',
+        'fromWarehouse',
+        'toWarehouse'
+    ])->findOrFail($id);
+
+    return view('dispatch-management.itn-dispatch', compact('itn', 'lots', 'seedQuantities'));
+}
     
 
     public function print($id)

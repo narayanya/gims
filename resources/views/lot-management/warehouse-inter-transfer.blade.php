@@ -214,7 +214,10 @@
                     <th>From Storage</th>
                     <th>To Warehouse</th>
                     <th>To Storage</th>
+                    <th>Quantity</th>
                     <th>User</th>
+                    <th>Generete</th>
+                    <th>View</th>
                 </tr>
             </thead>
             <tbody>
@@ -230,7 +233,38 @@
                         <td>{{ $t->toWarehouse->name ?? '-' }}</td>
                         
                         <td>{{ $t->toStorage->name ?? '-' }}</td>
+                        <td>{{ $t->quantity }}</td>
                         <td>{{ $t->user->name ?? '-' }}</td>
+                        <td>
+                            @if($t->status == 0)
+                                <a href="{{ route('warehouse-transfer.itn', $t->id) }}"
+                                class="btn btn-info btn-sm">
+                                    Generate ITN
+                                </a>
+                            @else
+                                <a href="{{ route('warehouse-transfer.itn.print', $t->itn->id ?? $t->id) }}"
+                                target="_blank"
+                                class="btn btn-success btn-sm">
+                                    Print ITN
+                                </a>
+                            @endif
+                        </td>
+                        <td>
+                            <button class="btn btn-primary btn-sm previewTransfer"
+                            data-date="{{ $t->created_at->format('d-m-Y H:i') }}"
+        data-crop="{{ $t->lot->crop->crop_name ?? '-' }}"
+        data-accession="{{ $t->lot->accession->accession_number ?? '-' }}"
+        data-lot="{{ $t->lot->lot_number ?? '-' }}"
+        data-from-warehouse="{{ $t->fromWarehouse->name ?? '-' }}"
+        data-from-storage="{{ $t->fromStorage->name ?? '-' }}"
+        data-to-warehouse="{{ $t->toWarehouse->name ?? '-' }}"
+        data-to-storage="{{ $t->toStorage->name ?? '-' }}"
+        data-quantity="{{ $t->quantity }}"
+        data-user="{{ $t->user->name ?? '-' }}"
+                            >
+        View
+    </button>
+                        </td>
                     </tr>
                 @empty
                     <tr>
@@ -243,10 +277,72 @@
         </div>
 </div>
 @endsection
+@section('modals')
+<div class="modal fade" id="itnModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
 
+            <div class="modal-header">
+                <h5 class="modal-title">Internal Transfer Note</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body" id="itnContent">
+                <!-- dynamic content -->
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-success btn-sm">Process</button>
+                <button class="btn btn-light btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+@endsection
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+document.querySelectorAll('.previewTransfer').forEach(button => {
+        button.addEventListener('click', function () {
+
+            let html = `
+                <table class="table table-bordered">
+                    <tr><th>Date</th><td>${this.dataset.date}</td></tr>
+                    <tr><th>From Warehouse</th><td>${this.dataset.fromWarehouse}</td> <th>From Storage</th><td>${this.dataset.fromStorage}</td></tr>
+                    <tr><th>To Warehouse</th><td>${this.dataset.toWarehouse}</td> <th>To Storage</th><td>${this.dataset.toStorage}</td></tr>
+                </table>
+
+                <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Crop</th>    
+                                <th>Accession No.</th>    
+                                <th>Lot No.</th>    
+                                <th>Qty.</th>    
+                            </tr>
+                            </thead>
+                        <tbody>
+                            <tr>
+                                <td>${this.dataset.crop}</td>
+                                <td>${this.dataset.accession}</td>
+                                <td>${this.dataset.lot}</td>
+                                <td>${this.dataset.quantity}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+            `;
+
+            document.getElementById('itnContent').innerHTML = html;
+
+            let modal = new bootstrap.Modal(document.getElementById('itnModal'));
+            modal.show();
+        });
+    });
+
+
+/***************************************/
     const warehouses = @json($warehouses);
 
     function getWarehouse(id) {

@@ -31,6 +31,7 @@
         <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
+                    <h5>Request</h5>
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
@@ -84,6 +85,82 @@
                                 <td colspan="11" class="text-center">No more requests</td> 
                             </tr>
                             @endif
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <h5>ITN</h5>
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ITN Number</th>
+                                <th>Accession Number</th>
+                                <th>Lot Number</th>
+                                <th>Receiver Name</th>
+                                <th>Crop</th>
+                                <th>Quantity</th>
+                                <th>Date</th>
+                                <th>From Warehouse</th>
+                                <th>To Warehouse</th>
+                                <th>Status</th>
+                                <th>Itn Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if($itns->count() > 0)
+                            @foreach($itns as $itn)
+                            <tr>
+                                <td>{{ $itn->itn_number }}</td>
+
+                                <td>{{ $itn->accession->accession_number ?? '—' }}</td>
+
+                                <td>{{ $itn->lot->lot_number ?? '—' }}</td>
+
+                                <td>{{ $itn->receiver ?? '—' }}</td>
+
+                                <td>{{ $itn->crop->crop_name ?? '—' }}</td>
+
+                                <td>{{ $itn->quantity }}</td>
+
+                                <td>{{ \Carbon\Carbon::parse($itn->created_at)->format('d-m-Y h:i A') }}</td>
+
+                                <td>{{ $itn->fromWarehouse->name ?? '—' }}</td>
+
+                                <td>{{ $itn->toWarehouse->name ?? '—' }}</td>
+
+                                <td>
+                                    <span class="badge bg-success">Generated</span>
+                                </td>
+
+                                <td>{{ \Carbon\Carbon::parse($itn->itn_date)->format('d-m-Y') }}</td>
+
+                                <td>
+                                    <a href="{{ route('warehouse-transfer.itn.print', $itn->id) }}"
+                                    target="_blank"
+                                    class="btn btn-sm btn-primary">
+                                        Print
+                                    </a>
+                                    <form action="" method="POST">
+                                        @csrf
+                                        <a href="{{ route('dispatch.itn.show', $itn->id) }}"
+                                            class="btn btn-sm btn-success">
+                                                Dispatch
+                                            </a>
+                                    </form>
+                                </td>
+                            </tr>
+                            @endforeach
+                        @else
+                            <tr>
+                                <td colspan="12" class="text-center">No ITN Found</td>
+                            </tr>
+                        @endif
                         </tbody>
                     </table>
                 </div>

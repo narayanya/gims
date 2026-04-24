@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class WarehouseTransfer extends Model
 {
     protected $fillable = [
-        'lot_id', 'crop_id', 'accession_id', 'from_storage_id', 'to_storage_id',
+        'lot_id', 'crop_id', 'accession_id', 'from_storage_id', 'to_storage_id', 'quantity',
     'from_warehouse_id',
     'to_warehouse_id',
     'transferred_by',
@@ -43,7 +43,10 @@ class WarehouseTransfer extends Model
     public function city() {
         return $this->belongsTo(City::class);
     }
-
+public function itn()
+{
+    return $this->hasOne(Itn::class, 'transfer_id');
+}
    
 }
 

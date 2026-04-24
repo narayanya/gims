@@ -10,12 +10,12 @@ use App\Models\WarehouseTransfer;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\Itn;
 class WarehouseTransferController extends Controller
 {
    public function index(Request $request)
     {
-    $query = \App\Models\WarehouseTransfer::with([
+    $query = WarehouseTransfer::with([
         'lot',
         'lot.crop',
         'lot.accession',
@@ -57,8 +57,10 @@ class WarehouseTransferController extends Controller
             return back()->withErrors('Source and destination storage cannot be same');
         }
 
+        $lot = Lot::with('seedQuantities')->findOrFail($request->from_lot_id);
         $lotIds = $request->lot_ids;
         $toStorageId = $request->to_storage;
+        $lotQty = (float) $lot->seedQuantities->sum('quantity');
 
         foreach ($lotIds as $lotId) {
 
@@ -67,10 +69,11 @@ class WarehouseTransferController extends Controller
             if ($lot) {
 
                 // ✅ Save transfer history FIRST
-                \App\Models\WarehouseTransfer::create([
+                WarehouseTransfer::create([
                     'lot_id' => $lotId,
                     'crop_id' => $lot->crop_id,
                     'accession_id'        => $lot->accession_id,
+                    'quantity' =>$lotQty,
                     'from_warehouse_id' => $request->from_warehouse_id,
                     'to_warehouse_id'   => $request->to_warehouse_id,
                     'from_storage_id' => $request->from_storage,
@@ -86,7 +89,7 @@ class WarehouseTransferController extends Controller
             }
         }
 
-        return back()->with('success', 'Lots transferred successfully!');
+        return back()->with('success', 'warehouse/storage transferred successfully!');
     }
 
    public function getLotsByWarehouse(Request $request)
@@ -176,6 +179,96 @@ class WarehouseTransferController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function itn($id)
+    {
+        $t = WarehouseTransfer::with([
+            'lot.crop',
+            'lot.accession',
+            'fromWarehouse',
+            'toWarehouse',
+            'fromStorage',
+            'toStorage',
+            'user'
+        ])->findOrFail($id);
+
+        return view('lot-management.itn', compact('t'));
+    }
+
+   public function processITN(Request $request)
+    {
+        $request->validate([
+            'transfer_id' => 'required|exists:warehouse_transfers,id',
+            'receiver' => 'required|string|max:255',
+            'mobile_number' => 'required|string|max:20',
+            'itn_date' => 'required|date',
+        ]);
+
+        $transfer = WarehouseTransfer::findOrFail($request->transfer_id);
+
+        // prevent duplicate
+        if ($transfer->status === 'completed') {
+            return back()->with('error', 'ITN already generated.');
+        }
+
+        // auto ITN number
+        $itnNumber = $request->itn_number;
+        if (!$itnNumber) {
+            $itnNumber = 'ITN-' . date('Y') . '-' . str_pad($transfer->id, 5, '0', STR_PAD_LEFT);
+        }
+
+        // upload photo
+        $photoPath = null;
+        if ($request->hasFile('dispatchUpload')) {
+            $photoPath = $request->file('dispatchUpload')->store('itn_photos', 'public');
+        }
+
+        // ✅ save into ITN table
+        Itn::create([
+            'transfer_id'        => $transfer->id,
+            'itn_number'         => $itnNumber,
+            'itn_date'           => $request->itn_date,
+
+            'lot_id'             => $transfer->lot_id,
+            'crop_id'            => $transfer->lot->crop->id ?? null,
+            'accession_id'       => $transfer->lot->accession->id ?? null,
+
+            'from_warehouse_id'  => $transfer->from_warehouse_id,
+            'to_warehouse_id'    => $transfer->to_warehouse_id,
+            'from_storage_id'    => $transfer->from_storage_id,
+            'to_storage_id'      => $transfer->to_storage_id,
+
+            'quantity'           => $transfer->quantity,
+
+            'receiver'           => $request->receiver,
+            'mobile_number'      => $request->mobile_number,
+            'email'              => $request->email,
+            'instructions'       => $request->instructions,
+            'photo'              => $photoPath,
+
+            'created_by'         => auth()->id(),
+        ]);
+
+        // ✅ update transfer table
+        $transfer->update([
+            'status' => '1'
+        ]);
+
+        return redirect()->route('warehouse-transfer.index')
+            ->with('success', 'ITN Generated Successfully');
+    }
+
+    public function printITN($id)
+    {
+        $itn = Itn::with([
+            'lot.crop',
+            'lot.accession',
+            'fromWarehouse',
+            'toWarehouse'
+        ])->findOrFail($id);
+
+        return view('lot-management.print', compact('itn'));
     }
 
 }

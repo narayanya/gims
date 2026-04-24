@@ -162,6 +162,13 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::get('/get-warehouse-by-storage', [WarehouseTransferController::class, 'getWarehouseByStorage']);
     Route::get('/warehouse-transfer-export', [WarehouseTransferController::class, 'export'])
     ->name('warehouse-transfer.export');
+    Route::get('/warehouse-transfer/{id}/itn', [WarehouseTransferController::class, 'itn'])->name('warehouse-transfer.itn');
+    Route::post('/warehouse-transfer/process-itn', [WarehouseTransferController::class, 'processITN'])
+    ->name('warehouse-transfer.process.itn');
+    Route::get('/warehouse-transfer/{id}/itn/print', [WarehouseTransferController::class, 'printITN'])
+    ->name('warehouse-transfer.itn.print');
+    Route::get('/dispatch/itn/{id}', [DispatchController::class, 'showITN'])
+    ->name('dispatch.itn.show');
 
     // Lot Master
     Route::resource('lots', App\Http\Controllers\LotMasterController::class)->except(['show', 'create', 'edit']);
@@ -304,6 +311,7 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
 
     Route::get('/dispatch/{id}', [DispatchController::class, 'show'])->name('dispatch.show');
     Route::post('/dispatch/{id}', [DispatchController::class, 'store'])->name('dispatch.store');
+    Route::post('/dispatch/itn/{id}', [DispatchController::class, 'store'])->name('dispatch.itnStore');
     Route::get('/dispatch-print/{id}', [DispatchController::class, 'print'])->name('dispatch.print');
 
     Route::post('/requests/{id}/return', [SeedReturnController::class, 'store'])->name('requests.return');
