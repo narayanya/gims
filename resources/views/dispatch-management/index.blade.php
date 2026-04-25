@@ -135,7 +135,11 @@
                                 <td>{{ $itn->toWarehouse->name ?? '—' }}</td>
 
                                 <td>
-                                    <span class="badge bg-success">Generated</span>
+                                    @if($itn->status === 'dispatched')
+                                        <span class="badge bg-secondary">Dispatched</span>
+                                    @else
+                                        <span class="badge bg-success">Generated</span>
+                                    @endif
                                 </td>
 
                                 <td>{{ \Carbon\Carbon::parse($itn->itn_date)->format('d-m-Y') }}</td>
@@ -146,13 +150,12 @@
                                     class="btn btn-sm btn-primary">
                                         Print
                                     </a>
-                                    <form action="" method="POST">
-                                        @csrf
-                                        <a href="{{ route('dispatch.itn.show', $itn->id) }}"
-                                            class="btn btn-sm btn-success">
-                                                Dispatch
-                                            </a>
-                                    </form>
+                                    @if($itn->status !== 'dispatched')
+                                    <a href="{{ route('dispatch.itn.show', $itn->id) }}"
+                                        class="btn btn-sm btn-success">
+                                            Dispatch
+                                        </a>
+                                    @endif
                                 </td>
                             </tr>
                             @endforeach
@@ -174,15 +177,14 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Dispatch Number</th>
-                                <th>Request Number</th>
-                                <th>Accession Number</th>
-                                <th>Lot Number</th>
+                                <th>ITN / Request No.</th>
+                                <th>Lot(s)</th>
                                 <th>MRN Number</th>
                                 <th>Quantity</th>
-                                <th>Courier name</th>
-                                <th>Tracking number</th>
-                                <th>Action</th>
+                                <th>Courier</th>
+                                <th>Tracking</th>
                                 <th>Date</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -190,38 +192,46 @@
                                 @foreach($dispatches as $dispatch)
                                 <tr>
                                     <td>{{ $dispatch->dispatch_number }}</td>
-                                    <td>{{ $dispatch->request?->request_number }}</td>
-                                    <td>{{ $dispatch->accession?->accession_number ?? 'N/A' }}</td>
                                     <td>
-                                        @if($dispatch->lot_id)
+                                        @if($dispatch->itn_id)
+                                            <span class="badge bg-info text-dark">{{ $dispatch->itn?->itn_number ?? '—' }}</span>
+                                        @else
+                                            {{ $dispatch->request?->request_number ?? '—' }}
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($dispatch->batch_id)
+                                            @php
+                                                $dLots = \App\Models\WarehouseTransfer::with('lot')
+                                                    ->where('batch_id', $dispatch->batch_id)->get();
+                                            @endphp
+                                            @foreach($dLots as $dl)
+                                                <span class="badge bg-primary">{{ $dl->lot->lot_number ?? '—' }}</span>
+                                            @endforeach
+                                        @elseif($dispatch->lot_id)
                                             @php $dLot = \App\Models\Lot::find($dispatch->lot_id); @endphp
                                             <span class="badge bg-primary">{{ $dLot?->lot_number ?? '—' }}</span>
                                         @else
-                                            @php
-                                                $dLotNums = \App\Models\Lot::where('accession_id', $dispatch->accession_id)
-                                                    ->whereNotNull('lot_number')->pluck('lot_number');
-                                            @endphp
-                                            {{ $dLotNums->isNotEmpty() ? $dLotNums->implode(', ') : '—' }}
+                                            —
                                         @endif
                                     </td>
                                     <td>{{ $dispatch->mrn_number }}</td>
                                     <td>{{ $dispatch->quantity }}</td>
-                                    <td>{{ $dispatch->courier_name }}</td>
-                                    <td>{{ $dispatch->tracking_number }}</td>
+                                    <td>{{ $dispatch->courier_name ?? '—' }}</td>
+                                    <td>{{ $dispatch->tracking_number ?? '—' }}</td>
+                                    <td>{{ $dispatch->created_at->format('d-m-Y h:i A') }}</td>
                                     <td>
                                         <a href="{{ route('dispatch.print', $dispatch->id) }}" class="btn btn-sm btn-primary" target="_blank">
                                             Print MRN
                                         </a>
                                     </td>
-                                    <td>{{ $dispatch->created_at->format('d-m-Y h:i A') }}</td>
                                 </tr>
-                                @endforeach   
+                                @endforeach
                             @else
                                 <tr>
-                                <td colspan="11" class="text-center">No more dispatched orders</td> 
-                            </tr>
+                                    <td colspan="9" class="text-center">No dispatched orders found</td>
+                                </tr>
                             @endif
-                             
                         </tbody>
                     </table>
                 </div>

@@ -145,12 +145,12 @@
                                 </div>
                             </div>
 
-                            <div class="card mt-2 d-none" id="tolotTableCard">
-                                <div class="card-header bg-info text-white">
-                                    <h6 class="mb-0">Available Lots</h6>
+                            {{-- Selected lots preview --}}
+                            <div class="card mt-2 d-none" id="selectedLotsCard">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0"><i class="ri-list-check me-1"></i>Selected Lots to Transfer <span id="selectedCount" class="badge bg-dark ms-1">0</span></h6>
                                 </div>
-
-                                <div class="card-body p-0"  style="height: 200px;overflow:auto;">
+                                <div class="card-body p-0" style="height: 200px; overflow:auto;">
                                     <table class="table table-sm mb-0">
                                         <thead>
                                             <tr>
@@ -160,7 +160,9 @@
                                                 <th>Storage</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="tolotTableBody"></tbody>
+                                        <tbody id="selectedLotsBody">
+                                            <tr><td colspan="4" class="text-center text-muted">No lots selected yet</td></tr>
+                                        </tbody>
                                     </table>
                                 </div>
                             </div>
@@ -207,33 +209,43 @@
             <thead>
                 <tr>
                     <th>Date</th>
-                    <th>Crop</th>
-                    <th>Accession No.</th>
-                    <th>Lot</th>
+                    <th>Batch ID</th>
                     <th>From Warehouse</th>
                     <th>From Storage</th>
                     <th>To Warehouse</th>
                     <th>To Storage</th>
-                    <th>Quantity</th>
+                    <th>Lots</th>
                     <th>User</th>
-                    <th>Generete</th>
+                    <th>Generate</th>
                     <th>View</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($wTransfers as $t)
+                    @php
+                        // All lots in this batch
+                        $batchTransfers = \App\Models\WarehouseTransfer::with(['lot.crop','lot.accession'])
+                            ->where('batch_id', $t->batch_id)->get();
+                        $itn = \App\Models\Itn::where('batch_id', $t->batch_id)->first();
+                        $batchJson = $batchTransfers->map(function($bt) {
+                            return [
+                                'crop'      => $bt->lot->crop->crop_name ?? '-',
+                                'accession' => $bt->lot->accession->accession_number ?? '-',
+                                'lot'       => $bt->lot->lot_number ?? '-',
+                                'quantity'  => $bt->quantity,
+                            ];
+                        })->toJson();
+                    @endphp
                     <tr>
                         <td>{{ $t->created_at->format('d-m-Y H:i') }}</td>
-                        <td>{{ $t->lot->crop->crop_name ?? '-' }}</td>
-                        <td>{{ $t->lot->accession->accession_number ?? '-' }}</td>
-                        <td>{{ $t->lot->lot_number ?? '-' }}</td>
-                        
+                        <td><small class="text-muted">{{ $t->batch_id }}</small></td>
                         <td>{{ $t->fromWarehouse->name ?? '-' }}</td>
                         <td>{{ $t->fromStorage->name ?? '-' }}</td>
                         <td>{{ $t->toWarehouse->name ?? '-' }}</td>
-                        
                         <td>{{ $t->toStorage->name ?? '-' }}</td>
-                        <td>{{ $t->quantity }}</td>
+                        <td>
+                            <span class="badge bg-info text-dark">{{ $batchTransfers->count() }} lot(s)</span>
+                        </td>
                         <td>{{ $t->user->name ?? '-' }}</td>
                         <td>
                             @if($t->status == 0)
@@ -242,7 +254,7 @@
                                     Generate ITN
                                 </a>
                             @else
-                                <a href="{{ route('warehouse-transfer.itn.print', $t->itn->id ?? $t->id) }}"
+                                <a href="{{ route('warehouse-transfer.itn.print', $itn->id ?? $t->id) }}"
                                 target="_blank"
                                 class="btn btn-success btn-sm">
                                     Print ITN
@@ -251,19 +263,15 @@
                         </td>
                         <td>
                             <button class="btn btn-primary btn-sm previewTransfer"
-                            data-date="{{ $t->created_at->format('d-m-Y H:i') }}"
-        data-crop="{{ $t->lot->crop->crop_name ?? '-' }}"
-        data-accession="{{ $t->lot->accession->accession_number ?? '-' }}"
-        data-lot="{{ $t->lot->lot_number ?? '-' }}"
-        data-from-warehouse="{{ $t->fromWarehouse->name ?? '-' }}"
-        data-from-storage="{{ $t->fromStorage->name ?? '-' }}"
-        data-to-warehouse="{{ $t->toWarehouse->name ?? '-' }}"
-        data-to-storage="{{ $t->toStorage->name ?? '-' }}"
-        data-quantity="{{ $t->quantity }}"
-        data-user="{{ $t->user->name ?? '-' }}"
+                                data-date="{{ $t->created_at->format('d-m-Y H:i') }}"
+                                data-from-warehouse="{{ $t->fromWarehouse->name ?? '-' }}"
+                                data-from-storage="{{ $t->fromStorage->name ?? '-' }}"
+                                data-to-warehouse="{{ $t->toWarehouse->name ?? '-' }}"
+                                data-to-storage="{{ $t->toStorage->name ?? '-' }}"
+                                data-batch='{{ $batchJson }}'
                             >
-        View
-    </button>
+                                View
+                            </button>
                         </td>
                     </tr>
                 @empty
@@ -304,40 +312,54 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
+    // Select All checkbox for FROM lots table
+    document.getElementById('select_all').addEventListener('change', function () {
+        document.querySelectorAll('#lotTableBody input[type="checkbox"]').forEach(cb => {
+            cb.checked = this.checked;
+        });
+        setTimeout(syncSelectedLotsPreview, 10);
+    });
+
+    // Sync select_all state when individual checkboxes change
+    document.getElementById('lotTableBody').addEventListener('change', function (e) {
+        if (e.target.type === 'checkbox') {
+            const all = document.querySelectorAll('#lotTableBody input[type="checkbox"]');
+            const checked = document.querySelectorAll('#lotTableBody input[type="checkbox"]:checked');
+            document.getElementById('select_all').checked = all.length === checked.length;
+            document.getElementById('select_all').indeterminate = checked.length > 0 && checked.length < all.length;
+            syncSelectedLotsPreview();
+        }
+    });
+
 document.querySelectorAll('.previewTransfer').forEach(button => {
         button.addEventListener('click', function () {
+            const batch = JSON.parse(this.dataset.batch || '[]');
+
+            let rowsHtml = batch.map(item => `
+                <tr>
+                    <td>${item.crop}</td>
+                    <td>${item.accession}</td>
+                    <td>${item.lot}</td>
+                    <td>${item.quantity}</td>
+                </tr>
+            `).join('');
 
             let html = `
                 <table class="table table-bordered">
                     <tr><th>Date</th><td>${this.dataset.date}</td></tr>
-                    <tr><th>From Warehouse</th><td>${this.dataset.fromWarehouse}</td> <th>From Storage</th><td>${this.dataset.fromStorage}</td></tr>
-                    <tr><th>To Warehouse</th><td>${this.dataset.toWarehouse}</td> <th>To Storage</th><td>${this.dataset.toStorage}</td></tr>
+                    <tr><th>From Warehouse</th><td>${this.dataset.fromWarehouse}</td><th>From Storage</th><td>${this.dataset.fromStorage}</td></tr>
+                    <tr><th>To Warehouse</th><td>${this.dataset.toWarehouse}</td><th>To Storage</th><td>${this.dataset.toStorage}</td></tr>
                 </table>
-
                 <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Crop</th>    
-                                <th>Accession No.</th>    
-                                <th>Lot No.</th>    
-                                <th>Qty.</th>    
-                            </tr>
-                            </thead>
-                        <tbody>
-                            <tr>
-                                <td>${this.dataset.crop}</td>
-                                <td>${this.dataset.accession}</td>
-                                <td>${this.dataset.lot}</td>
-                                <td>${this.dataset.quantity}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <thead>
+                        <tr><th>Crop</th><th>Accession No.</th><th>Lot No.</th><th>Qty.</th></tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
             `;
 
             document.getElementById('itnContent').innerHTML = html;
-
-            let modal = new bootstrap.Modal(document.getElementById('itnModal'));
-            modal.show();
+            new bootstrap.Modal(document.getElementById('itnModal')).show();
         });
     });
 
@@ -467,134 +489,73 @@ document.querySelectorAll('.previewTransfer').forEach(button => {
                     });
 
                     document.getElementById('lotTableCard').classList.remove('d-none');
+
+                    // Reset select_all state
+                    let selectAll = document.getElementById('select_all');
+                    selectAll.checked = false;
+                    selectAll.indeterminate = false;
                 });
             
     }
 
-    // TO WAREHOUSE logic remains the same as your old working code...
     // --- TO WAREHOUSE CHANGE ---
     document.getElementById('to_warehouse').addEventListener('change', function () {
         let warehouseId = this.value;
         if (!warehouseId) return;
 
         let w = warehouses.find(i => i.id == warehouseId);
-
         document.getElementById('to_warehouseInfo').classList.remove('d-none');
         document.getElementById('tw_country').innerText = w.country?.country_name ?? '—';
         document.getElementById('tw_state').innerText = w.state?.state_name ?? '—';
         document.getElementById('tw_district').innerText = w.district?.district_name ?? '—';
         document.getElementById('tw_city').innerText = w.city?.city_village_name ?? '—';
 
-        filterToStorageByWarehouse(warehouseId);
-
-    });
-
-    document.getElementById('to_storage').addEventListener('change', function () {
-        let storageId = this.value;
-        if (!storageId) return;
-
-        fetch(`/get-warehouse-by-storage?storage_id=${storageId}`)
-            .then(res => {
-                if (!res.ok) throw new Error('Route not found');
-                return res.json();
-            })
-            .then(data => {
-                if (data.warehouse_id) {
-                    let whDropdown = document.getElementById('to_warehouse');
-                    
-                    // Only update and refresh info if it's a different warehouse
-                    if (whDropdown.value != data.warehouse_id) {
-                        whDropdown.value = data.warehouse_id;
-                        
-                        // Manually update the warehouse info card
-                        let w = warehouses.find(i => i.id == data.warehouse_id);
-                        if (w) {
-                            document.getElementById('to_warehouseInfo').classList.remove('d-none');
-                            document.getElementById('tw_country').innerText = w.country?.country_name ?? '—';
-                            document.getElementById('tw_state').innerText = w.state?.state_name ?? '—';
-                            document.getElementById('tw_district').innerText = w.district?.district_name ?? '—';
-                            document.getElementById('tw_city').innerText = w.city?.city_village_name ?? '—';
-                        }
-                    }
-                    // ✅ Always load lots after finding the warehouse
-                    loadLotsTo();
-                }
-            })
-            .catch(err => console.error("Error syncing warehouse:", err));
-
-             
-    });
-    function filterToStorageByWarehouse(warehouseId) {
+        // Filter destination storages
         fetch(`/get-storages-by-warehouse?warehouse_id=${warehouseId}`)
             .then(res => res.json())
             .then(data => {
-
                 let storageDropdown = document.getElementById('to_storage');
                 storageDropdown.innerHTML = `<option value="">Select Storage</option>`;
-
-                data.forEach(storage => {
-                    storageDropdown.innerHTML += `
-                        <option value="${storage.id}">
-                            ${storage.storage_id} — ${storage.name}
-                        </option>`;
+                data.forEach(s => {
+                    storageDropdown.innerHTML += `<option value="${s.id}">${s.storage_id} — ${s.name}</option>`;
                 });
-
-                // auto select first (same as FROM)
-
-                if (data.length > 0) {
-                    storageDropdown.value = data[0].id;
-
-                    // ✅ FIX: wait for DOM update
-                    setTimeout(() => {
-                        loadLotsTo();
-                    }, 50);
-
-                } else {
-                    document.getElementById('lotTableBody').innerHTML =
-                        '<tr><td colspan="5" class="text-center">No storage found</td></tr>';
-                }
             });
-    }
+    });
 
-    function loadLotsTo() {
-        let warehouseId = document.getElementById('to_warehouse').value;
-        let storageId = document.getElementById('to_storage').value;
+    // --- SELECTED LOTS PREVIEW (syncs whenever checkboxes change) ---
+    function syncSelectedLotsPreview() {
+        const checked = document.querySelectorAll('#lotTableBody input[type="checkbox"]:checked');
+        const tbody = document.getElementById('selectedLotsBody');
+        const card  = document.getElementById('selectedLotsCard');
+        const count = document.getElementById('selectedCount');
 
-        if (!warehouseId) return;
+        count.textContent = checked.length;
 
-        let url = `/get-lots-by-warehouse?warehouse_id=${warehouseId}`;
-
-        // ✅ Only send storage if exists
-        if (storageId) {
-            url += `&storage_id=${storageId}`;
+        if (checked.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No lots selected yet</td></tr>';
+            card.classList.add('d-none');
+            return;
         }
 
-        fetch(`/get-lots-by-warehouse?warehouse_id=${warehouseId}&storage_id=${storageId}`)
-                .then(res => res.json())
-                .then(data => {
-
-                    let tbody = document.getElementById('tolotTableBody');
-                    tbody.innerHTML = '';
-
-                    if (data.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="5" class="text-center">No lots found</td></tr>`;
-                    }
-
-                    data.forEach(lot => {
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${lot.lot_number}</td>
-                                <td>${lot.crop?.crop_name ?? ''}</td>
-                                <td>${lot.accession?.accession_number ?? ''}</td>
-                                <td>${lot.storage?.name ?? ''}</td>
-                            </tr>
-                        `;
-                    });
-
-                    document.getElementById('tolotTableCard').classList.remove('d-none');
-                });
-            
+        card.classList.remove('d-none');
+        tbody.innerHTML = '';
+        checked.forEach(cb => {
+            const row = cb.closest('tr');
+            const cells = row.querySelectorAll('td');
+            tbody.innerHTML += `
+                <tr>
+                    <td>${cells[1]?.innerText ?? ''}</td>
+                    <td>${cells[2]?.innerText ?? ''}</td>
+                    <td>${cells[3]?.innerText ?? ''}</td>
+                    <td>${cells[4]?.innerText ?? ''}</td>
+                </tr>`;
+        });
     }
+
+    // Hook into existing checkbox listeners
+    document.getElementById('select_all').addEventListener('change', function () {
+        setTimeout(syncSelectedLotsPreview, 10);
+    });
 });
 </script>
 @endpush

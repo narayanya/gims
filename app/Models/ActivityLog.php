@@ -14,12 +14,15 @@ class ActivityLog extends Model
         'user_id', 'action', 'module', 'record_id',
         'record_label', 'old_values', 'new_values',
         'ip_address', 'user_agent',
+        'page_url', 'page_title', 'in_time', 'out_time', 'time_spent_seconds',
     ];
 
     protected $casts = [
-        'old_values' => 'array',
-        'new_values' => 'array',
-        'created_at' => 'datetime',
+        'old_values'  => 'array',
+        'new_values'  => 'array',
+        'created_at'  => 'datetime',
+        'in_time'     => 'datetime',
+        'out_time'    => 'datetime',
     ];
 
     public function user()

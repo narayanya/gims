@@ -70,12 +70,14 @@
                                             </tr>
                                             </thead>
                                         <tbody>
+                                            @foreach($batchLots as $bl)
                                             <tr>
-                                                <td>{{ $t->lot->crop->crop_name ?? '-' }}</td>
-                                                <td>{{ $t->lot->accession->accession_number ?? '-' }}</td>
-                                                <td>{{ $t->lot->lot_number ?? '-' }}</td>
-                                                <td>{{ $t->quantity }}</td>
+                                                <td>{{ $bl->lot->crop->crop_name ?? '-' }}</td>
+                                                <td>{{ $bl->lot->accession->accession_number ?? '-' }}</td>
+                                                <td>{{ $bl->lot->lot_number ?? '-' }}</td>
+                                                <td>{{ $bl->quantity }}</td>
                                             </tr>
+                                            @endforeach
                                         </tbody>
                                     </table>
                             </div>

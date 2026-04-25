@@ -276,6 +276,7 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::get('/logs', [LogReportController::class, 'index'])->name('logs.index');
     Route::get('/logs/export', [LogReportController::class, 'export'])->name('logs.export');
     Route::get('/logs/{id}', [LogReportController::class, 'show'])->name('logs.show');
+    Route::post('/logs/page-exit', [LogReportController::class, 'pageExit'])->name('logs.page-exit');
 
      //========================Core API=======================
     Route::resource('core_api', CoreAPIController::class);
@@ -309,10 +310,11 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::post('/dispatch/{id}', [DispatchController::class, 'dispatch'])
         ->name('dispatch-management.send');
 
+    Route::post('/dispatch/itn/{id}', [DispatchController::class, 'itnStore'])->name('dispatch.itnStore');
     Route::get('/dispatch/{id}', [DispatchController::class, 'show'])->name('dispatch.show');
     Route::post('/dispatch/{id}', [DispatchController::class, 'store'])->name('dispatch.store');
-    Route::post('/dispatch/itn/{id}', [DispatchController::class, 'store'])->name('dispatch.itnStore');
     Route::get('/dispatch-print/{id}', [DispatchController::class, 'print'])->name('dispatch.print');
+    
 
     Route::post('/requests/{id}/return', [SeedReturnController::class, 'store'])->name('requests.return');
 
@@ -344,19 +346,35 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
         $totalQty     = $sq?->total_quantity     ?? $acc->quantity       ?? 0;
         $totalQtyShow = $sq?->total_quantity_show ?? $acc->quantity_show  ?? 0;
 
+        // Per-lot breakdown
+        $lots = \App\Models\Lot::with(['unit', 'storage'])
+            ->where('accession_id', $id)
+            ->whereNotNull('lot_number')
+            ->get()
+            ->map(function ($lot) use ($unit) {
+                $sq = \App\Models\SeedQuantity::where('lot_id', $lot->id)->first();
+                return [
+                    'lot_number' => $lot->lot_number,
+                    'storage'    => $lot->storage?->name ?? '—',
+                    'quantity'   => $sq?->quantity_show ?? $sq?->quantity ?? $lot->quantity ?? 0,
+                    'unit'       => $lot->unit?->name ?? $unit?->name ?? '',
+                ];
+            });
+
         return response()->json([
             'id'               => $acc->id,
             'accession_name'   => $acc->accession_name,
             'accession_number' => $acc->accession_number,
             'crop'             => optional($acc->crop)->crop_name,
             'scientific_name'  => $acc->scientific_name,
-            'quantity'         => $totalQtyShow,       // available for user
+            'quantity'         => $totalQtyShow,
             'quantity_show'    => $totalQtyShow,
-            'total_quantity'   => $totalQty,           // actual total
+            'total_quantity'   => $totalQty,
             'unit'             => $unit?->name ?? $unit?->code ?? '',
             'unit_id'          => $unit?->id ?? $acc->capacity_unit_id,
             'expiry_date'      => $acc->expiry_date,
             'barcode'          => $acc->barcode,
+            'lots'             => $lots,
         ]);
     });
     

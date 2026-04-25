@@ -94,5 +94,32 @@
      @yield('scripts')
     @yield('modals')
     @stack('scripts')
+    @auth
+    @php
+        $pageVisitLogId = Session::get('page_visit_log_id');
+        $pageExitUrl    = route('logs.page-exit');
+        $csrfToken      = csrf_token();
+    @endphp
+    <script>
+    (function () {
+        var logId = @if($pageVisitLogId) {{ (int) $pageVisitLogId }} @else null @endif;
+        if (!logId) return;
+        var url   = '{{ $pageExitUrl }}';
+        var token = '{{ $csrfToken }}';
+        function sendExit() {
+            var data = JSON.stringify({ log_id: logId, _token: token });
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(url, new Blob([data], { type: 'application/json' }));
+            } else {
+                fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token }, body: data, keepalive: true });
+            }
+        }
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'hidden') sendExit();
+        });
+        window.addEventListener('pagehide', sendExit);
+    })();
+    </script>
+    @endauth
 </body>
 </html>

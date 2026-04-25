@@ -227,13 +227,19 @@ class RequestController extends Controller
 
                 $accession = Accession::find($accessionId);
 
-                // ✅ Quantity check per row — use seed_quantities latest or accession.quantity_show
+                // ✅ Quantity check — sum across ALL seed_quantities for this accession
                 if ($accession) {
-                    $sq = \App\Models\SeedQuantity::where('accession_id', $accessionId)->latest()->first();
-                    $availableQty = $sq?->quantity_show ?? $accession->quantity_show ?? null;
-                    if ($availableQty !== null && (float)$httpRequest->quantity[$i] > (float)$availableQty) {
+                    $availableQty = \App\Models\SeedQuantity::where('accession_id', $accessionId)
+                        ->sum('quantity_show');
+
+                    // fallback to accession.quantity_show if no seed_quantities rows
+                    if ($availableQty == 0) {
+                        $availableQty = $accession->quantity_show ?? 0;
+                    }
+
+                    if ((float)$httpRequest->quantity[$i] > (float)$availableQty) {
                         return back()->withInput()->withErrors([
-                            'quantity.' . $i => 'Row '.($i+1).': Request qty ('.($httpRequest->quantity[$i]).') exceeds available qty ('.$availableQty.').'
+                            'quantity.' . $i => 'Row '.($i+1).': Request qty ('.$httpRequest->quantity[$i].') exceeds total available qty ('.$availableQty.').'
                         ]);
                     }
                 }

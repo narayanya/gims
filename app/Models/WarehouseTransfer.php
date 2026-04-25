@@ -7,11 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class WarehouseTransfer extends Model
 {
     protected $fillable = [
-        'lot_id', 'crop_id', 'accession_id', 'from_storage_id', 'to_storage_id', 'quantity',
-    'from_warehouse_id',
-    'to_warehouse_id',
-    'transferred_by',
-];
+        'batch_id', 'lot_id', 'crop_id', 'accession_id', 'from_storage_id', 'to_storage_id', 'quantity',
+        'from_warehouse_id',
+        'to_warehouse_id',
+        'transferred_by',
+        'remarks',
+        'status',
+    ];
     public function lot()
     {
         return $this->belongsTo(Lot::class);
@@ -46,6 +48,26 @@ class WarehouseTransfer extends Model
 public function itn()
 {
     return $this->hasOne(Itn::class, 'transfer_id');
+}
+
+// ITN linked via batch_id (for multi-lot transfers)
+public function batchItn()
+{
+    return $this->hasOneThrough(
+        Itn::class,
+        WarehouseTransfer::class,
+        'batch_id', // foreign key on warehouse_transfers
+        'batch_id', // foreign key on itns
+        'batch_id', // local key on this model
+        'batch_id'  // local key on warehouse_transfers
+    );
+}
+
+// Resolve the ITN for this transfer (single or batch)
+public function getItnAttribute()
+{
+    return Itn::where('batch_id', $this->batch_id)->first()
+        ?? $this->itn()->first();
 }
    
 }

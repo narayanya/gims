@@ -29,6 +29,15 @@ class LogReportController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
+        // Separate page visits from action logs
+        $tab = $request->get('tab', 'actions');
+
+        if ($tab === 'visits') {
+            $query->where('action', 'page_visit');
+        } else {
+            $query->where('action', '!=', 'page_visit');
+        }
+
         $logs    = $query->paginate(20)->withQueryString();
         $users   = User::orderBy('name')->get();
 
@@ -36,9 +45,36 @@ class LogReportController extends Controller
         $dbModules    = ActivityLog::select('module')->distinct()->orderBy('module')->pluck('module')->toArray();
         $modules      = collect(array_unique(array_merge($knownModules, $dbModules)))->sort()->values();
 
-        $actions = ActivityLog::select('action')->distinct()->orderBy('action')->pluck('action');
+        $actions = ActivityLog::select('action')
+            ->where('action', '!=', 'page_visit')
+            ->distinct()->orderBy('action')->pluck('action');
 
-        return view('logs.index', compact('logs', 'users', 'modules', 'actions'));
+        return view('logs.index', compact('logs', 'users', 'modules', 'actions', 'tab'));
+    }
+
+    public function pageExit(Request $request)
+    {
+        // sendBeacon sends JSON body, not form data
+        $data  = $request->json()->all() ?: $request->all();
+        $logId = $data['log_id'] ?? null;
+
+        if (!$logId) return response()->json(['ok' => false]);
+
+        $log = ActivityLog::where('id', $logId)
+            ->where('user_id', auth()->id())
+            ->whereNull('out_time')
+            ->first();
+
+        if ($log && $log->in_time) {
+            $now   = now();
+            $spent = max(0, min((int) $log->in_time->diffInSeconds($now), 86400));
+            $log->update([
+                'out_time'           => $now,
+                'time_spent_seconds' => $spent,
+            ]);
+        }
+
+        return response()->json(['ok' => true]);
     }
 
     public function show($id)

@@ -85,12 +85,12 @@
                 <span>{{ $dispatch->dispatched_at ? \Carbon\Carbon::parse($dispatch->dispatched_at)->format('d M Y') : now()->format('d M Y') }}</span>
             </div>
             <div class="item">
-                <label>Request No.</label>
-                <span>{{ $dispatch->request->request_number }}</span>
+                <label>{{ $dispatch->itn_id ? 'ITN Number' : 'Request No.' }}</label>
+                <span>{{ $dispatch->itn?->itn_number ?? $dispatch->request?->request_number ?? 'N/A' }}</span>
             </div>
             <div class="item">
                 <label>Quantity Dispatched</label>
-                <span>{{ $dispatch->quantity }} {{ $dispatch->request->unit?->name ?? '' }}</span>
+                <span>{{ $dispatch->quantity }}</span>
             </div>
             <div class="item">
                 <label>Status</label>
@@ -99,7 +99,75 @@
         </div>
     </div>
 
-    {{-- Requester Info --}}
+    {{-- Warehouse / Storage (ITN-based dispatches) --}}
+    @if($dispatch->itn)
+    <div class="section">
+        <div class="section-title">Warehouse &amp; Storage Details</div>
+        <table style="width:100%; border-collapse:collapse;">
+            <tr>
+                <th style="border:1px solid #000;padding:5px;background:#f0f0f0;width:25%">From Warehouse</th>
+                <td style="border:1px solid #000;padding:5px;width:25%">{{ $dispatch->itn->fromWarehouse->name ?? '-' }}</td>
+                <th style="border:1px solid #000;padding:5px;background:#f0f0f0;width:25%">To Warehouse</th>
+                <td style="border:1px solid #000;padding:5px;width:25%">{{ $dispatch->itn->toWarehouse->name ?? '-' }}</td>
+            </tr>
+            <tr>
+                <th style="border:1px solid #000;padding:5px;background:#f0f0f0;">From Storage</th>
+                <td style="border:1px solid #000;padding:5px;">{{ $dispatch->itn->fromStorage->name ?? '-' }}</td>
+                <th style="border:1px solid #000;padding:5px;background:#f0f0f0;">To Storage</th>
+                <td style="border:1px solid #000;padding:5px;">{{ $dispatch->itn->toStorage->name ?? '-' }}</td>
+            </tr>
+        </table>
+    </div>
+    @endif
+
+    {{-- Lot Info --}}
+    <div class="section">
+        <div class="section-title">Material Details</div>
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr>
+                    <th style="border:1px solid #000;padding:5px;background:#f0f0f0;">#</th>
+                    <th style="border:1px solid #000;padding:5px;background:#f0f0f0;">Lot No.</th>
+                    <th style="border:1px solid #000;padding:5px;background:#f0f0f0;">Crop</th>
+                    <th style="border:1px solid #000;padding:5px;background:#f0f0f0;">Accession No.</th>
+                    <th style="border:1px solid #000;padding:5px;background:#f0f0f0;">Quantity</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if($dispatch->batch_id)
+                    @php
+                        $batchRows = \App\Models\WarehouseTransfer::with(['lot', 'lot.crop', 'lot.accession'])
+                            ->where('batch_id', $dispatch->batch_id)->get();
+                    @endphp
+                    @foreach($batchRows as $i => $br)
+                    <tr>
+                        <td style="border:1px solid #000;padding:5px;">{{ $i + 1 }}</td>
+                        <td style="border:1px solid #000;padding:5px;">{{ $br->lot->lot_number ?? '-' }}</td>
+                        <td style="border:1px solid #000;padding:5px;">{{ $br->lot->crop->crop_name ?? '-' }}</td>
+                        <td style="border:1px solid #000;padding:5px;">{{ $br->lot->accession->accession_number ?? '-' }}</td>
+                        <td style="border:1px solid #000;padding:5px;">{{ $br->quantity }}</td>
+                    </tr>
+                    @endforeach
+                    <tr>
+                        <td colspan="4" style="border:1px solid #000;padding:5px;text-align:right;font-weight:bold;">Total</td>
+                        <td style="border:1px solid #000;padding:5px;font-weight:bold;">{{ $batchRows->sum('quantity') }}</td>
+                    </tr>
+                @else
+                    <tr>
+                        <td style="border:1px solid #000;padding:5px;">1</td>
+                        <td style="border:1px solid #000;padding:5px;">
+                            @php $pLot = $dispatch->lot_id ? \App\Models\Lot::with('accession','crop')->find($dispatch->lot_id) : null; @endphp
+                            {{ $pLot?->lot_number ?? '-' }}
+                        </td>
+                        <td style="border:1px solid #000;padding:5px;">{{ $pLot?->crop?->crop_name ?? $dispatch->request?->crop?->crop_name ?? '-' }}</td>
+                        <td style="border:1px solid #000;padding:5px;">{{ $pLot?->accession?->accession_number ?? $dispatch->accession?->accession_number ?? '-' }}</td>
+                        <td style="border:1px solid #000;padding:5px;">{{ $dispatch->quantity }}</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+    </div>
+    @if($dispatch->request)
     <div class="section">
         <div class="section-title">Requester Information</div>
         <div class="grid">
@@ -113,12 +181,13 @@
     <div class="section">
         <div class="section-title">Seed / Accession Information</div>
         <div class="grid grid-3">
-            <div class="field"><label>Crop</label><span>{{ $dispatch->request->crop?->crop_name ?? 'N/A' }}</span></div>
+            <div class="field"><label>Crop</label><span>{{ $dispatch->request?->crop?->crop_name ?? $dispatch->itn?->crop?->crop_name ?? 'N/A' }}</span></div>
             <div class="field"><label>Accession No.</label><span>{{ $dispatch->accession?->accession_number ?? 'N/A' }}</span></div>
             <div class="field"><label>Requested Qty</label><span>{{ $dispatch->request->quantity }} {{ $dispatch->request->unit?->name ?? '' }}</span></div>
             <div class="field"><label>Dispatched Qty</label><span>{{ $dispatch->quantity }} {{ $dispatch->request->unit?->name ?? '' }}</span></div>
         </div>
     </div>
+    @endif
 
     {{-- Courier / Logistics Info --}}
     <div class="section">
@@ -131,7 +200,8 @@
         </div>
     </div>
 
-    {{-- Approval Info --}}
+    {{-- if request Approval Info --}}
+    @if($dispatch->request)
     <div class="section">
         <div class="section-title">Approval Information</div>
         <div class="grid">
@@ -140,6 +210,7 @@
             <div class="field"><label>Approval Remarks</label><span>{{ $dispatch->request->remarks ?? 'N/A' }}</span></div>
         </div>
     </div>
+    @endif
 
     {{-- Dispatch Remarks --}}
     @if($dispatch->remarks)

@@ -103,12 +103,14 @@
                 </tr>
             </thead>
             <tbody>
+                @foreach($batchLots as $bl)
                 <tr>
-                    <td>{{ $itn->crop->crop_name ?? '-' }}</td>
-                    <td>{{ $itn->accession->accession_number ?? '-' }}</td>
-                    <td>{{ $itn->lot->lot_number ?? '-' }}</td>
-                    <td>{{ $itn->quantity }}</td>
+                    <td>{{ $bl->lot->crop->crop_name ?? '-' }}</td>
+                    <td>{{ $bl->lot->accession->accession_number ?? '-' }}</td>
+                    <td>{{ $bl->lot->lot_number ?? '-' }}</td>
+                    <td>{{ $bl->quantity }}</td>
                 </tr>
+                @endforeach
             </tbody>
         </table>
     </div>

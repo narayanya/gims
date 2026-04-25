@@ -230,6 +230,28 @@ $role = optional(auth()->user()->role)->slug;
                             <div class="col-md-3"><span class="text-muted">Expiry Date:</span><br><strong id="acc_expiry">—</strong></div>
                             <div class="col-md-3"><span class="text-muted">Barcode:</span><br><strong id="acc_barcode">—</strong></div>
                         </div>
+                        {{-- Lots breakdown --}}
+                        <div id="accLotsWrapper" class="mt-2 d-none">
+                            <div class="fw-semibold small mb-1"><i class="ri-stack-line me-1"></i>Lots Breakdown</div>
+                            <table class="table table-sm table-bordered mb-0" style="font-size:12px;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Lot No.</th>
+                                        <th>Storage</th>
+                                        <th class="text-end">Available Qty</th>
+                                        <th>Unit</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="accLotsBody"></tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <th colspan="2" class="text-end">Total</th>
+                                        <th class="text-end" id="accLotsTotal">—</th>
+                                        <th id="accLotsTotalUnit">—</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
                     </div>
                 </div>
                 
@@ -399,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // ✅ ROW BASED VALUES
                 // =========================
 
-                // Quantity
+                // Quantity — use total across all lots
                 let qtyInput = row.querySelector('.availableQty');
                 if (qtyInput) {
                     qtyInput.value = d.quantity_show ?? d.quantity ?? 0;
@@ -417,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     unitIdInput.value = d.unit_id || '';
                 }
 
-                // Max validation
+                // Max validation — total available across all lots
                 let requestQty = row.querySelector('input[name="quantity[]"]');
                 if (requestQty) {
                     requestQty.setAttribute('max', d.quantity_show ?? d.quantity ?? 0);
@@ -442,6 +464,30 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('acc_barcode').textContent = d.barcode || '—';
 
                 document.getElementById('accessionDetailsBox').classList.remove('d-none');
+
+                // =========================
+                // ✅ LOTS BREAKDOWN TABLE
+                // =========================
+                const lotsWrapper = document.getElementById('accLotsWrapper');
+                const lotsBody    = document.getElementById('accLotsBody');
+                const lotsTotal   = document.getElementById('accLotsTotal');
+                const lotsTotalUnit = document.getElementById('accLotsTotalUnit');
+
+                if (d.lots && d.lots.length > 0) {
+                    lotsBody.innerHTML = d.lots.map(lot => `
+                        <tr>
+                            <td>${lot.lot_number}</td>
+                            <td>${lot.storage}</td>
+                            <td class="text-end">${lot.quantity}</td>
+                            <td>${lot.unit}</td>
+                        </tr>
+                    `).join('');
+                    lotsTotal.textContent   = d.quantity_show ?? d.quantity ?? 0;
+                    lotsTotalUnit.textContent = d.unit || '';
+                    lotsWrapper.classList.remove('d-none');
+                } else {
+                    lotsWrapper.classList.add('d-none');
+                }
 
             })
             .catch(err => {
@@ -489,7 +535,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if(invalid){
             e.preventDefault();
-            alert('❌ Quantity cannot exceed available stock');
+            alert('One or more rows have a request quantity that exceeds the total available stock. Please check the highlighted fields.');
         }
 
     });

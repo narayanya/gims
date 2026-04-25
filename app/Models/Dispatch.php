@@ -9,6 +9,8 @@ class Dispatch extends Model
     protected $fillable = [
         'dispatch_number',
         'request_id',
+        'itn_id',
+        'batch_id',
         'accession_id',
         'lot_id',
         'mrn_number',
@@ -49,4 +51,15 @@ class Dispatch extends Model
     {
         return $this->belongsTo(Accession::class, 'accession_id');
     }
+    public function itn()
+    {
+        return $this->belongsTo(\App\Models\Itn::class);
+    }
+
+    // All warehouse transfers in the same batch
+    public function batchTransfers()
+    {
+        return $this->hasMany(\App\Models\WarehouseTransfer::class, 'batch_id', 'batch_id');
+    }
+    public function unit()      { return $this->belongsTo(Unit::class, 'capacity_unit_id'); }
 }

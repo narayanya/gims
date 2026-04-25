@@ -12,7 +12,7 @@ class PermissionController extends Controller
     {
         $roles       = Role::with('permissions')->orderBy('id')->get();
         $permissions = Permission::orderBy('slug')->get();
-        $modules     = ['crop', 'variety', 'lot', 'storage', 'accession', 'request'];
+        $modules     = ['crop', 'variety', 'lot', 'storage', 'accession', 'request', 'dispatch'];
 
         return view('settings.permission', compact('roles', 'permissions', 'modules'));
     }

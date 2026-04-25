@@ -113,11 +113,10 @@
                                 <span
                                     class="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Critical</span>
                             </div>
-                            <h3 class="text-2xl font-bold text-rose-600 mt-1">14</h3>
+                            <h3 class="text-2xl font-bold text-rose-600 mt-1">{{ $lowStockCount }}</h3>
                         </div>
                         <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Low Stock Alert</p>
-
-                        <p class="text-sage-muted text-xs italic text-danger">Below minimum </p>
+                        <p class="text-sage-muted text-xs italic text-danger">Below {{ 10 }} units</p>
                     </div>
                 </div>
                 <div class="row">
@@ -130,86 +129,6 @@
                                 <a href="{{ route('storage-management.index') }}" class="view-all">View All Location</a>
                             </div>
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-                                <!--<div class="flex flex-col gap-4 rounded-xl p-4 border border-sage-200 dark:border-sage-800 bg-white dark:bg-sage-900 group cursor-pointer hover:border-primary transition-all">
-        <div class="w-full aspect-video bg-sage-100 dark:bg-sage-800 rounded-lg overflow-hidden relative">
-        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-        <div class="absolute bottom-2 left-2 text-white">
-        <span class="bg-emerald-500 text-[10px] px-2 py-0.5 rounded-full font-bold">OPTIMAL</span>
-        </div>
-        <div class="w-full h-full bg-cover bg-center" data-alt="Laboratory cryo tank rows in clean room" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDOksLwrs65G8XxQBGucpIWdHUZKmXHU3NUlLcFtsz0e3m1oJUDeZ4ZPd1TpdHLJcsWtdYp_eL2c-zeUYN95Ig8KUJ4EgTxngBhAZAD96SVoMlQoXF_hyLGNb4RuubPJWd7vEBwneJfhG1LuMbPpklVqw33LuMOwMHe-4BZvunKbFirX4H0MqHb9YKLa2U06KDSpKF1pAdqIJHeglINTYySaUlPIGtJeWfTWsg0Ie-hflgorLeEc07CayjtEMfLWj39DVCpDZiyk1s');"></div>
-        </div>
-        <div class="flex flex-col">
-        <p class="text-sage-900 dark:text-white text-base font-bold leading-tight">Cryo Tank Alpha-1</p>
-        <div class="flex justify-between items-center mt-1">
-        <p class="text-sage-500 dark:text-sage-400 text-xs font-medium">-196°C | Liquid Nitrogen</p>
-        <p class="text-sage-900 dark:text-white text-xs font-bold">92% Full</p>
-        </div>
-        <div class="w-full bg-sage-100 dark:bg-sage-800 h-1 rounded-full mt-2">
-        <div class="bg-primary h-full rounded-full" style="width: 92%"></div>
-        </div>
-        </div>
-        </div>
-
-        <div class="flex flex-col gap-4 rounded-xl p-4 border border-sage-200 dark:border-sage-800 bg-white dark:bg-sage-900 group cursor-pointer hover:border-primary transition-all">
-        <div class="w-full aspect-video bg-sage-100 dark:bg-sage-800 rounded-lg overflow-hidden relative">
-        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-        <div class="absolute bottom-2 left-2 text-white">
-        <span class="bg-emerald-500 text-[10px] px-2 py-0.5 rounded-full font-bold">OPTIMAL</span>
-        </div>
-        <div class="w-full h-full bg-cover bg-center" data-alt="Indoor seed vault storage shelves" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB7uJDW20a6SX7tQ8p_Tx8cNTf-4ZlOO7DFNP6-g2a2yhSOrXcDmkPudzHPpm9Z7yFLM92vxmxcXg_tQ3oBHiKfW4099gQNgpd1tH8vbOsuJQZW6Gk0X1uY_saD412Dri2IAcbvJN8O4lzHFGuK8zDo6h3dBA4b6ZE-FECVW8nxyPo7bCff0VD64xVjh03Yguy8-vN9tJ9fIbmMw57LWOJPenORVFqCJf6OTz6gWBIpy16_RsBE7kRgDaYVqPBw7M1BZ7GNgAvASks');"></div>
-        </div>
-        <div class="flex flex-col">
-        <p class="text-sage-900 dark:text-white text-base font-bold leading-tight">Seed Vault Room 2</p>
-        <div class="flex justify-between items-center mt-1">
-        <p class="text-sage-500 dark:text-sage-400 text-xs font-medium">4°C | 25% Humidity</p>
-        <p class="text-sage-900 dark:text-white text-xs font-bold">45% Full</p>
-        </div>
-        <div class="w-full bg-sage-100 dark:bg-sage-800 h-1 rounded-full mt-2">
-        <div class="bg-sage-400 h-full rounded-full" style="width: 45%"></div>
-        </div>
-        </div>
-        </div>
-
-        <div class="flex flex-col gap-4 rounded-xl p-4 border border-sage-200 dark:border-sage-800 bg-white dark:bg-sage-900 group cursor-pointer hover:border-primary transition-all">
-        <div class="w-full aspect-video bg-sage-100 dark:bg-sage-800 rounded-lg overflow-hidden relative">
-        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-        <div class="absolute bottom-2 left-2 text-white">
-        <span class="bg-amber-500 text-[10px] px-2 py-0.5 rounded-full font-bold text-sage-900">CHECK RE-ICE</span>
-        </div>
-        <div class="w-full h-full bg-cover bg-center" data-alt="Bio-sample freezer units in lab" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCRUFDrSspAFUnC59rmu1shTFWjBZZr95j_4ZWHz3BGlFMjf_q_TChpgUWC_cii6dcbdF_E4GGm0tY61S5Sw0Dr07moDU0toXT_sxZ5_Cj3RE8duxodIJcK4xuzD0y5CnTWILfYj8wwOYDbCHalZP7vB2yEyotOiGd5eP1A2P3K3Wo4cD1vchJ7dJL9nAyQ0egQqPICBNXZeqVuQ1PXVsfK3AOEptagfRQ4383UwgxgkHvlucYlirF2qdLQ8z0DegGHPIBl2PC-BDw');"></div>
-        </div>
-        <div class="flex flex-col">
-        <p class="text-sage-900 dark:text-white text-base font-bold leading-tight">Cold Storage B-4</p>
-        <div class="flex justify-between items-center mt-1">
-        <p class="text-sage-500 dark:text-sage-400 text-xs font-medium">-20°C | Deep Freeze</p>
-        <p class="text-sage-900 dark:text-white text-xs font-bold">78% Full</p>
-        </div>
-        <div class="w-full bg-sage-100 dark:bg-sage-800 h-1 rounded-full mt-2">
-        <div class="bg-primary h-full rounded-full" style="width: 78%"></div>
-        </div>
-        </div>
-        </div>
-
-        <div class="flex flex-col gap-4 rounded-xl p-4 border border-sage-200 dark:border-sage-800 bg-white dark:bg-sage-900 group cursor-pointer hover:border-primary transition-all">
-            <div class="w-full aspect-video bg-sage-100 dark:bg-sage-800 rounded-lg overflow-hidden relative">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-            <div class="absolute bottom-2 left-2 text-white">
-            <span class="bg-emerald-500 text-[10px] px-2 py-0.5 rounded-full font-bold">OPTIMAL</span>
-            </div>
-            <div class="w-full h-full bg-cover bg-center" data-alt="Incubator chamber with glass door" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCNi8W53xt_Ozx7giDqjY1b2ORBJcC4ctXj_uUY8ZjRyzWUvEEXb3zE3xnUUJ4O2kRAiDV_PoUZ9h1lFyYajYcJU9aJs-HrjEFCIlo62M8vK2aXMepFfO2re4FMIpi3J_gjs56yFK6wUFOBLKVL6EMN1zxdry1bdn2V6CHkvcbvVmpQX3_h3IumXNMAO29rMI6mXKpkBXFbmhWAM_w1w1kLQiUCT0Kos9iKA9uG5bjcFQlp-tfbIJTcJvJCAvweNam4xQHiQ-1ZOQo');"></div>
-            </div>
-            <div class="flex flex-col">
-            <p class="text-sage-900 dark:text-white text-base font-bold leading-tight">Incubator C-1</p>
-            <div class="flex justify-between items-center mt-1">
-            <p class="text-sage-500 dark:text-sage-400 text-xs font-medium">25°C | Germination</p>
-            <p class="text-sage-900 dark:text-white text-xs font-bold">15% Full</p>
-            </div>
-            <div class="w-full bg-sage-100 dark:bg-sage-800 h-1 rounded-full mt-2">
-            <div class="bg-sage-300 h-full rounded-full" style="width: 15%"></div>
-            </div>
-            </div>
-        </div>-->
                                 @forelse($storages as $storage)
                                     <div
                                         class="flex flex-col gap-4 rounded-xl p-3 border border-sage-200 dark:border-sage-800 bg-white dark:bg-sage-900 group cursor-pointer hover:border-primary transition-all">
@@ -291,6 +210,51 @@ h-full rounded-full"
                             </div>
                         </div>
 
+                        <!-- Low Stock Alert Section -->
+                        @if($lowStockAccessions->count())
+                        <div class="mb-4 mt-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="text-lg font-bold text-rose-600" style="font-size:17px;">
+                                    <span class="material-symbols-outlined align-middle text-rose-500" style="font-size:18px;">error</span>
+                                    Low Stock Alert
+                                    <span class="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-full ms-2">{{ $lowStockCount }} accession(s) below 10 units</span>
+                                </h4>
+                            </div>
+                            <div class="bg-white rounded-xl border border-rose-200 shadow-sm overflow-hidden">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-rose-50 text-rose-700 text-xs uppercase tracking-wider">
+                                        <tr>
+                                            <th class="px-3 py-2">Accession No.</th>
+                                            <th class="px-3 py-2">Crop</th>
+                                            <th class="px-3 py-2">Accession Name</th>
+                                            <th class="px-3 py-2 text-end">Available Qty</th>
+                                            <th class="px-3 py-2">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-rose-100">
+                                        @foreach($lowStockAccessions as $ls)
+                                        <tr class="hover:bg-rose-50 transition-colors">
+                                            <td class="px-3 py-2 font-mono font-semibold text-slate-800">{{ $ls->accession_number }}</td>
+                                            <td class="px-3 py-2 text-slate-600">{{ $ls->crop->crop_name ?? '—' }}</td>
+                                            <td class="px-3 py-2 text-slate-600">{{ $ls->accession_name ?? '—' }}</td>
+                                            <td class="px-3 py-2 text-end">
+                                                <span class="font-bold {{ ($ls->total_available ?? 0) <= 5 ? 'text-red-600' : 'text-amber-600' }}">
+                                                    {{ number_format($ls->total_available ?? 0, 2) }}
+                                                </span>
+                                            </td>
+                                            <td class="px-3 py-2">
+                                                <a href="{{ route('accessions.show', $ls->id) }}" class="text-primary text-xs">
+                                                    <i class="ri-eye-line me-1"></i>View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        @endif
+
                         <!-- Data Table Section -->
                         <section
                             class="bg-white dark:bg-background-dark rounded-xl border border-sage-light dark:border-sage-deep/30 shadow-sm overflow-hidden">
@@ -352,7 +316,8 @@ h-full rounded-full"
                                                     </div>
                                                 </td>
                                                 <td class="px-3 py-2 text-sm">
-                                                    {{ $accession->quantity_show }} {{ $accession->unit }}
+                                                    {{ number_format($accession->total_available ?? $accession->quantity_show ?? 0, 2) }}
+                                                    {{ $accession->capacityUnit?->name ?? '' }}
                                                 </td>
 
                                                 <td class="px-3 py-2 text-sm">

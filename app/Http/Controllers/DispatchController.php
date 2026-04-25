@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Dispatch;
 use App\Models\SeedRequest;
 use App\Models\Itn;
+use App\Models\Lot;
 use Illuminate\Http\Request;
 
 use function Laravel\Prompts\alert;
@@ -14,7 +15,7 @@ class DispatchController extends Controller
     // ✅ List all approved requests (ready for dispatch)
     public function index()
     {
-        $dispatches = Dispatch::with(['request','accession'])->latest()->get();   
+        $dispatches = Dispatch::with(['request', 'accession', 'itn'])->latest()->get();   
         $requests = SeedRequest::with(['user','crop','unit','accession.lots'])
             ->where('status', 'approved')
             ->latest()
@@ -93,27 +94,27 @@ class DispatchController extends Controller
 
     public function itnStore(Request $req, $id)
     {   
-    $req->validate([
-            'lot_id'          => 'nullable',
+        $req->validate([
             'dispatched_at'   => 'nullable|date',
             'mrn_number'      => 'nullable|string|max:100',
             'courier_name'    => 'nullable|string|max:255',
             'contact_person'  => 'nullable|string|max:255',
             'contact_number'  => 'nullable|string|max:50',
             'tracking_number' => 'nullable|string|max:255',
-            'quantity'        => 'nullable|numeric|min:0.01',
             'remarks'         => 'nullable|string',
         ]);
 
-        $itn = SeedRequest::findOrFail($id);
+        $itn = Itn::findOrFail($id);
+
+        // Total quantity across all lots in the batch
+        $totalQty = \App\Models\WarehouseTransfer::where('batch_id', $itn->batch_id)->sum('quantity');
 
         $dispatch = Dispatch::create([
             'dispatch_number' => Dispatch::generateDispatchNumber(),
-            'request_id'      => $itn->id,
-            'accession_id'    => $itn->accession_id,
-            'lot_id'          => $req->lot_id, // ✅ FIXED
+            'itn_id'          => $itn->id,
+            'batch_id'        => $itn->batch_id,
             'mrn_number'      => $req->mrn_number ?: 'MRN-' . now()->format('YmdHis'),
-            'quantity'        => $req->quantity ?? $itn->quantity,
+            'quantity'        => $totalQty ?: $itn->quantity,
             'courier_name'    => $req->courier_name,
             'contact_person'  => $req->contact_person,
             'contact_number'  => $req->contact_number,
@@ -124,11 +125,8 @@ class DispatchController extends Controller
 
         $itn->update(['status' => 'dispatched']);
 
-        // Deduct dispatched quantity from seed_quantities for this lot
-    
-
-
-        return redirect()->route('dispatch.print', $dispatch->id);
+        return redirect()->route('dispatch-management.index')
+            ->with('success', 'MRN ' . $dispatch->mrn_number . ' generated — dispatch recorded successfully.');
     }
 
     // ✅ Mark as dispatched
@@ -170,28 +168,41 @@ class DispatchController extends Controller
     }
 
     public function showITN($id)
-{
-     $lots = collect();
-        $seedQuantities = collect();    
-$itn = Itn::with([
-        'lot',
-        'crop',
-        'accession',
-        'fromWarehouse',
-        'toWarehouse'
-    ])->findOrFail($id);
+    {
+        $itn = Itn::with([
+            'transfer',
+            'fromWarehouse',
+            'toWarehouse',
+            'fromStorage',
+            'toStorage'
+        ])->findOrFail($id);
 
-    return view('dispatch-management.itn-dispatch', compact('itn', 'lots', 'seedQuantities'));
-}
+        // Load all lots in this batch
+        $batchLots = \App\Models\WarehouseTransfer::with(['lot.crop', 'lot.accession', 'lot.storage'])
+            ->where('batch_id', $itn->batch_id)
+            ->get();
+
+        $lots = $batchLots; // alias for view compatibility
+        $seedQuantities = collect();
+
+        return view('dispatch-management.itn-dispatch', compact('itn', 'lots', 'batchLots', 'seedQuantities'));
+    }
     
 
     public function print($id)
-    {
-        $dispatch = Dispatch::with([
-            'request.crop', 'request.unit',
-            'request.user', 'request.approvedBy', 'accession'
-        ])->findOrFail($id);
+{
+    $dispatch = Dispatch::with([
+        'request.crop',
+        'request.unit',
+        'request.user',
+        'request.approvedBy',
+        'itn.fromWarehouse',
+        'itn.toWarehouse',
+        'itn.fromStorage',
+        'itn.toStorage',
+        'accession'
+    ])->findOrFail($id);
 
-        return view('dispatch-management.print', compact('dispatch'));
-    }
+    return view('dispatch-management.print', compact('dispatch'));
+}
 }

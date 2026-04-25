@@ -8,6 +8,7 @@ class Itn extends Model
 {
     protected $fillable = [
         'transfer_id',
+        'batch_id',
         'itn_number',
         'itn_date',
         'lot_id',
@@ -30,6 +31,12 @@ class Itn extends Model
     public function transfer()
     {
         return $this->belongsTo(WarehouseTransfer::class);
+    }
+
+    // All transfers in the same batch
+    public function transfers()
+    {
+        return $this->hasMany(WarehouseTransfer::class, 'batch_id', 'batch_id');
     }
     public function lot()
 {
@@ -63,5 +70,6 @@ public function fromStorage() {
 public function toStorage() {
     return $this->belongsTo(Storage::class, 'to_storage_id');
 }
+public function unit()      { return $this->belongsTo(Unit::class, 'capacity_unit_id'); }
 
 }
