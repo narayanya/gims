@@ -25,12 +25,13 @@ class StorageTypeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255|unique:storage_types,name',
             'description' => 'nullable|string|max:1000',
+            'status' => 'required|in:0,1'
         ]);
 
         StorageType::create([
         'name' => $request->name,
         'description' => $request->description,
-        'status' => 'active',
+        'status' => $request->status,
     ]);
         return redirect()->route('storage-types.index')->with('success', 'Storage type added successfully.');
     }
@@ -54,9 +55,10 @@ class StorageTypeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255|unique:storage_types,name,' . $type->id,
             'description' => 'nullable|string|max:1000',
+            'status' => 'required|in:0,1'
         ]);
 
-        $type->update($request->only('name', 'description'));
+        $type->update($request->only('name', 'description', 'status'));
         return redirect()->route('storage-types.index')->with('success', 'Storage type updated successfully.');
     }
 

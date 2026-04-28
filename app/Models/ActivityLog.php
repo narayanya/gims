@@ -45,6 +45,11 @@ class ActivityLog extends Model
             'new_values'   => $newValues,
             'ip_address'   => Request::ip(),
             'user_agent'   => Request::userAgent(),
+            'in_time'      => now(),
+            'out_time'     => null,
+            'time_spent_seconds' => null,
+            'page_url'    => Request::fullUrl(),
+            'page_title'  => Request::header('X-Page-Title', 'Unknown'),
             'created_at'   => now(),
         ]);
     }

@@ -227,17 +227,19 @@
                             // Validation error
                             $qtyRows = collect(old('quantity'))->map(function ($val, $i) {
                                 return (object)[
-                                    'quantity' => $val,
-                                    'unit_id' => old('unit_id.' . $i),
+                                    'quantity'         => $val,
+                                    'unit_id'          => old('unit_id.' . $i),
                                     'reference_number' => old('reference_number.' . $i),
-                                    'number_of_seeds' => old('number_of_seeds.' . $i),
-                                    'number_of_bags' => old('number_of_bags.' . $i),
-                                    'per_seed_weight' => old('per_seed_weight.' . $i),
+                                    'number_of_seeds'  => old('number_of_seeds.' . $i),
+                                    'number_of_bags'   => old('number_of_bags.' . $i),
+                                    'per_seed_weight'  => old('per_seed_weight.' . $i),
+                                    'quantity_show'    => old('quantity_show.' . $i),
+                                    'min_quantity'     => old('min_quantity.' . $i),
                                 ];
                             });
                         } elseif(isset($lot) && $lot->seedQuantities->count()) {
-                            // ✅ EDIT MODE (THIS WAS MISSING)
-                            $qtyRows = $lot->seedQuantities;
+                            // EDIT MODE — only rows belonging to this lot
+                            $qtyRows = $lot->seedQuantities->where('lot_id', $lot->id)->values();
                         } else {
                             // CREATE MODE
                             $qtyRows = collect([(object)[]]);
@@ -279,12 +281,12 @@
     </td>
 
     <td>
-        <input type="number" name="number_of_seeds[]" class="form-control" placeholder="e.g. 100"
+        <input type="number" name="number_of_seeds[]" class="form-control" placeholder="e.g. 100" min="0" max="4"
             value="{{ $row->number_of_seeds ?? '' }}">
     </td>
 
     <td>
-        <input type="number" name="number_of_bags[]" class="form-control" placeholder="e.g. 100"
+        <input type="number" name="number_of_bags[]" class="form-control" placeholder="e.g. 100" min="0" max="3"
             value="{{ $row->number_of_bags ?? '' }}">
     </td>
 
@@ -342,7 +344,9 @@
                                     <div class="text-danger">{{ $message }}</div>
                                 @enderror
                                 <div class="mt-2 text-muted">
-                                    Last Reference No.: <strong>{{ $lastRef ?? 'N/A' }}</strong>
+                                    Last Reference No.: <strong class="me-4">{{ $lastRef ?? 'N/A' }},</strong> 
+
+                                    Total Quantity: <strong id="totalQuantity">{{ isset($lot) ? $lot->seedQuantities->sum('quantity') : '0' }}</strong>
                                 </div>
                             </div>
                         </div>
@@ -670,20 +674,43 @@ document.addEventListener('DOMContentLoaded', function () {
     let _storageData    = null;
     let _accessionData  = null;
 
+    function getTotalQty() {
+        let total = 0;
+        document.querySelectorAll('#tableBodyQuantity .quantity').forEach(el => {
+            total += parseFloat(el.value || 0);
+        });
+        return total;
+    }
+
     function updateBalance() {
-        const balEl = document.getElementById('sd_balance');
+        const balEl      = document.getElementById('sd_balance');
+        const totalEl    = document.getElementById('totalQuantity');
+        const available  = _storageData ? parseFloat(_storageData.available || 0) : null;
+        const unit       = _storageData ? (_storageData.unit || '') : '';
+        const totalQty   = getTotalQty();
+
+        // Update total quantity display
+        if (totalEl) {
+            totalEl.textContent = totalQty.toFixed(2);
+        }
+
         if (!_storageData || !balEl) return;
 
-        let totalQty = 0;
+        const balance = available - totalQty;
+        balEl.textContent = `${balance.toFixed(2)} ${unit}`;
+        balEl.className   = 'ms-1 fw-bold ' + (balance < 0 ? 'text-danger' : 'text-success');
 
-        document.querySelectorAll('.quantity').forEach(el => {
-            totalQty += parseFloat(el.value || 0);
+        // Highlight quantity inputs that push over capacity
+        document.querySelectorAll('#tableBodyQuantity .quantity').forEach(input => {
+            const val = parseFloat(input.value || 0);
+            if (balance < 0 && val > 0) {
+                input.classList.add('is-invalid');
+                input.title = `Total exceeds available capacity (${available} ${unit})`;
+            } else {
+                input.classList.remove('is-invalid');
+                input.title = '';
+            }
         });
-
-        const balance = (_storageData.available || 0) - totalQty;
-
-        balEl.textContent = `${balance.toFixed(2)} ${_storageData.unit || ''}`;
-        balEl.className   = 'ms-1 ' + (balance < 0 ? 'text-danger' : 'text-success');
     }
 
     document.addEventListener('input', function (e) {
@@ -696,11 +723,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const id  = this.value;
         const box = document.getElementById('storageDetails');
         const accessionSelect = document.getElementById('accessionSelect');
+        const accessionDetails = document.getElementById('accessionDetails');
 
-        _storageData = null;
+        _storageData   = null;
+        _accessionData = null;
 
-        // Reset accession dropdown
+        // Remember current accession so we can restore if still valid
+        const prevAccessionId = accessionSelect.value;
+
+        // Reset accession dropdown and hide its details
         accessionSelect.innerHTML = '<option value="">Select Accession</option>';
+        if (accessionDetails) accessionDetails.classList.add('d-none');
 
         if (!id) {
             box.classList.add('d-none');
@@ -724,9 +757,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('sd_humidity').textContent   = d.humidity   ? `${d.humidity} %`      : '—';
 
                 box.classList.remove('d-none');
+
+                filterUnitsByCapacity(d.capacity_in_grams, d.unit_code);
                 updateBalance();
 
-                // 2️⃣ Fetch filtered accessions (🔥 NEW)
+                // 2️⃣ Fetch filtered accessions
                 return fetch(`/lot-management/accessions-by-storage/${id}`);
             })
             .then(r => r.json())
@@ -737,11 +772,72 @@ document.addEventListener('DOMContentLoaded', function () {
                     option.textContent = a.accession_number;
                     accessionSelect.appendChild(option);
                 });
+
+                // Restore previous accession if it's still in the filtered list
+                if (prevAccessionId && [...accessionSelect.options].some(o => o.value == prevAccessionId)) {
+                    accessionSelect.value = prevAccessionId;
+                    // Re-trigger accession details
+                    accessionSelect.dispatchEvent(new Event('change'));
+                }
             })
             .catch(() => {
                 box.classList.add('d-none');
             });
     });
+
+    
+    const units = @json($units);
+
+    // Filter unit dropdowns based on storage capacity unit
+    // storageUnitCode: the storage's own unit (g, kg, mg, ton…)
+    // capacityInGrams: capacity converted to grams for threshold logic
+    function filterUnitsByCapacity(capacityInGrams, storageUnitCode) {
+        const code = (storageUnitCode || '').toLowerCase();
+
+        // Determine which units are compatible
+        // Rule: show units that are <= the storage unit scale
+        // e.g. storage in kg → show kg, g, mg
+        //      storage in g  → show g, mg
+        //      storage in mg → show mg only
+        const scaleOrder = ['mg', 'g', 'kg', 'ton'];
+        const storageScale = scaleOrder.indexOf(code);
+
+        document.querySelectorAll('select[name="unit_id[]"]').forEach(select => {
+            const current = select.value;
+            select.innerHTML = '<option value="">Unit</option>';
+
+            units.forEach(unit => {
+                const uCode = unit.code.toLowerCase();
+                const uScale = scaleOrder.indexOf(uCode);
+
+                // If storage unit is known, show units at same or smaller scale
+                // If unknown, show all
+                const show = storageScale === -1 || uScale <= storageScale;
+
+                if (show) {
+                    const opt = document.createElement('option');
+                    opt.value = unit.id;
+                    opt.textContent = `${unit.name} (${unit.code})`;
+                    select.appendChild(opt);
+                }
+            });
+
+            // Restore previous selection if still available
+            if ([...select.options].some(o => o.value == current)) {
+                select.value = current;
+            }
+        });
+    }
+
+    // On edit: trigger unit filter for the pre-selected storage
+    @if(isset($lot) && $lot->storage_id)
+    (function () {
+        fetch(`/lot-management/storage/{{ $lot->storage_id }}`)
+            .then(r => r.json())
+            .then(d => filterUnitsByCapacity(d.capacity_in_grams, d.unit_code));
+    })();
+    @endif
+    
 
     
 
@@ -998,6 +1094,17 @@ document.addEventListener('DOMContentLoaded', function () {
     // ADD ROW
     tableBodyQuantity.addEventListener('click', function(e) {
         if (e.target.classList.contains('addRowQ')) {
+
+            // Block adding row if already over capacity
+            if (_storageData) {
+                const available = parseFloat(_storageData.available || 0);
+                const total     = getTotalQty();
+                if (total >= available) {
+                    alert(`Storage capacity reached. Available: ${available} ${_storageData.unit || ''}. Cannot add more rows.`);
+                    return;
+                }
+            }
+
             let newRow = tableBodyQuantity.rows[0].cloneNode(true);
 
             // Clear values
@@ -1005,6 +1112,14 @@ document.addEventListener('DOMContentLoaded', function () {
             newRow.querySelectorAll('select').forEach(select => select.value = '');
 
             tableBodyQuantity.appendChild(newRow);
+
+            // Re-apply unit filter to the new row's unit select
+            const storageId = document.getElementById('storageSelect').value;
+            if (storageId) {
+                fetch(`/lot-management/storage/${storageId}`)
+                    .then(r => r.json())
+                    .then(d => filterUnitsByCapacity(d.capacity_in_grams, d.unit_code));
+            }
         }
 
         // REMOVE ROW
@@ -1062,12 +1177,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
     $('form').on('submit', function(e){
 
+        // ── Capacity check ──────────────────────────────────────────────
+        if (_storageData) {
+            const available = parseFloat(_storageData.available || 0);
+            const total     = getTotalQty();
+            if (total > available) {
+                e.preventDefault();
+                alert(`Total quantity (${total.toFixed(2)}) exceeds available storage capacity (${available.toFixed(2)} ${_storageData.unit || ''}). Please reduce quantities.`);
+                return;
+            }
+        }
+
+        // ── Duplicate reference check ───────────────────────────────────
         let values = [];
         let hasDuplicate = false;
 
         $('.refNumber').each(function () {
             let val = $(this).val().trim();
-
             if (val !== '') {
                 if (values.includes(val)) {
                     hasDuplicate = true;

@@ -89,6 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('typeFormMethod').value = 'POST';
         document.getElementById('typeName').value = '';
         document.getElementById('typeDescription').value = '';
+        document.getElementById('typeStatus').value = '1';
         modal.show();
     });
 
@@ -103,6 +104,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     document.getElementById('typeFormMethod').value = 'PUT';
                     document.getElementById('typeName').value = data.name;
                     document.getElementById('typeDescription').value = data.description;
+                    document.getElementById('typeStatus').value = data.status;
                     modal.show();
                 });
         });
@@ -131,8 +133,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="mb-3">
                         <label for="typeStatus" class="form-label">Status</label>
                         <select class="form-select" id="typeStatus" name="status">
-                            <option value="1">Active</option>
-                            <option value="0">Inactive</option>
+                            <option value="">Select Status</option>
+                            <option value="1" {{ old('status') == 1 ? 'selected' : '' }}>Active</option>
+                            <option value="0" {{ old('status') == 0 ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
                     <div class="mb-3">

@@ -24,7 +24,7 @@ class StorageController extends Controller
         return [
             'users'            => User::all(),
             'storageTypes'     => StorageType::orderBy('name')->get(),
-            'units'            => Unit::orderBy('name')->get(),
+            'units'            => Unit::where('status', 1)->orderBy('name')->get(),
             'storageTime'      => StorageTime::orderBy('name')->get(),
             'storageCondition' => StorageCondition::orderBy('name')->get(),
             'storageWarehouse' => Warehouse::with(['state','district','city'])->orderBy('name')->get(),
@@ -72,17 +72,35 @@ class StorageController extends Controller
             'image' => 'required|image|max:2048',
         ]);
 
+        $capacity = $request->capacity;
+        $unitId   = $request->unit;
+
+        // Get unit name (assuming relation)
+        $unit = \App\Models\Unit::find($unitId);
+
+        $capacityInGrams = null;
+
+        if ($capacity && $unit) {
+            if (strtolower($unit->code) == 'kg') {
+                $capacityInGrams = $capacity * 1000;
+            } elseif (strtolower($unit->code) == 'g') {
+                $capacityInGrams = $capacity;
+            }
+        }
+
         $imagePath = $request->hasFile('image')
             ? $request->file('image')->store('storages', 'public')
             : null;
         
         $storageTime = \App\Models\StorageTime::find($request->storage_time_id);
+        $gramUnitId = \App\Models\Unit::where('code', 'g')->value('id');
 
             if (!$storageTime) {
                 return back()->with('error', 'Invalid storage time selected.');
             }
 
             $storageTimeCode = $storageTime->code; // make sure column exists
+            
 
         try {
             DB::beginTransaction();
@@ -92,8 +110,8 @@ class StorageController extends Controller
                 'name' => $request->name,
                 'storage_type_id' => $request->type,
                 
-                'capacity' => $request->capacity,
-                'unit_id' => $request->unit,
+                'capacity' => $capacityInGrams,
+                'unit_id'  => $gramUnitId, 
                 'storage_time_id' => $request->storage_time_id, 
                 'storage_condition_id' => $request->storage_condition_id,
                 'warehouse_id' => $request->warehouse_id,
@@ -163,11 +181,26 @@ class StorageController extends Controller
         try {
             DB::beginTransaction();
 
+            // ✅ GET UNIT
+            $unit = \App\Models\Unit::find($request->unit);
+            $gramUnitId = \App\Models\Unit::where('code', 'g')->value('id');
+
+            // ✅ CONVERT TO GRAMS
+            $capacityInGrams = null;
+
+            if ($request->capacity && $unit) {
+                if (strtolower($unit->code) == 'kg') {
+                    $capacityInGrams = $request->capacity * 1000;
+                } elseif (strtolower($unit->code) == 'g') {
+                    $capacityInGrams = $request->capacity;
+                }
+            }
+
             $updateData = [
                 'name'                 => $request->name,
                 'storage_type_id'      => $request->type,
-                'capacity'             => $request->capacity,
-                'unit_id'              => $request->unit,
+                'capacity'             => $capacityInGrams,
+                'unit_id'  => $gramUnitId, 
                 'storage_time_id'      => $request->storage_time_id,
                 'storage_condition_id' => $request->storage_condition_id,
                 'warehouse_id'         => $request->warehouse_id,

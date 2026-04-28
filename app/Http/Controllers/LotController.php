@@ -24,7 +24,7 @@ class LotController extends Controller
             'accessions' => Accession::orderBy('accession_number')->get(['id','accession_number','accession_name','expiry_date']),
             'storages'   => Storage::where('status', 1)->orderBy('name')->get(['id','storage_id','name']),
             //'crops'      => \App\Models\Crop::where('status',1)->where('update_status', 1)->orderBy('crop_name')->get(['id','crop_name']),
-            'units'      => Unit::orderBy('name')->get(['id','name','code']),
+            'units'      => Unit::where('status',1)->orderBy('name')->get(['id','name','code']),
             'sections'   => \App\Models\Section::where('status',1)->orderBy('name')->get(),
             'racks'      => \App\Models\Rack::where('status',1)->orderBy('name')->get(),
             'bins'       => \App\Models\Bin::where('status',1)->orderBy('name')->get(),
@@ -84,10 +84,10 @@ class LotController extends Controller
             //'reference_number.*' => ['nullable','string','distinct','max:255'],
 
             'number_of_seeds'    => 'nullable|array',
-            'number_of_seeds.*'  => 'nullable|numeric|min:0',
+            'number_of_seeds.*'  => 'nullable|numeric|min:0|max:4',
 
             'number_of_bags'    => 'nullable|array',
-            'number_of_bags.*'  => 'nullable|numeric|min:0',
+            'number_of_bags.*'  => 'nullable|numeric|min:0|max:3',
 
             'per_seed_weight'    => 'nullable|array',
             'per_seed_weight.*'  => 'nullable|numeric|min:0',
@@ -213,9 +213,11 @@ class LotController extends Controller
     public function managementEdit($id)
     {
         $lot = Lot::with(['accession','storage','seedQualities', 'seedQuantities'])->findOrFail($id);
+        $lastRef = \App\Models\SeedQuantity::latest('id')->value('reference_number');
         return view('lot-management.create', array_merge($this->formData(), [
             'nextLotNo' => $lot->lot_number,
             'lot'       => $lot,
+            'lastRef'   => $lastRef,
         ]));
     }
 
@@ -266,9 +268,13 @@ class LotController extends Controller
         SeedQuality::where('lot_id', $lot->id)->delete();
         SeedQuantity::where('lot_id', $lot->id)->delete();
 
-        // ✅ INSERT NEW DATA
+        // ✅ INSERT NEW DATA — loop all quantity rows
         $this->saveSeedQualities($request, $lot->id, $accession->id);
-        $this->saveSeedQuantities($request, $lot->id, $accession->id , 0); // 👉 Assuming single quantity row for edit
+
+        $qtys = $request->quantity ?? [];
+        foreach (array_keys($qtys) as $i) {
+            $this->saveSeedQuantities($request, $lot->id, $accession->id, $i);
+        }
 
         // ✅ Update storage usage
         $diff = $newQty - $oldQty;
@@ -349,6 +355,16 @@ class LotController extends Controller
         $storage = Storage::with(['storageType','storageCondition','storageTime','warehouse','unit','lots'])->findOrFail($id);
         $used      = $storage->lots()->sum('quantity');
         $available = (float)$storage->capacity - $used;
+
+        // Unit conversion map to grams for filtering
+        $unitCode = strtolower($storage->unit?->code ?? '');
+        $capacityInGrams = match($unitCode) {
+            'kg'  => (float)$storage->capacity * 1000,
+            'mg'  => (float)$storage->capacity / 1000,
+            'ton' => (float)$storage->capacity * 1000000,
+            default => (float)$storage->capacity, // assume grams
+        };
+
         return response()->json([
             'id'                => $storage->id,
             'storage_id'        => $storage->storage_id,
@@ -361,6 +377,9 @@ class LotController extends Controller
             'current_usage'     => $used,
             'available'         => $available,
             'unit'              => $storage->unit?->name,
+            'unit_id'           => $storage->unit_id,
+            'unit_code'         => $unitCode,
+            'capacity_in_grams' => $capacityInGrams,
             'temperature'       => $storage->temperature,
             'humidity'          => $storage->humidity,
         ]);
@@ -408,48 +427,41 @@ class LotController extends Controller
     }
     public function getQuantityDetails($lotId)
     {
-        $q = SeedQuantity::with('unit')
+        $rows = SeedQuantity::with('unit')
             ->where('lot_id', $lotId)
-            ->latest()
-            ->first();
+            ->orderBy('id')
+            ->get()
+            ->map(fn($q) => [
+                'reference_number' => $q->reference_number,
+                'number_of_seeds'  => $q->number_of_seeds,
+                'number_of_bags'   => $q->number_of_bags,
+                'per_seed_weight'  => $q->per_seed_weight,
+                'quantity'         => $q->quantity,
+                'quantity_show'    => $q->quantity_show,
+                'min_quantity'     => $q->min_quantity,
+                'unit'             => $q->unit ? $q->unit->name . ' (' . $q->unit->code . ')' : null,
+                'quantity_updated' => $q->updated_at,
+            ]);
 
-        if (!$q) {
-            return response()->json([]);
-        }
-
-        return response()->json([
-            'quantity'         => $q->quantity,
-            'quantity_show'    => $q->quantity_show,
-            'number_of_seeds'  => $q->number_of_seeds,
-            'number_of_bags'  => $q->number_of_bags,
-            'per_seed_weight'  => $q->per_seed_weight,
-            'capacity_unit_id' => $q->capacity_unit_id,
-            'unit' => $q->unit 
-            ? $q->unit->name . ' (' . $q->unit->code . ')'
-            : null,
-            'quantity_updated' => $q->updated_at,
-        ]);
+        return response()->json($rows);
     }
 
     public function getQualityDetails($lotId)
     {
-        $q = SeedQuality::where('lot_id', $lotId)
-            ->latest()
-            ->first();
+        $rows = SeedQuality::where('lot_id', $lotId)
+            ->orderBy('id')
+            ->get()
+            ->map(fn($q) => [
+                'germination_percent' => $q->germination_percentage,
+                'moisture_content'    => $q->moisture_content,
+                'purity_percent'      => $q->purity_percentage,
+                'seed_health_status'  => $q->seed_health_status,
+                'viability_test_date' => $q->viability_test_date,
+                'researcher'          => $q->researcher?->name ?? $q->researcher_other,
+                'research_date'       => $q->research_date,
+            ]);
 
-        if (!$q) {
-            return response()->json([]);
-        }
-
-        return response()->json([
-            'germination_percent' => $q->germination_percentage,
-            'moisture_content'    => $q->moisture_content,
-            'purity_percent'      => $q->purity_percentage,
-            'seed_health_status'  => $q->seed_health_status,
-            'viability_test_date' => $q->viability_test_date,
-            'researcher' => $q->researcher?->name ?? $q->researcher_other,
-            'research_date'       => $q->research_date,
-        ]);
+        return response()->json($rows);
     }
 
     // ── Legacy Lot Master delegates ───────────────────────────────────────
@@ -513,6 +525,15 @@ class LotController extends Controller
                 'container' => $lot->container->name ?? '',
             ]
         ]);
+    }
+
+    public function getQuality($id)
+    {
+        return response()->json(
+            SeedQuality::where('lot_id', $id)
+                ->latest()   // optional
+                ->get()      // ✅ MUST be get()
+        );
     }
 
 }

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class StorageLocation extends Model
 {
-    protected $fillable = ['name', 'description', 'code', 'warehouse_id'];
+    protected $fillable = ['name', 'description', 'code', 'warehouse_id' ,'status'];
 
     /**
      * Get the warehouse that this location belongs to

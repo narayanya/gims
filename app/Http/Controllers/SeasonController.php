@@ -19,6 +19,7 @@ class SeasonController extends Controller
             'name' => 'required|string|max:255|unique:seasons,name',
             'code' => 'nullable|string|max:50|unique:seasons,code',
             'description' => 'nullable|string|max:1000',
+            'status' => 'required|in:0,1'
         ]);
 
         Season::create($request->only('name', 'code', 'status', 'description'));
@@ -33,6 +34,7 @@ class SeasonController extends Controller
             'name' => 'required|string|max:255|unique:seasons,name,' . $season->id,
             'code' => 'nullable|string|max:50|unique:seasons,code,' . $season->id,
             'description' => 'nullable|string|max:1000',
+            'status' => 'required|in:0,1'
         ]);
 
         $season->update($request->only('name', 'code', 'status', 'description'));

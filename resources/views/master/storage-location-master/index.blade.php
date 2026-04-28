@@ -241,6 +241,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <input type="text" class="form-control" name="code" value="${d.code||''}"></div>
         <div class="mb-3"><label class="form-label">Status</label>
             <select class="form-select" name="status">
+                <option value="">Select Status</option>
                 <option value="1" ${(d.status==1||d.status===undefined)?'selected':''}>Active</option>
                 <option value="0" ${d.status==0?'selected':''}>Inactive</option>
             </select></div>

@@ -28,7 +28,7 @@ class LogReportController extends Controller
         if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
-
+        
         // Separate page visits from action logs
         $tab = $request->get('tab', 'actions');
 

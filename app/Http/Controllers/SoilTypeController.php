@@ -10,6 +10,7 @@ class SoilTypeController extends Controller
     public function index()
     {
         $soiltypes = SoilType::latest()->get();
+        
         return view('master.soil-types.index', compact('soiltypes'));
     }
 

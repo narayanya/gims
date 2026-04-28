@@ -60,7 +60,8 @@
                                                 data-name="{{ $cropCategory->name }}"
                                                 data-code="{{ $cropCategory->code }}"
                                                 data-status="{{ $cropCategory->status }}"
-                                                data-description="{{ $cropCategory->description }}">
+                                                data-description="{{ $cropCategory->description }}"
+                                                data-status="{{ $cropCategory->status }}">
                                             <i class="ri-edit-line"></i>
                                         </button>
                                         <form action="{{ route('crop-categories.destroy', $cropCategory) }}" method="POST" class="d-inline"
@@ -163,8 +164,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="mb-3">
                         <label for="cropCategoryStatus" class="form-label">Status</label>
                         <select class="form-select" id="cropCategoryStatus" name="status">
-                            <option value="1">Active</option>
-                            <option value="0">Inactive</option>
+                            <option value="" >Select Status</option>
+                            <option value="1" {{ old('status') == 1 ? 'selected' : '' }}>Active</option>
+                            <option value="0" {{ old('status') == 0 ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
                     <div class="mb-3">

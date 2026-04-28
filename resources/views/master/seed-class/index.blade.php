@@ -59,7 +59,8 @@
                                                 data-name="{{ $seedClass->name }}" 
                                                 data-code="{{ $seedClass->code }}"
                                                 data-status="{{ $seedClass->status }}"
-                                                data-description="{{ $seedClass->description }}">
+                                                data-description="{{ $seedClass->description }}"
+                                                data-status="{{ $seedClass->status }}">
                                             <i class="ri-edit-line"></i> 
                                         </button>
                                         <form action="{{ route('seed-classes.destroy', $seedClass) }}" method="POST" class="d-inline"
@@ -114,8 +115,9 @@
                     <div class="mb-3">
                         <label for="seedClassStatus" class="form-label">Status</label>
                         <select class="form-select" id="seedClassStatus" name="status">
-                            <option value="1">Active</option>
-                            <option value="0">Inactive</option>
+                            <option value="">Select Status</option>
+                            <option value="1" {{ old('status') == 1 ? 'selected' : '' }}>Active</option>
+                            <option value="0" {{ old('status') == 0 ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
                     <div class="mb-3">

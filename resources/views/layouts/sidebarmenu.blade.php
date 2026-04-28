@@ -67,7 +67,9 @@
                                             'seasons*',
                                             'seed-classes*',
                                             'units*',
-                                            'soil-types*'
+                                            'soil-types*',
+                                            'location*',
+                                            'employees*',
                                         ) ? 'active' : '' }}"
                                         
                                         href="#sidebarMasterSetting"
@@ -90,7 +92,8 @@
                                             
                                             'soil-types*',
                                             
-                                            'location*'
+                                            'location*',
+                                            'employees*'
                                         ) ? 'show' : '' }}"
                                         
                                         id="sidebarMasterSetting" style="visibility: visible;">
@@ -217,7 +220,7 @@
                                 </li>
 
                                 <li class="nav-item">
-                                    <a class="nav-link menu-link {{ request()->is('lot-management', 'lot-types' ,'lots*') ? 'active' : '' }} "  href="#sidebarMasterLot"
+                                    <a class="nav-link menu-link {{ request()->is('lot-management', 'lot-transfer', 'warehouse-transfer', 'lot-types' ,'lots*') ? 'active' : '' }} "  href="#sidebarMasterLot"
                                         data-bs-toggle="collapse"
                                         role="button">
                                         <i class="ri-layout-3-line"></i> <span data-key="t-layouts">Lot / Batch Management</span>
@@ -226,6 +229,8 @@
                                         {{ request()->is(
                                             'lot-management',
                                             'lot-transfer',
+                                            'warehouse-transfer',
+                                            'lot-types*',
                                             'lots*'
                                         ) ? 'show' : '' }}"
                                         

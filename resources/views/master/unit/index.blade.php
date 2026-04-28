@@ -59,7 +59,9 @@
                                         <button class="btn btn-sm btn-outline-warning editUnitBtn" data-id="{{ $unit->id }}"
                                                 data-name="{{ $unit->name }}" 
                                                 data-code="{{ $unit->code }}"
-                                                data-description="{{ $unit->description }}">
+                                                data-description="{{ $unit->description }}"
+                                                data-status="{{ $unit->status }}"
+                                                >
                                             <i class="ri-edit-line"></i> 
                                         </button>
                                         <form action="{{ route('units.destroy', $unit) }}" method="POST" class="d-inline"
@@ -98,10 +100,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const name = this.getAttribute('data-name');
             const code = this.getAttribute('data-code');
             const description = this.getAttribute('data-description');
+            const status = this.getAttribute('data-status');
 
             document.getElementById('unitName').value = name;
             document.getElementById('unitCode').value = code || '';
             document.getElementById('unitDescription').value = description || '';
+            document.getElementById('unitStatus').value = status || '';
             document.getElementById('unitModalLabel').textContent = 'Edit Unit';
             document.getElementById('submitBtn').textContent = 'Update Unit';
 
@@ -161,8 +165,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="mb-3">
                         <label for="unitStatus" class="form-label">Status</label>
                         <select class="form-select" id="unitStatus" name="status">
-                            <option value="1">Active</option>
-                            <option value="0">Inactive</option>
+                            <option value="">Select Status</option>
+                            <option value="1" {{ $unit->status == 1 ? 'selected' : '' }}>Active</option>
+                            <option value="0" {{ $unit->status == 0 ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
                     <div class="mb-3">

@@ -59,7 +59,8 @@
                                                 data-name="{{ $season->name }}" 
                                                 data-code="{{ $season->code }}"
                                                 data-status="{{ $season->status }}"
-                                                data-description="{{ $season->description }}">
+                                                data-description="{{ $season->description }}"
+                                                data-status="{{ $season->status }}">
                                             <i class="ri-edit-line"></i> 
                                         </button>
                                         <form action="{{ route('seasons.destroy', $season) }}" method="POST" class="d-inline"
@@ -114,8 +115,9 @@
                         <div class="mb-3">
                             <label for="seasonStatus" class="form-label">Status</label>
                             <select class="form-select" id="seasonStatus" name="status">
-                                <option value="1">Active</option>
-                                <option value="0">Inactive</option>
+                                <option value="">Select Status</option>
+                                 <option value="1" {{ old('status') == 1 ? 'selected' : '' }}>Active</option>
+                                 <option value="0" {{ old('status') == 0 ? 'selected' : '' }}>Inactive</option>
                             </select>
                         </div>
                     <div class="mb-3">

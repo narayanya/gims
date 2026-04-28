@@ -175,19 +175,20 @@
 
                                     <div class="col-md-4">
                                         <label for="unit" class="form-label">Unit <span class="text-danger">*</span></label>
-                                        <select class="form-select @error('unit') is-invalid @enderror"
-                                            id="unit" name="unit" required>
+                                        <select disabled class="form-select @error('unit') is-invalid @enderror"
+                                            id="unit" name="unit" required >
 
                                         <option value="">Select Unit</option>
 
-                                        @foreach($units as $unit)
+                                         @foreach($units as $unit)
                                             <option value="{{ $unit->id }}"
-                                                {{ old('unit', $storage->unit_id ?? '') == $unit->id ? 'selected' : '' }}>
+                                                {{ strtolower($unit->code) == 'kg' ? 'selected' : '' }}>
                                                 {{ $unit->name }} ({{ $unit->code }})
                                             </option>
                                         @endforeach
 
                                     </select>
+                                    <input type="hidden" name="unit" value="{{ $units->firstWhere('code', 'kg')->id }}">
 
                                     @error('unit')
                                         <div class="invalid-feedback">{{ $message }}</div>

@@ -26,9 +26,10 @@ class UnitController extends Controller
             'name' => 'required|string|max:255|unique:units,name',
             'code' => 'nullable|string|max:50|unique:units,code',
             'description' => 'nullable|string|max:1000',
+            'status' => 'required|in:0,1'
         ]);
 
-        Unit::create($request->only('name', 'code', 'description'));
+        Unit::create($request->only('name', 'code', 'description', 'status'));
         return redirect()->route('units.index')->with('success', 'Unit added successfully.');
     }
 
@@ -52,9 +53,10 @@ class UnitController extends Controller
             'name' => 'required|string|max:255|unique:units,name,' . $unit->id,
             'code' => 'nullable|string|max:50|unique:units,code,' . $unit->id,
             'description' => 'nullable|string|max:1000',
+            'status' => 'required|in:0,1'
         ]);
 
-        $unit->update($request->only('name', 'code', 'description'));
+        $unit->update($request->only('name', 'code', 'description', 'status'));
         return redirect()->route('units.index')->with('success', 'Unit updated successfully.');
     }
 

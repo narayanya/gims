@@ -95,11 +95,11 @@
                                 
                                 <th>Date / Time</th>
                                 <th>Details</th>
-                                <th>Page Url</th>
+                                <!--<th>Page Url</th>
                                 <th>Page Title</th>
                                 <th>in time</th>
                                 <th>Out time</th>
-                                <th>Total Time</th>
+                                <th>Total Time</th>-->
                             </tr>
                         </thead>
                         <tbody>
@@ -121,7 +121,7 @@
                                     <span class="badge bg-{{ $badge }}">{{ ucfirst($log->action) }}</span>
                                 </td>
                                 <td>{{ ucfirst($log->module) }}</td>
-                                <td>{{ $log->record_label ?? ($log->record_id ? '#'.$log->record_id : '—') }}</td>
+                                <td>{{ $log->record_id ?? $log->user_id ?? '-' }}</td>
                                 <td>{{ $log->ip_address }}</td>
                                 <td>{{ $log->created_at->format('d M Y, H:i') }}</td>
                                 <td>
@@ -129,11 +129,11 @@
                                         <a href="{{ route('logs.show', $log->id) }}" class="btn btn-xs btn-outline-primary btn-sm py-0 px-1">Details</a>
                                     @endif
                                 </td>
-                                <td>{{ $log->page_url }}</td>
+                                {{--<td>{{ $log->page_url }}</td>
                                 <td>{{ $log->page_title }}</td>
                                 <td>{{ $log->in_time }}</td>
                                 <td>{{ $log->out_time }}</td>
-                                <td>{{ $log->time_spent_seconds }}</td>
+                                <td>{{ $log->time_spent_seconds }}</td>--}}
                                 
                             </tr>
                             @empty

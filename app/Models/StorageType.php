@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class StorageType extends Model
 {
-    protected $fillable = ['name', 'description'];
+    protected $fillable = ['name', 'description' ,'status'];
 
     /**
      * Accessions that use this storage type (if applicable)

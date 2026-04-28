@@ -130,9 +130,13 @@
                                         title="View">
                                         <i class="ri-eye-line"></i>
                                     </button>
-                                    <a href="{{ route('lot-management.edit', $lot->id) }}" class="btn btn-sm btn-outline-warning d-none" title="Edit">
-                                        <i class="ri-edit-line"></i>
-                                    </a>
+                                     @auth
+                                        @if(auth()->user()->hasRole(['super-admin', 'admin',]))
+                                        <a href="{{ route('lot-management.edit', $lot->id) }}" class="btn btn-sm btn-outline-warning" title="Edit">
+                                            <i class="ri-edit-line"></i>
+                                        </a>
+                                        @endif
+                                    @endauth
                                 </td>
                             </tr>
                             @endforeach
@@ -207,34 +211,48 @@
                 {{-- Quantity Parameters --}}
                 <div class="card mb-3">
                     <div class="card-header bg-light py-2"><strong class="small"><i class="ri-test-tube-line me-1"></i>Quantity Parameters</strong></div>
-                    <div class="card-body">
-                        <div class="row g-3 small">
-                            <div class="col-md-4"><span class="text-muted d-block">Actual Quantity</span><strong id="vl_quantity"></strong></div>
-                            <div class="col-md-4"><span class="text-muted d-block">Visible Quantity</span><strong id="vl_quantity_show"></strong></div>
-                            <div class="col-md-4"><span class="text-muted d-block">Unit</span><strong id="vl_capacity_unit_id"></strong></div>
-                            <div class="col-md-4"><span class="text-muted d-block">Quantity Last Updated</span><strong id="vl_qty_updated"></strong></div>
-                            <div class="col-md-4"><span class="text-muted d-block">Number of Seeds</span><strong id="vl_number_of_seeds"></strong></div>
-                            <div class="col-md-4"><span class="text-muted d-block">Number of Seeds</span><strong id="vl_number_of_bags"></strong></div>
-                            <div class="col-md-4"><span class="text-muted d-block">Per Seed Weight</span><strong id="vl_per_seed_weight"></strong>
-
-                        </div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Ref No.</th>
+                                    <th>Seeds</th>
+                                    <th>Bags</th>
+                                    <th>Seed Wt (g)</th>
+                                    <th>Quantity</th>
+                                    <th>Min Stock</th>
+                                    <th>Visible</th>
+                                    <th>Unit</th>
+                                    <th>Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vl_quantity_tbody">
+                                <tr><td colspan="9" class="text-center text-muted">Loading...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
                 {{-- Quality Parameters --}}
                 <div class="card mb-3">
                     <div class="card-header bg-light py-2"><strong class="small"><i class="ri-test-tube-line me-1"></i>Quality Parameters</strong></div>
-                    <div class="card-body">
-                        <div class="row g-3 small">
-                            <div class="col-md-4"><span class="text-muted d-block">Germination %</span><strong id="vl_germination"></strong></div>
-                            <div class="col-md-4"><span class="text-muted d-block">Moisture %</span><strong id="vl_moisture"></strong></div>
-                            <div class="col-md-4"><span class="text-muted d-block">Purity %</span><strong id="vl_purity"></strong></div>
-                            <div class="col-md-4"><span class="text-muted d-block">Health</span><strong id="vl_health"></strong></div>
-                            <div class="col-md-4"><span class="text-muted d-block">Viability Date</span><strong id="vl_viability"></strong></div>
-                            <div class="col-md-4"><span class="text-muted d-block">Researcher</span><strong id="vl_researcher"></strong></div>
-                            <div class="col-md-4"><span class="text-muted d-block">Research Date</span><strong id="vl_research_date"></strong></div>
-
-                        </div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Germination %</th>
+                                    <th>Moisture %</th>
+                                    <th>Purity %</th>
+                                    <th>Health</th>
+                                    <th>Viability Date</th>
+                                    <th>Researcher</th>
+                                    <th>Research Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vl_quality_tbody">
+                                <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
                 
@@ -281,6 +299,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const el = document.getElementById(id);
             if (el) el.textContent = (val !== null && val !== undefined && val !== '') ? val : '—';
         };
+
+        // Reset tables before loading
+        document.getElementById('vl_quantity_tbody').innerHTML = '<tr><td colspan="9" class="text-center text-muted">Loading...</td></tr>';
+        document.getElementById('vl_quality_tbody').innerHTML  = '<tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>';
 
         // Lot info
         set('vl_lot_number',  d.lot_number);
@@ -329,18 +351,25 @@ document.addEventListener('DOMContentLoaded', function () {
         if (d.id) {
             fetch(`/lot-management/${d.id}/quantity`)
                 .then(r => r.json())
-                .then(q => {
-                    set('vl_quantity', q.quantity ? q.quantity + ' ' + (q.unit || '') : null);
-                    set('vl_number_of_seeds', q.number_of_seeds);
-                    set('vl_number_of_bags', q.number_of_bags);
-                    set('vl_per_seed_weight', q.per_seed_weight ? q.per_seed_weight + ' g' : null);
-                    set('vl_capacity_unit_id', q.unit);
-                    set('vl_quantity_show', q.quantity_show ? q.quantity_show + ' ' + (q.unit || '') : null);
-                    set('vl_qty_updated',
-                        q.quantity_updated && !isNaN(Date.parse(q.quantity_updated))
-                            ? new Date(q.quantity_updated).toLocaleDateString('en-GB')
-                            : q.quantity_updated
-                    );
+                .then(rows => {
+                    const tbody = document.getElementById('vl_quantity_tbody');
+                    if (!rows || rows.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No quantity data</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = rows.map(q => `
+                        <tr>
+                            <td>${q.reference_number || '—'}</td>
+                            <td>${q.number_of_seeds || '—'}</td>
+                            <td>${q.number_of_bags || '—'}</td>
+                            <td>${q.per_seed_weight ? q.per_seed_weight + ' g' : '—'}</td>
+                            <td>${q.quantity || '—'}</td>
+                            <td>${q.min_quantity || '—'}</td>
+                            <td>${q.quantity_show || '—'}</td>
+                            <td>${q.unit || '—'}</td>
+                            <td>${q.quantity_updated ? new Date(q.quantity_updated).toLocaleDateString('en-GB') : '—'}</td>
+                        </tr>
+                    `).join('');
                 });
         }
 
@@ -348,23 +377,23 @@ document.addEventListener('DOMContentLoaded', function () {
         if (d.id) {
             fetch(`/lot-management/${d.id}/quality`)
                 .then(r => r.json())
-                .then(q => {
-                    set('vl_germination', q.germination_percent ? q.germination_percent + ' %' : null);
-                    set('vl_moisture', q.moisture_content ? q.moisture_content + ' %' : null);
-                    set('vl_purity', q.purity_percent ? q.purity_percent + ' %' : null);
-                    set('vl_health', q.seed_health_status);
-                    set('vl_viability',
-                        q.viability_test_date && !isNaN(Date.parse(q.viability_test_date))
-                            ? new Date(q.viability_test_date).toLocaleDateString('en-GB')
-                            : q.viability_test_date
-                    );
-                    
-                    set('vl_researcher', q.researcher);
-                    set('vl_research_date',
-                        q.research_date && !isNaN(Date.parse(q.research_date))
-                            ? new Date(q.research_date).toLocaleDateString('en-GB')
-                            : q.research_date
-                    );
+                .then(rows => {
+                    const tbody = document.getElementById('vl_quality_tbody');
+                    if (!rows || rows.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No quality data</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = rows.map(q => `
+                        <tr>
+                            <td>${q.germination_percent ? q.germination_percent + ' %' : '—'}</td>
+                            <td>${q.moisture_content ? q.moisture_content + ' %' : '—'}</td>
+                            <td>${q.purity_percent ? q.purity_percent + ' %' : '—'}</td>
+                            <td>${q.seed_health_status || '—'}</td>
+                            <td>${q.viability_test_date ? new Date(q.viability_test_date).toLocaleDateString('en-GB') : '—'}</td>
+                            <td>${q.researcher || '—'}</td>
+                            <td>${q.research_date ? new Date(q.research_date).toLocaleDateString('en-GB') : '—'}</td>
+                        </tr>
+                    `).join('');
                 });
         }
 

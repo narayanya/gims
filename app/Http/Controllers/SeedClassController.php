@@ -19,6 +19,7 @@ class SeedClassController extends Controller
             'name' => 'required|string|max:255|unique:seed_classes,name',
             'code' => 'nullable|string|max:50|unique:seed_classes,code',
             'description' => 'nullable|string|max:1000',
+            'status' => 'required|in:0,1'
         ]);
 
         SeedClass::create($request->only('name', 'code', 'status', 'description'));
@@ -33,6 +34,7 @@ class SeedClassController extends Controller
             'name' => 'required|string|max:255|unique:seed_classes,name,' . $seedClass->id,
             'code' => 'nullable|string|max:50|unique:seed_classes,code,' . $seedClass->id,
             'description' => 'nullable|string|max:1000',
+            'status' => 'required|in:0,1'
         ]);
 
         $seedClass->update($request->only('name', 'code', 'status', 'description'));

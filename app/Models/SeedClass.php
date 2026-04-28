@@ -10,5 +10,6 @@ class SeedClass extends Model
         'name',
         'code',
         'description',
+        'status'
     ];
 }
