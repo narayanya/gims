@@ -11,45 +11,93 @@ class LogReportController extends Controller
 {
     public function index(Request $request)
     {
-        $query = ActivityLog::with('user')->latest('created_at');
-
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
-        }
-        if ($request->filled('module')) {
-            $query->where('module', $request->module);
-        }
-        if ($request->filled('action')) {
-            $query->where('action', $request->action);
-        }
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-        
-        // Separate page visits from action logs
-        $tab = $request->get('tab', 'actions');
-
-        if ($tab === 'visits') {
-            $query->where('action', 'page_visit');
-        } else {
-            $query->where('action', '!=', 'page_visit');
-        }
-
-        $logs    = $query->paginate(20)->withQueryString();
+        $tab = $request->get('tab', 'dashboard');
         $users   = User::orderBy('name')->get();
 
-        $knownModules = ['accession', 'auth', 'crop', 'lot', 'request', 'storage', 'variety'];
+        $knownModules = ['accession', 'auth', 'crop', 'lot', 'request', 'storage', 'variety', 'dispatch'];
         $dbModules    = ActivityLog::select('module')->distinct()->orderBy('module')->pluck('module')->toArray();
         $modules      = collect(array_unique(array_merge($knownModules, $dbModules)))->sort()->values();
+        $actions      = ActivityLog::select('action')->where('action', '!=', 'page_visit')->distinct()->orderBy('action')->pluck('action');
 
-        $actions = ActivityLog::select('action')
+        // ── Dashboard stats ──────────────────────────────────────────────
+        $stats = [
+            'total'        => ActivityLog::where('action', '!=', 'page_visit')->count(),
+            'today'        => ActivityLog::where('action', '!=', 'page_visit')->whereDate('created_at', today())->count(),
+            'active_users' => ActivityLog::whereDate('created_at', today())->distinct('user_id')->count('user_id'),
+            'page_visits'  => ActivityLog::where('action', 'page_visit')->whereDate('created_at', today())->count(),
+        ];
+
+        // Module activity breakdown (top 6)
+        $moduleStats = ActivityLog::select('module', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
             ->where('action', '!=', 'page_visit')
-            ->distinct()->orderBy('action')->pluck('action');
+            ->groupBy('module')
+            ->orderByDesc('total')
+            ->limit(6)
+            ->get();
 
-        return view('logs.index', compact('logs', 'users', 'modules', 'actions', 'tab'));
+        $moduleMax = $moduleStats->max('total') ?: 1;
+
+        // Action breakdown
+        $actionStats = ActivityLog::select('action', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
+            ->where('action', '!=', 'page_visit')
+            ->groupBy('action')
+            ->orderByDesc('total')
+            ->get();
+
+        // Recent activity (last 10)
+        $recentActivity = ActivityLog::with('user')
+            ->where('action', '!=', 'page_visit')
+            ->latest('created_at')
+            ->limit(10)
+            ->get();
+
+        // Top active users today
+        $topUsers = ActivityLog::with('user')
+            ->select('user_id', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
+            ->whereDate('created_at', today())
+            ->where('action', '!=', 'page_visit')
+            ->groupBy('user_id')
+            ->orderByDesc('total')
+            ->limit(5)
+            ->get();
+
+        // Hourly activity today (for mini chart)
+        $hourlyActivity = ActivityLog::select(
+                \Illuminate\Support\Facades\DB::raw('HOUR(created_at) as hour'),
+                \Illuminate\Support\Facades\DB::raw('count(*) as total')
+            )
+            ->whereDate('created_at', today())
+            ->where('action', '!=', 'page_visit')
+            ->groupBy('hour')
+            ->orderBy('hour')
+            ->get()
+            ->keyBy('hour');
+
+        // ── Filtered logs for action/visits tabs ─────────────────────────
+        $logs = collect();
+        if ($tab !== 'dashboard') {
+            $query = ActivityLog::with('user')->latest('created_at');
+
+            if ($request->filled('user_id'))   $query->where('user_id', $request->user_id);
+            if ($request->filled('module'))    $query->where('module', $request->module);
+            if ($request->filled('action'))    $query->where('action', $request->action);
+            if ($request->filled('date_from')) $query->whereDate('created_at', '>=', $request->date_from);
+            if ($request->filled('date_to'))   $query->whereDate('created_at', '<=', $request->date_to);
+
+            if ($tab === 'visits') {
+                $query->where('action', 'page_visit');
+            } else {
+                $query->where('action', '!=', 'page_visit');
+            }
+
+            $logs = $query->paginate(20)->withQueryString();
+        }
+
+        return view('logs.index', compact(
+            'logs', 'users', 'modules', 'actions', 'tab',
+            'stats', 'moduleStats', 'moduleMax', 'actionStats',
+            'recentActivity', 'topUsers', 'hourlyActivity'
+        ));
     }
 
     public function pageExit(Request $request)

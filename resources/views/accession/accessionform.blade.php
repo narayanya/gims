@@ -172,6 +172,12 @@
                                         @enderror
                                     </div>
                                     <div class="col-md-6">
+                                        <label class="form-label">Sample ID <span class="text-danger">*</span></label>
+                                        <input type="text" name="sample_id" class="form-control"
+                                            value="{{ old('sample_id', $accession->sample_id ?? '') }}"
+                                            placeholder="Enter sample ID" required>
+                                    </div>
+                                    <div class="col-md-6">
                                         <label class="form-label required">Storage Time </label>
                                         <select name="storage_time_id" class="form-select" required>
                                             <option value="">Select Time</option>
@@ -198,7 +204,7 @@
                                             class="form-control @error('accession_name') is-invalid @enderror"
                                             value="{{ old('accession_name', $accession->accession_name ?? '') }}"
                                             placeholder="e.g., HD-2967 Punjab Collection" required>
-                                            <small class="text-muted">Accession Number: Auto-generated (e.g., AG-2026-ACC-00001)</small>
+                                            <small class="text-muted">Accession ID: Auto-generated (e.g., AG-2026-ACC-00001)</small>
                                         @error('accession_name')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -251,6 +257,10 @@
                                             <li>
                                                 <strong>Type:</strong>
                                                 <span id="type">{{ old('type', $accession->type ?? '') }}</span>
+                                            </li>
+                                            <li>
+                                                <strong>Season:</strong>
+                                                <span id="season">{{ old('season', $accession->season_id ?? '') }}</span>
                                             </li>
                                         </ul>
                                     </div>
@@ -471,8 +481,8 @@
                                     </a>
                                 </div>
 
-                                <div class="text-center my-2 fw-bold">OR</div>
-                                <div class="col-md-12">
+                                <div class="text-center my-2 fw-bold d-none">OR</div>
+                                <div class="col-md-12 d-none">
                                     <label class="form-label fw-bold">Passport Data</label>
 
                                     <table class="table table-bordered" id="passportTable">
@@ -675,9 +685,10 @@
                                         <input type="hidden" name="entered_by" value="{{ auth()->id() }}">
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="form-label">Regenaration Cut of Year</label> 
-                                        <input type="text" id="" name="" class="form-control"
-                                            value="">
+                                        <label class="form-label">Regeneration Cut of Year <span class="text-danger">*</span></label> 
+                                        <input type="number" id="regen_year" name="regen_year" class="form-control"
+                                            value="{{ old('regen_year', $accession->regen_year ?? '') }}"
+                                            placeholder="Enter number only" min="1" max="100">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label required">Status</label>
@@ -697,7 +708,7 @@
                                     <div class="col-md-4">
                                         <label class="form-label">Expiry Date <span class="text-danger">*</span></label>
                                         <input type="date" id="expiry_date" name="expiry_date" class="form-control"
-                                            value="{{ old('expiry_date', now()->addMonth(2)->format('Y-m-d')) }}" min="{{ date('Y-m-d') }}">
+                                            value="{{ old('expiry_date', now()->addMonth(0)->format('Y-m-d')) }}" min="{{ date('Y-m-d') }}">
                                     </div>
 
                                     <div class="col-md-4">
@@ -1019,21 +1030,141 @@
             // =========================
             // DATE AUTO CALC
             // =========================
-            const expiryInput = $('expiry_date');
-            const regenInput = $('recheck_date');
+            /*const expiryInput = document.getElementById('expiry_date');
+            const regenInput  = document.getElementById('recheck_date');
+            const regenYearInput = document.getElementById('regen_year');
 
-            function calculateRegenDate() {
-                if (!expiryInput || !regenInput || !expiryInput.value) return;
+            function calculateDates() {
+                let years = parseInt(regenYearInput.value);
 
-                let d = new Date(expiryInput.value);
-                d.setMonth(d.getMonth() - 1);
-                regenInput.value = d.toISOString().split('T')[0];
+                if (!years || years <= 0) return;
+
+                // Entry date = today
+                let entryDate = new Date();
+
+                // Expiry = entry + years
+                let expiry = new Date(entryDate);
+                expiry.setFullYear(expiry.getFullYear() + years);
+
+                // Next regeneration = same as expiry (or you can change logic)
+                let regen = new Date(expiry);
+
+                // Format YYYY-MM-DD
+                let format = d => d.toISOString().split('T')[0];
+
+                expiryInput.value = format(expiry);
+                regenInput.value  = format(regen);
             }
 
-            if (expiryInput) {
-                expiryInput.addEventListener('change', calculateRegenDate);
-                calculateRegenDate();
-            }
+            // Trigger when user enters years
+            regenYearInput.addEventListener('input', calculateDates);
+
+            // Run once if value already exists
+            calculateDates();*/
+
+    const expiryInput    = document.getElementById('expiry_date');
+    const regenInput     = document.getElementById('recheck_date');
+    const regenYearInput = document.getElementById('regen_year');
+
+    @php
+        $seasonStart = 0;
+        $seasonEnd   = 0;
+        if (isset($accession) && $accession && $accession->crop && $accession->crop->season) {
+            $seasonStart = (int) $accession->crop->season->start_month;
+            $seasonEnd   = (int) $accession->crop->season->end_month;
+        }
+    @endphp
+
+    // Season seeded from PHP on edit (crop already selected), updated via AJAX on crop change
+    window._cropSeason = {
+        start_month: {{ $seasonStart }},
+        end_month:   {{ $seasonEnd }}
+    };
+
+    console.log("Season from PHP:", window._cropSeason);
+
+    // On edit with regen_year stored: recalculate immediately if season is valid
+    @if(isset($accession) && $accession && $accession->regen_year)
+    if (window._cropSeason.start_month > 0 && regenYearInput && regenYearInput.value) {
+        calculateAllDates();
+    }
+    @endif
+    
+
+    function formatDate(d) {
+        const y   = d.getFullYear();
+        const m   = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
+    // Check if month is inside season (handles wrap-around e.g. Rabi: Nov–Mar)
+    function isMonthInSeason(month, start, end) {
+        if (start <= end) {
+            return month >= start && month <= end;
+        } else {
+            return month >= start || month <= end;
+        }
+    }
+
+    // CALCULATION LOGIC:
+    //   Expiry     = today + regen_years  (same day/month, N years ahead)
+    //   Regen Date = expiry month IN season  → same date as expiry
+    //              = expiry month OUT of season → (expiry year - 1), season start month, same day
+    // Example: today=29-Apr-2026, years=2, Kharif(Jun-Oct)
+    //   Expiry = 29-Apr-2028  (Apr is outside Jun-Oct)
+    //   Regen  = 29-Jun-2027  (2028-1=2027, start month=Jun, day=29)
+    function calculateAllDates() {
+        const years = parseInt(regenYearInput.value);
+        if (!years || years <= 0) return;
+
+        const today  = new Date();
+        const todayY = today.getFullYear();
+        const todayM = today.getMonth();   // 0-based
+        const todayD = today.getDate();
+
+        // Expiry = today + N years (local date, no UTC shift)
+        const expiry = new Date(todayY + years, todayM, todayD);
+        expiryInput.value = formatDate(expiry);
+
+        // No season → regen = expiry
+        if (!window._cropSeason.start_month || !window._cropSeason.end_month) {
+            regenInput.value = formatDate(expiry);
+            return;
+        }
+
+        const expMonth = expiry.getMonth() + 1; // 1-based
+
+        let regen;
+        if (isMonthInSeason(expMonth, window._cropSeason.start_month, window._cropSeason.end_month)) {
+            // Expiry is already inside the season
+            regen = new Date(expiry);
+        } else {
+            // Go back to previous season start
+            const regenYear  = expiry.getFullYear() - 1;
+            const regenMonth = window._cropSeason.start_month - 1; // 0-based
+            const lastDay    = new Date(regenYear, regenMonth + 1, 0).getDate();
+            regen = new Date(regenYear, regenMonth, Math.min(todayD, lastDay));
+        }
+
+        regenInput.value = formatDate(regen);
+    }
+
+    // ✅ EVENTS
+    regenYearInput.addEventListener('input', function () {
+        const cropSelect = document.getElementById('crop_id');
+
+        // If crop not selected yet, warn once
+        if (!cropSelect || !cropSelect.value) {
+            alert('Please select a Crop first.');
+            this.value = '';
+            return;
+        }
+
+        // Season may or may not be set — calculateAllDates handles both cases
+        calculateAllDates();
+    });
+
 
 
            
@@ -1187,45 +1318,55 @@
                 -----------------------------*/
 
                 $.ajax({
-
                     url: '/get-crop-details/' + crop_id,
                     type: 'GET',
-
                     success: function(data) {
-
                         $('#scientificName').text(data.scientific_name ?? '-');
                         $('#family').text(data.family_name ?? '-');
                         $('#genus').text(data.genus ?? '-');
-                         $('#category').text('-');
-                        $('#cropCategory').text('-');
-                        $('#type').text('-');
+                        $('#category').text(data.category ? data.category.name : '-');
+                        $('#cropCategory').text(data.crop_category ? data.crop_category.name : '-');
+                        $('#type').text(data.crop_type ? data.crop_type.name : '-');
+                        $('#season').text(data.season ? data.season.name : '-');
 
+                        // ✅ Update season for date calculation
+                        if (data.season && data.season.start_month && data.season.end_month) {
+                            window._cropSeason.start_month = parseInt(data.season.start_month);
+                            window._cropSeason.end_month   = parseInt(data.season.end_month);
+                        } else {
+                            window._cropSeason.start_month = 0;
+                            window._cropSeason.end_month   = 0;
+                        }
+                        console.log("Season updated:", window._cropSeason);
+
+                        // Recalculate if regen_year already filled
+                        const regenYearEl = document.getElementById('regen_year');
+                        if (regenYearEl && regenYearEl.value) {
+                            calculateAllDates();
+                        }
                     },
-
                     error: function() {
-
                         $('#scientificName').text('-');
                         $('#family').text('-');
                         $('#genus').text('-');
                         $('#category').text('-');
                         $('#cropCategory').text('-');
                         $('#type').text('-');
-
-
+                        $('#season').text('-');
+                        window._cropSeason.start_month = 0;
+                        window._cropSeason.end_month   = 0;
                     }
-
                 });
 
             } else {
-
-                //$('#variety_id').html('<option value="">Select Variety</option>');
-
                 $('#scientificName').text('-');
                 $('#family').text('-');
                 $('#genus').text('-');
                 $('#category').text('-');
                 $('#cropCategory').text('-');
                 $('#type').text('-');
+                window._cropSeason.start_month = 0;
+                window._cropSeason.end_month   = 0;
             }
 
         });

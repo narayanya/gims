@@ -16,13 +16,15 @@ class SeasonController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:seasons,name',
-            'code' => 'nullable|string|max:50|unique:seasons,code',
+            'name'        => 'required|string|max:255|unique:seasons,name',
+            'code'        => 'nullable|string|max:50|unique:seasons,code',
             'description' => 'nullable|string|max:1000',
-            'status' => 'required|in:0,1'
+            'status'      => 'required|in:0,1',
+            'start_month' => 'nullable|integer|between:1,12',
+            'end_month'   => 'nullable|integer|between:1,12',
         ]);
 
-        Season::create($request->only('name', 'code', 'status', 'description'));
+        Season::create($request->only('name', 'code', 'status', 'description', 'start_month', 'end_month'));
         return redirect()->route('seasons.index')->with('success', 'Season added successfully.');
     }
 
@@ -31,13 +33,15 @@ class SeasonController extends Controller
         $season = Season::findOrFail($id);
 
         $request->validate([
-            'name' => 'required|string|max:255|unique:seasons,name,' . $season->id,
-            'code' => 'nullable|string|max:50|unique:seasons,code,' . $season->id,
+            'name'        => 'required|string|max:255|unique:seasons,name,' . $season->id,
+            'code'        => 'nullable|string|max:50|unique:seasons,code,' . $season->id,
             'description' => 'nullable|string|max:1000',
-            'status' => 'required|in:0,1'
+            'status'      => 'required|in:0,1',
+            'start_month' => 'nullable|integer|between:1,12',
+            'end_month'   => 'nullable|integer|between:1,12',
         ]);
 
-        $season->update($request->only('name', 'code', 'status', 'description'));
+        $season->update($request->only('name', 'code', 'status', 'description', 'start_month', 'end_month'));
         return redirect()->route('seasons.index')->with('success', 'Season updated successfully.');
     }
 

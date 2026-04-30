@@ -55,8 +55,8 @@ class CropController extends Controller
     {
 
         $request->validate([
-            'crop_name' => 'required',
-            'crop_code' => 'required',
+            'crop_name' => 'nullable',
+            'crop_code' => 'nullable',
             'category_id' => 'required',
             'crop_category_id' => 'required',
             'crop_type_id' => 'required',
@@ -80,8 +80,8 @@ class CropController extends Controller
     {
         
         $request->validate([
-            'crop_name' => 'required',
-            'crop_code' => 'required',
+            'crop_name' => 'nullable',
+            'crop_code' => 'nullable',
             'category_id' => 'required',
             'crop_category_id' => 'required',
             'crop_type_id' => 'required',
@@ -153,8 +153,17 @@ class CropController extends Controller
 
     public function getCropDetails($id)
     {
-        $crop = \App\Models\Crop::select('scientific_name','family_name','genus')
-                ->find($id);
+        $crop = \App\Models\Crop::with([
+            'category:id,name',
+            'cropCategory:id,name',
+            'cropType:id,name',
+            'season:id,name,start_month,end_month',
+            'soilType:id,name'
+        ])->find($id);
+
+        if (!$crop) {
+            return response()->json(['error' => 'Crop not found'], 404);
+        }
 
         return response()->json($crop);
     }

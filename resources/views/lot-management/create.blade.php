@@ -6,7 +6,7 @@
 
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
             <div>
-                <h3 class="text-xl font-bold">Lot Management</h3>
+                <h3 class="text-xl font-bold">Arrival Management</h3>
                 <p class="text-muted mb-0" style="font-size:13px">Create and manage germplasm lots</p>
             </div>
             <a href="{{ route('lot-management') }}" class="btn btn-primary btn-sm">
@@ -36,14 +36,14 @@
                 @endif
                 <div class="card-header">
                     <h5 class="modal-title" id="addLotModalLabel">
-                        <i class="ri-stack-line me-2"></i>Add New Lot
+                        <i class="ri-stack-line me-2"></i>Add New Arrival
                     </h5>
                 </div>
                 <div class="card-body" style="overflow-y:auto; flex:1;">
                     <div class="row g-3">
 
                         {{-- ── Section 1: Lot Info ── --}}
-                        <div class="col-12"><h6 class="text-muted border-bottom pb-1">Lot Information</h6></div>
+                        <div class="col-12"><h6 class="text-muted border-bottom pb-1">Arrival Information</h6></div>
                         {{-- Lot Number (auto-generated) --}}
                         {{--<div class="col-md-8 d-none">
                         <div class="alert alert-info py-2 d-flex align-items-center gap-3 mb-0">
@@ -55,49 +55,44 @@
                         </div>
                     </div>--}}
                     
-                        
                         <div class="col-md-3 mt-2">
-                            <label class="form-label">Rejuvenation Program <span class="text-danger">*</span></label>
-                            <input type="text" name="rejuvenation_program" class="form-control" value="{{ old('rejuvenation_program', $lot->rejuvenation_program ?? '') }}" placeholder="Enter rejuvenation program" {{ isset($lot) ? 'readonly style=background-color:#e9ecef;' : '' }} required>
-                        </div>
-                        <div class="col-md-3 mt-2">
-                            <label class="form-label">Prefix <span class="text-danger">*</span></label>
-                            <input type="text" name="prefix" class="form-control" value="{{ old('prefix', $lot->prefix ?? '') }}" placeholder="Enter prefix" {{ isset($lot) ? 'readonly style=background-color:#e9ecef;' : '' }} required>
-                        </div>
-                        <div class="col-md-3 mt-2">
-                            <label class="form-label">Sample ID <span class="text-danger">*</span></label>
-                            <input type="text" name="sample_id" class="form-control" value="{{ old('sample_id', $lot->sample_id ?? '') }}" placeholder="Enter sample ID" {{ isset($lot) ? 'readonly style=background-color:#e9ecef;' : '' }} required>
-                        </div>
-
-                        <div class="col-md-3 mt-2">
-                            <label class="form-label">Status <span class="text-danger">*</span></label>
-                            <select name="status" class="form-select" required>
-                                <option value="">Select Status</option>
-
-                                <option value="active" 
-                                    {{ old('status', $lot->status ?? '') == 'active' ? 'selected' : '' }}>
-                                    Active
-                                </option>
-
-                                <option value="inactive" 
-                                    {{ old('status', $lot->status ?? '') == 'inactive' ? 'selected' : '' }}>
-                                    Inactive
-                                </option>
-
-                                <option value="quarantine" 
-                                    {{ old('status', $lot->status ?? '') == 'quarantine' ? 'selected' : '' }}>
-                                    Quarantine
-                                </option>
-
-                                <option value="depleted" 
-                                    {{ old('status', $lot->status ?? '') == 'depleted' ? 'selected' : '' }}>
-                                    Depleted
-                                </option>
+                            <label class="form-label">Arrival Type <span class="text-danger">*</span></label>
+                            <select name="arrival_type" id="arrivalType" class="form-select" required>
+                                <option value="">Select Arrival Type</option>
+                                @foreach(\App\Models\ArrivalType::where('status', 1)->orderBy('name')->get() as $type)
+                                    <option value="{{ $type->name }}" {{ old('arrival_type', $lot->arrival_type ?? '') == $type->name ? 'selected' : '' }}>
+                                        {{ $type->name }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
 
-                        {{-- ── Section 3: Storage ── --}}
-                        <div class="col-12 mt-3"><h6 class="text-muted border-bottom pb-1">Storage</h6></div>
+                        {{-- Only shown when Arrival Type = Rejuvenation --}}
+                        <div class="col-md-3 mt-2" id="rejuvenationFields" style="display:none;">
+                            <label class="form-label">Rejuvenation Program <span class="text-danger">*</span></label>
+                            <input type="text" name="rejuvenation_program" id="rejuvenation_program" class="form-control"
+                                value="{{ old('rejuvenation_program', $lot->rejuvenation_program ?? '') }}"
+                                placeholder="e.g. 2017-2018"
+                                {{ isset($lot) ? 'readonly style=background-color:#e9ecef;' : '' }}>
+                        </div>
+                        <div class="col-md-2 mt-2" id="prefixField" style="display:none;">
+                            <label class="form-label">Prefix <span class="text-danger">*</span></label>
+                            <input type="text" name="prefix" id="prefix" class="form-control"
+                                value="{{ old('prefix', $lot->prefix ?? '') }}"
+                                placeholder="e.g. MB"
+                                {{ isset($lot) ? 'readonly style=background-color:#e9ecef;' : '' }}>
+                        </div>
+
+                        {{-- Lot Number Preview --}}
+                        <div class="col-md-3 mt-2" id="lotPreviewBox" style="display:none;">
+                            <label class="form-label">Lot Number Preview</label>
+                            <div class="alert alert-info py-2 mb-0 small">
+                                <i class="ri-barcode-line me-1"></i>
+                                <strong id="lotNumberPreview">—</strong>
+                            </div>
+                        </div>
+
+                        
                         @php
                             $selectedStorage = old('storage_id', $lot->storage_id ?? '');
                             $selectedAccession = old('accession_id', $lot->accession_id ?? '');
@@ -106,50 +101,20 @@
                             $selectedBin       = old('bin_id', $lot->bin_id ?? '');
                             $selectedContainer = old('container_id', $lot->container_id ?? '');
                         @endphp
-                        <div class="col-md-4 mt-2">
-                            <label class="form-label">Storage <span class="text-danger">*</span></label>
-                            <select name="storage_id" id="storageSelect" class="form-select" required>
-                                <option value="">Select Storage</option>
-                                @foreach($storages as $s)
-                                    <option value="{{ $s->id }}" {{ $selectedStorage == $s->id ? 'selected' : '' }}>{{ $s->storage_id }} — {{ $s->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        
-
-                        <div class="col-md-8 mt-2">
-                            {{-- Storage Details Card --}}
-                            <div id="storageDetails" class="card border bg-light mb-0 d-none">
-                                <div class="card-body py-2 px-3">
-                                    <div class="row g-1 small">
-                                        <div class="col-4"><span class="text-muted">Warehouse:</span> <span id="sd_warehouse">—</span></div>
-                                        <div class="col-4"><span class="text-muted">Type:</span> <span id="sd_type">—</span></div>
-                                        <div class="col-4"><span class="text-muted">Condition:</span> <span id="sd_condition">—</span></div>
-                                        <div class="col-4"><span class="text-muted">Time:</span> <span id="sd_time">—</span></div>
-                                        <div class="col-4"><span class="text-muted">Capacity:</span> <span id="sd_capacity">—</span></div>
-                                        <div class="col-4"><span class="text-muted">Available:</span> <span id="sd_available">—</span></div>
-                                        <div class="col-4"><span class="text-muted">Temp:</span> <span id="sd_temp">—</span></div>
-                                        <div class="col-4"><span class="text-muted">Humidity:</span> <span id="sd_humidity">—</span></div>
-                                        <div class="col-12 mt-1 pt-1 border-top">
-                                            <span class="text-muted">Balance (after lot qty):</span>
-                                            <strong id="sd_balance" class="ms-1">—</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {{-- ── Section 2: Accession ── --}}
+                         {{-- ── Section 2: Accession ── --}}
                         <div class="col-12 mt-3"><h6 class="text-muted border-bottom pb-1">Accession</h6></div>
 
                         
                         <div class="col-md-4 mt-2">
-                            <label class="form-label">Accession Number <span class="text-danger">*</span></label>
+                            <label class="form-label">Accession ID <span class="text-danger">*</span></label>
                             <select name="accession_id" id="accessionSelect" class="form-select" required>
                                 <option value="">Select Accession</option>
                                 @foreach($accessions as $acc)
                                     <option value="{{ $acc->id }}" {{ $selectedAccession == $acc->id ? 'selected' : '' }}>{{ $acc->accession_number }} — {{ $acc->accession_name }}</option>
                                 @endforeach
                             </select>
+                            <input hidden type="text" id="sample_id_input" name="sample_id"
+value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                         </div>
 
                         <div class="col-md-8 mt-2">
@@ -162,64 +127,12 @@
                                         <div class="col-4"><span class="text-muted">Scientific:</span> <span id="ad_scientific">—</span></div>
                                         <div class="col-4"><span class="text-muted">Status:</span> <span id="ad_status">—</span></div>
                                         <div class="col-4"><span class="text-muted">Collected:</span> <span id="ad_collected">—</span></div>
-                                        <div class="col-4"><span class="text-muted">Barcode:</span> <span id="ad_barcode">—</span></div>
+                                        <div class="col-4"><span class="text-muted">Sample ID:</span> <span id="ad_sample_id">—</span></div>
                                         <div class="col-4"><span class="text-muted">Expiry Date:</span> <span id="ad_expiryDate">—</span></div>
+                                        <div class="col-4"><span class="text-muted">Next Regeneration Date:</span> <span id="ad_recheckDate">—</span></div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        {{-- ── Section 4: Lot Details ── --}}
-                        <div class="col-12 mt-3"><h6 class="text-muted border-bottom pb-1">Lot Details</h6></div>
-
-                        <div class="col-md-3 mt-2">
-                            <label class="form-label">Section (Category/Zone)<span class="text-danger">*</span></label>
-                            <select name="section_id" id="sectionSelect" class="form-select" required>
-                                <option value="">Select Section</option>
-                                @foreach ($sections as $section)
-                                    <option value="{{ $section->id }}" {{ $selectedSection == $section->id ? 'selected' : '' }}>{{ $section->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-3 mt-2">
-                            <label class="form-label">Shelf/Rack <span class="text-danger">*</span></label>
-                            <select name="rack_id" id="rackSelect" class="form-select" required>
-                                <option value="">Select Rack</option>
-                                @foreach ($racks as $rack)
-                                    <option value="{{ $rack->id }}" data-section="{{ $rack->section_id }}" {{ $selectedRack == $rack->id ? 'selected' : '' }}>
-                                        {{ $rack->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-3 mt-2">
-                            <label class="form-label">Bin (Compartment)<span class="text-danger">*</span></label>
-                            <select name="bin_id" id="binSelect" class="form-select" required>
-                                    <option value="">Select Bin</option>
-                                    @foreach ($bins as $bin)
-                                        <option value="{{ $bin->id }}" 
-                                                data-section="{{ $bin->section_id }}" 
-                                                data-rack="{{ $bin->rack_id }}" {{ $selectedBin == $bin->id ? 'selected' : '' }}>
-                                        {{ $bin->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-3 mt-2">
-                            <label class="form-label">Container (Actual seed unit - box/tray)<span class="text-danger">*</span></label>
-                            <select name="container_id" id="containerSelect" class="form-select" required>
-                                <option value="">Select Container</option>
-                                @foreach ($containers as $container)
-                                    <option value="{{ $container->id }}" 
-                                            data-section="{{ $container->section_id }}" 
-                                            data-rack="{{ $container->rack_id }}" 
-                                            data-bin="{{ $container->bin_id }}" {{ $selectedContainer == $container->id ? 'selected' : '' }}>
-                                        {{ $container->name }}
-                                    </option>
-                                @endforeach
-                            </select>
                         </div>
 
                         @php
@@ -350,6 +263,92 @@
                                 </div>
                             </div>
                         </div>
+                        </div>
+
+                         {{-- ── Section 4: Lot Details ── --}}
+                        <div class="col-12 mt-3"><h6 class="text-muted border-bottom pb-1">SLOC Details</h6></div>
+
+                        <div class="col-md-3 mt-2">
+                            <label class="form-label">Section (Category/Zone)<span class="text-danger">*</span></label>
+                            <select name="section_id" id="sectionSelect" class="form-select" required>
+                                <option value="">Select Section</option>
+                                @foreach ($sections as $section)
+                                    <option value="{{ $section->id }}" {{ $selectedSection == $section->id ? 'selected' : '' }}>{{ $section->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3 mt-2">
+                            <label class="form-label">Shelf/Rack <span class="text-danger">*</span></label>
+                            <select name="rack_id" id="rackSelect" class="form-select" required>
+                                <option value="">Select Rack</option>
+                                @foreach ($racks as $rack)
+                                    <option value="{{ $rack->id }}" data-section="{{ $rack->section_id }}" {{ $selectedRack == $rack->id ? 'selected' : '' }}>
+                                        {{ $rack->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 mt-2">
+                            <label class="form-label">Bin (Compartment)<span class="text-danger">*</span></label>
+                            <select name="bin_id" id="binSelect" class="form-select" required>
+                                    <option value="">Select Bin</option>
+                                    @foreach ($bins as $bin)
+                                        <option value="{{ $bin->id }}" 
+                                                data-section="{{ $bin->section_id }}" 
+                                                data-rack="{{ $bin->rack_id }}" {{ $selectedBin == $bin->id ? 'selected' : '' }}>
+                                        {{ $bin->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 mt-2">
+                            <label class="form-label">Container (Actual seed unit - box/tray)<span class="text-danger">*</span></label>
+                            <select name="container_id" id="containerSelect" class="form-select" required>
+                                <option value="">Select Container</option>
+                                @foreach ($containers as $container)
+                                    <option value="{{ $container->id }}" 
+                                            data-section="{{ $container->section_id }}" 
+                                            data-rack="{{ $container->rack_id }}" 
+                                            data-bin="{{ $container->bin_id }}" {{ $selectedContainer == $container->id ? 'selected' : '' }}>
+                                        {{ $container->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mt-2">
+                            <label class="form-label">Storage <span class="text-danger">*</span></label>
+                            <select name="storage_id" id="storageSelect" class="form-select" required>
+                                <option value="">Select Storage</option>
+                                @foreach($storages as $s)
+                                    <option value="{{ $s->id }}" {{ $selectedStorage == $s->id ? 'selected' : '' }}>{{ $s->storage_id }} — {{ $s->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+
+                        <div class="col-md-8 mt-2">
+                            {{-- Storage Details Card --}}
+                            <div id="storageDetails" class="card border bg-light mb-0 d-none">
+                                <div class="card-body py-2 px-3">
+                                    <div class="row g-1 small">
+                                        <div class="col-4"><span class="text-muted">Warehouse:</span> <span id="sd_warehouse">—</span></div>
+                                        <div class="col-4"><span class="text-muted">Type:</span> <span id="sd_type">—</span></div>
+                                        <div class="col-4"><span class="text-muted">Condition:</span> <span id="sd_condition">—</span></div>
+                                        <div class="col-4"><span class="text-muted">Time:</span> <span id="sd_time">—</span></div>
+                                        <div class="col-4"><span class="text-muted">Capacity:</span> <span id="sd_capacity">—</span></div>
+                                        <div class="col-4"><span class="text-muted">Available:</span> <span id="sd_available">—</span></div>
+                                        <div class="col-4"><span class="text-muted">Temp:</span> <span id="sd_temp">—</span></div>
+                                        <div class="col-4"><span class="text-muted">Humidity:</span> <span id="sd_humidity">—</span></div>
+                                        <div class="col-12 mt-1 pt-1 border-top">
+                                            <span class="text-muted">Balance (after lot qty):</span>
+                                            <strong id="sd_balance" class="ms-1">—</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         @php
@@ -497,11 +496,39 @@
                             </div>
                         </div>
                         </div>
-                        <div class="col-3">
-                            <label class="form-label">Expiry Date</label>
-                            <input type="text" id="expiry_input" class="form-control" value="" readonly>
+                        <div class="col-3 mt-4">
+                            <label class="form-label text-danger">Expiry Date:</label>
+                            <span id="expiry_input" ></span><br>
+                            <label class="form-label text-success">Next Regeneration Date:</label>
+                            <span id="expiry_recheck"></span>
                         </div>
-                        <div class="col-9">
+                        <div class="col-md-2">
+                            <label class="form-label">Status <span class="text-danger">*</span></label>
+                            <select name="status" class="form-select" required>
+                                <option value="">Select Status</option>
+
+                                <option value="active" 
+                                    {{ old('status', $lot->status ?? '') == 'active' ? 'selected' : '' }}>
+                                    Active
+                                </option>
+
+                                <option value="inactive" 
+                                    {{ old('status', $lot->status ?? '') == 'inactive' ? 'selected' : '' }}>
+                                    Inactive
+                                </option>
+
+                                <option value="quarantine" 
+                                    {{ old('status', $lot->status ?? '') == 'quarantine' ? 'selected' : '' }}>
+                                    Quarantine
+                                </option>
+
+                                <option value="depleted" 
+                                    {{ old('status', $lot->status ?? '') == 'depleted' ? 'selected' : '' }}>
+                                    Depleted
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-7">
                             <label class="form-label">Description / Notes</label>
                             <textarea name="description" class="form-control" rows="2" placeholder="Optional notes about this lot">{{ old('description', $lot->description ?? '') }}</textarea>
                         </div>
@@ -613,7 +640,66 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    //const $ = (id) => document.getElementById(id);
+    // ── Arrival Type → show/hide fields + lot number preview ──────────
+    const arrivalType        = document.getElementById('arrivalType');
+    const rejuvenationFields = document.getElementById('rejuvenationFields');
+    const prefixField        = document.getElementById('prefixField');
+    const rejuvInput         = document.getElementById('rejuvenation_program');
+    const prefixInput        = document.getElementById('prefix');
+    const lotPreviewBox      = document.getElementById('lotPreviewBox');
+    const lotNumberPreview   = document.getElementById('lotNumberPreview');
+
+    function buildLotPreview() {
+        const type    = arrivalType ? arrivalType.value : '';
+        const ref     = document.querySelector('input[name="reference_number[]"]')?.value || '{REF}';
+        const sampleId = document.querySelector('input[name="sample_id"]')?.value || '{SID}';
+        const rejuv   = rejuvInput?.value || '{RP}';
+        const pfx     = prefixInput?.value || '{PFX}';
+
+        let preview = '';
+        switch (type) {
+            case 'Rejuvenation':
+                preview = `${ref}-${rejuv}/1-${pfx}-${sampleId}-01`;
+                break;
+            case 'Accession Arrival':
+                preview = `${ref}-Acca/1-${sampleId}-01`;
+                break;
+            case 'Return From Field':
+                preview = `${ref}-Rtn/1-${sampleId}-01`;
+                break;
+            default:
+                preview = '—';
+        }
+        if (lotNumberPreview) lotNumberPreview.textContent = preview;
+    }
+
+    function toggleArrivalFields() {
+        const type    = arrivalType ? arrivalType.value : '';
+        const isRejuv = type === 'Rejuvenation';
+        const hasType = type !== '';
+
+        if (rejuvenationFields) rejuvenationFields.style.display = isRejuv ? '' : 'none';
+        if (prefixField)        prefixField.style.display        = isRejuv ? '' : 'none';
+        if (lotPreviewBox)      lotPreviewBox.style.display      = hasType ? '' : 'none';
+
+        if (rejuvInput)  rejuvInput.required  = isRejuv;
+        if (prefixInput) prefixInput.required = isRejuv;
+
+        buildLotPreview();
+    }
+
+    if (arrivalType) {
+        arrivalType.addEventListener('change', toggleArrivalFields);
+        toggleArrivalFields(); // run on page load for edit mode
+    }
+
+    // Update preview when reference_number, rejuvenation_program, prefix, sample_id change
+    document.addEventListener('input', function (e) {
+        const name = e.target.name;
+        if (['reference_number[]', 'rejuvenation_program', 'prefix', 'sample_id'].includes(name)) {
+            buildLotPreview();
+        }
+    });
 
     // ── Edit Lot ──────────────────────────────────────────────────────────
     document.querySelectorAll('.editLotBtn').forEach(btn => {
@@ -660,10 +746,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('ad_scientific').textContent = d.scientific_name  || '—';
                 document.getElementById('ad_status').textContent     = d.status           || '—';
                 document.getElementById('ad_collected').textContent  = d.collection_date  || '—';
-                document.getElementById('ad_barcode').textContent    = d.barcode          || '—';
+                document.getElementById('ad_sample_id').textContent    = d.sample_id          || '—';
                 document.getElementById('ad_expiryDate').textContent     = d.expiry_date     || '-';
-                document.getElementById('expiry_input').value = d.expiry_date || '';
+                document.getElementById('expiry_input').textContent = d.expiry_date || '';
+                document.getElementById('expiry_recheck').textContent = d.recheck_date || '—';
+                document.getElementById('ad_recheckDate').textContent = d.recheck_date || '—';
                 box.classList.remove('d-none');
+
+                document.getElementById('sample_id_input').value = d.sample_id || '';
 
                 updateBalance();
             })
@@ -719,71 +809,49 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-   document.getElementById('storageSelect').addEventListener('change', function () {
-        const id  = this.value;
-        const box = document.getElementById('storageDetails');
-        const accessionSelect = document.getElementById('accessionSelect');
-        const accessionDetails = document.getElementById('accessionDetails');
 
-        _storageData   = null;
-        _accessionData = null;
+document.getElementById('storageSelect').addEventListener('change', function () {
 
-        // Remember current accession so we can restore if still valid
-        const prevAccessionId = accessionSelect.value;
+    const id  = this.value;
+    const box = document.getElementById('storageDetails');
 
-        // Reset accession dropdown and hide its details
-        accessionSelect.innerHTML = '<option value="">Select Accession</option>';
-        if (accessionDetails) accessionDetails.classList.add('d-none');
+    _storageData = null;
 
-        if (!id) {
-            box.classList.add('d-none');
+    // If no storage selected → hide
+    if (!id) {
+        box.classList.add('d-none');
+        updateBalance();
+        return;
+    }
+
+    // Fetch storage details only
+    fetch(`/lot-management/storage/${id}`)
+        .then(r => r.json())
+        .then(d => {
+
+            _storageData = d;
+
+            document.getElementById('sd_warehouse').textContent  = d.warehouse         || '—';
+            document.getElementById('sd_type').textContent       = d.storage_type      || '—';
+            document.getElementById('sd_condition').textContent  = d.storage_condition || '—';
+            document.getElementById('sd_time').textContent       = d.storage_time      || '—';
+            document.getElementById('sd_capacity').textContent   = d.capacity  ? `${d.capacity} ${d.unit || ''}`  : '—';
+            document.getElementById('sd_available').textContent  = d.available ? `${d.available} ${d.unit || ''}` : '—';
+            document.getElementById('sd_temp').textContent       = d.temperature ? `${d.temperature} °C` : '—';
+            document.getElementById('sd_humidity').textContent   = d.humidity   ? `${d.humidity} %`      : '—';
+
+            // Show card
+            box.classList.remove('d-none');
+
+            // Update balance
+            filterUnitsByCapacity(d.capacity_in_grams, d.unit_code);
             updateBalance();
-            return;
-        }
+        })
+        .catch(() => {
+            box.classList.add('d-none');
+        });
+});
 
-        // 1️⃣ Fetch storage details
-        fetch(`/lot-management/storage/${id}`)
-            .then(r => r.json())
-            .then(d => {
-                _storageData = d;
-
-                document.getElementById('sd_warehouse').textContent  = d.warehouse         || '—';
-                document.getElementById('sd_type').textContent       = d.storage_type      || '—';
-                document.getElementById('sd_condition').textContent  = d.storage_condition || '—';
-                document.getElementById('sd_time').textContent       = d.storage_time      || '—';
-                document.getElementById('sd_capacity').textContent   = d.capacity  ? `${d.capacity} ${d.unit || ''}`  : '—';
-                document.getElementById('sd_available').textContent  = d.available ? `${d.available} ${d.unit || ''}` : '—';
-                document.getElementById('sd_temp').textContent       = d.temperature ? `${d.temperature} °C` : '—';
-                document.getElementById('sd_humidity').textContent   = d.humidity   ? `${d.humidity} %`      : '—';
-
-                box.classList.remove('d-none');
-
-                filterUnitsByCapacity(d.capacity_in_grams, d.unit_code);
-                updateBalance();
-
-                // 2️⃣ Fetch filtered accessions
-                return fetch(`/lot-management/accessions-by-storage/${id}`);
-            })
-            .then(r => r.json())
-            .then(accessions => {
-                accessions.forEach(a => {
-                    let option = document.createElement('option');
-                    option.value = a.id;
-                    option.textContent = a.accession_number;
-                    accessionSelect.appendChild(option);
-                });
-
-                // Restore previous accession if it's still in the filtered list
-                if (prevAccessionId && [...accessionSelect.options].some(o => o.value == prevAccessionId)) {
-                    accessionSelect.value = prevAccessionId;
-                    // Re-trigger accession details
-                    accessionSelect.dispatchEvent(new Event('change'));
-                }
-            })
-            .catch(() => {
-                box.classList.add('d-none');
-            });
-    });
 
     
     const units = @json($units);

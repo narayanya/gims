@@ -10,6 +10,8 @@ class Accession extends Model
 {
     protected $fillable = [
         // Basic Information
+        'sample_id',
+        'regen_year',
         'accession_number',
         'accession_name',
         'acc_source',
@@ -83,6 +85,10 @@ class Accession extends Model
     public function crop(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Crop::class);
+    }
+    public function season()
+    {
+        return $this->belongsTo(Season::class);
     }
 
     public function country()

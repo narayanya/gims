@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Lot extends Model
 {
     protected $fillable = [
-        'lot_number', 'lot_master_id', 'code', 'lot_type_id', 'reference_number', 'rejuvenation_program', 'prefix', 'sample_id',
+        'lot_number', 'arrival_type', 'lot_master_id', 'code', 'lot_type_id', 'reference_number', 'rejuvenation_program', 'prefix', 'sample_id',
         'accession_id', 'crop_id',
         'storage_id', 'storage_location_id',
         'section_id', 'rack_id', 'bin_id', 'container_id',

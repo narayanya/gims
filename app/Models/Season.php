@@ -10,6 +10,8 @@ class Season extends Model
         'name',
         'code',
         'description',
-        'status'
+        'status',
+        'start_month',
+        'end_month',
     ];
 }

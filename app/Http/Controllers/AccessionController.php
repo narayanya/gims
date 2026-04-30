@@ -111,13 +111,12 @@ class AccessionController extends Controller
         if (!auth()->user()->hasPermission('accession.edit')) {
             abort(403, 'You do not have permission to edit accessions.');
         }
-        $accession = Accession::findOrFail($id);
+        $accession = Accession::with(['crop.season'])->findOrFail($id);
         $crops = Crop::where([
                 ['is_active', 1],
                 ['update_status', 1]
             ])->select('id', 'crop_name')->get();
         $users = \App\Models\User::orderBy('name')->get();
-       
         $countries = Country::orderBy('country_name')->get();
         $states = State::where('country_id', $accession->country_id)->orderBy('state_name')->get();
         $districts = District::where('state_id', $accession->state_id)->orderBy('district_name')->get();
@@ -150,6 +149,8 @@ class AccessionController extends Controller
 
         $request->validate([
             'crop_id' => 'required|exists:core_crop,id',
+            'sample_id' => 'nullable|string|max:100',
+            'regen_year' => 'nullable|integer|min:1|max:100',
         ]);
 
         //$accession->update($request->all());
@@ -181,22 +182,21 @@ class AccessionController extends Controller
                 ['update_status', 1]
             ])->select('id', 'crop_name')->get();
 
-
-        
         $units = \App\Models\Unit::orderBy('name')->get();
         $users = \App\Models\User::orderBy('name')->get();
         $warehouses = \App\Models\Warehouse::orderBy('name')->get();
         $storageTime = \App\Models\StorageTime::orderBy('name')->get();
         $countries = \App\Models\Country::orderBy('country_name')->get();
-        // states, districts, cities loaded via AJAX on country/state/district change
         $states    = collect();
         $districts = collect();
         $cities    = collect();
         $accessionRequests = collect();
-        
+        $accession = null; // explicit null for view
+
         return view('accession.accessionform', compact(
-            'crops', 'units', 'users', 'warehouses', 
-            'storageTime', 'countries', 'states', 'districts', 'cities', 'accessionRequests'
+            'crops', 'units', 'users', 'warehouses',
+            'storageTime', 'countries', 'states', 'districts', 'cities',
+            'accessionRequests', 'accession'
         ));
     }
 
@@ -206,6 +206,8 @@ class AccessionController extends Controller
             $validated = $request->validate([
                 // Basic Information
                 'acc_source' => 'required|in:internal,external',
+                'sample_id' => 'required|string|max:100',
+                'regen_year' => 'nullable|integer|min:1|max:100',
                 'requester_show' => 'required|in:yes,no',
                 'storage_time' => 'nullable|exists:storage_times,id',
                 'accession_name' => 'required|string|max:255',
@@ -315,7 +317,7 @@ class AccessionController extends Controller
             // 👇 Generate accession_number using ID
             $crop = \App\Models\Crop::find($accession->crop_id);
 
-            $accessionNumber = $crop->crop_code . '-' . date('Y') . '-ACC-' .
+            $accessionNumber = $crop->crop_code . '-' . date('Y') . '-ACC-' .$accession->sample_id . '-' .
                 str_pad($accession->id, 5, '0', STR_PAD_LEFT);
 
             // 👇 Update record

@@ -68,6 +68,7 @@
                                             'seed-classes*',
                                             'units*',
                                             'soil-types*',
+                                            'arrival-types*',
                                             'location*',
                                             'employees*',
                                         ) ? 'active' : '' }}"
@@ -91,7 +92,7 @@
                                             'units*',
                                             
                                             'soil-types*',
-                                            
+                                            'arrival-types*',
                                             'location*',
                                             'employees*'
                                         ) ? 'show' : '' }}"
@@ -155,6 +156,13 @@
                                                 Soil Type
                                                 </a>
                                             </li>
+
+                                            <li class="nav-item">
+                                                <a href="{{ route('arrival-types.index') }}"
+                                                class="nav-link {{ request()->routeIs('arrival-types.*') ? 'active' : '' }}">
+                                                Arrival Type
+                                                </a>
+                                            </li>
                                             
                                             <li class="nav-item">
                                                 <a href="{{ route('location.countries') }}"
@@ -173,7 +181,11 @@
                                         </ul>
                                     </div>
                                 </li>
+                            @endif
+                            @endauth
 
+                            @auth
+                            @if(auth()->user()->hasRole(['super-admin', 'admin']))
                                 <li class="nav-item">
                                     <a class="nav-link menu-link 
                                         {{ request()->is('sync*') ? 'active' : '' }}"
@@ -218,6 +230,11 @@
                                         </ul>
                                     </div>
                                 </li>
+                            @endif
+                            @endauth
+                            
+                            @auth
+                            @if(auth()->user()->hasRole(['super-admin', 'admin', 'manager']))
 
                                 <li class="nav-item">
                                     <a class="nav-link menu-link {{ request()->is('lot-management', 'lot-transfer', 'warehouse-transfer', 'lot-types' ,'lots*') ? 'active' : '' }} "  href="#sidebarMasterLot"

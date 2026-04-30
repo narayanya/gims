@@ -203,6 +203,9 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     
     // Season Master
     Route::resource('seasons', App\Http\Controllers\SeasonController::class)->except(['show', 'create', 'edit']);
+
+    // Arrival Type Master
+    Route::resource('arrival-types', App\Http\Controllers\ArrivalTypeController::class)->except(['show', 'create', 'edit']);
     
     // Accession Rule Master
     Route::resource('accession-rules', App\Http\Controllers\AccessionRuleController::class)->except(['show', 'create', 'edit']);

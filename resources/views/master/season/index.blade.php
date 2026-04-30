@@ -32,6 +32,8 @@
                                 <tr>
                                     <th>Name</th>
                                     <th>Code</th>
+                                    <th>Start Month</th>
+                                    <th>End Month</th>
                                     <th>Description</th>
                                     <th>Status</th>
                                     <th>Actions</th>
@@ -48,6 +50,8 @@
                                             <span class="text-muted">-</span>
                                         @endif
                                     </td>
+                                    <td>{{ $season->start_month ? \Carbon\Carbon::create()->month($season->start_month)->format('F') : '-' }}</td>
+                                    <td>{{ $season->end_month ? \Carbon\Carbon::create()->month($season->end_month)->format('F') : '-' }}</td>
                                     <td>{{ $season->description ?? '-' }}</td>
                                     <td>
                                         <span class="badge {{ $season->status == 1 ? 'bg-success' : 'bg-danger' }}">
@@ -60,7 +64,9 @@
                                                 data-code="{{ $season->code }}"
                                                 data-status="{{ $season->status }}"
                                                 data-description="{{ $season->description }}"
-                                                data-status="{{ $season->status }}">
+                                                data-status="{{ $season->status }}"
+                                                data-start-month="{{ $season->start_month }}"
+                                                data-end-month="{{ $season->end_month }}">
                                             <i class="ri-edit-line"></i> 
                                         </button>
                                         <form action="{{ route('seasons.destroy', $season) }}" method="POST" class="d-inline"
@@ -112,6 +118,46 @@
                         <input type="text" class="form-control" id="seasonCode" name="code" placeholder="e.g., S001">
                         <small class="text-danger" id="codeError"></small>
                     </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="seasonStartMonth" class="form-label">Start Month</label>
+                        <select name="start_month" class="form-select" id="seasonStartMonth">
+                            <option value="">Select Month</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="seasonEndMonth" class="form-label">End Month</label>
+                        <select name="end_month" class="form-select" id="seasonEndMonth">
+                            <option value="">Select Month</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                </div>
+
                         <div class="mb-3">
                             <label for="seasonStatus" class="form-label">Status</label>
                             <select class="form-select" id="seasonStatus" name="status">
@@ -159,6 +205,9 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('seasonCode').value        = d.code        || '';
             document.getElementById('seasonStatus').value      = d.status      ?? '1';
             document.getElementById('seasonDescription').value = d.description || '';
+            // start_month stored as integer (1-12), option values are also 1-12
+            document.getElementById('seasonStartMonth').value  = d.startMonth ? String(parseInt(d.startMonth)) : '';
+            document.getElementById('seasonEndMonth').value    = d.endMonth   ? String(parseInt(d.endMonth))   : '';
             document.getElementById('seasonModalLabel').textContent = 'Edit Season';
             document.getElementById('submitBtn').textContent        = 'Update Season';
             const form = document.getElementById('seasonForm');

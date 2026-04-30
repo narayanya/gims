@@ -216,8 +216,7 @@
                     document.getElementsByName('crop_type_id')[0].value = this.dataset.type;
                     document.getElementsByName('season_id')[0].value = this.dataset.season;
 
-                    document.getElementsByName('description')[0].value = this.dataset.description ||
-                        '';
+                    document.getElementById('description').value = this.dataset.description || '';
                     document.getElementsByName('vertical_id')[0].value = this.dataset.vertical_id || '';
                     document.getElementsByName('numeric_code')[0].value = this.dataset.numeric_code || '';
                     document.getElementsByName('effective_date')[0].value = this.dataset.effective_date || '';
@@ -511,7 +510,7 @@
                                         <label class="form-label">Crop Name <span class="text-danger">*</span></label>
                                         <input disabled type="text" name="crop_name"
                                             class="form-control @error('crop_name') is-invalid @enderror"
-                                            placeholder="Enter crop name" value="{{ old('crop_name') }}" required>
+                                            placeholder="Enter crop name" value="{{ old('crop_name') }}" >
                                         @error('crop_name')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -520,7 +519,7 @@
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Code <span class="text-danger">*</span></label>
                                         <input disabled type="text" name="crop_code" class="form-control"
-                                            placeholder="e.g. CR001" value="{{ old('crop_code') }}" required>
+                                            placeholder="e.g. CR001" value="{{ old('crop_code') }}" >
                                         @error('crop_code')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -611,8 +610,10 @@
 
 
                                     <div class="col-md-12 mb-3">
-                                        <label class="form-label">Description</label>
-                                        <textarea name="description" class="form-control" rows="3" placeholder="Enter crop description">{{ old('description') }}</textarea>
+                                        <label class="form-label">Description <span class="text-danger">*</span></label>
+                                        <textarea name="description" id="description" class="form-control" rows="3" placeholder="Enter crop description" required>
+                                            {{ old('description') }}
+                                        </textarea>
                                     </div>
 
                                 </div>

@@ -43,25 +43,27 @@ class Crop extends Model
     {
         return $this->hasMany(\App\Models\Accession::class, 'crop_id');
     }
-    public function cropCategory()
-    {
-        return $this->belongsTo(CropCategory::class,'crop_category_id');
-    }
-
-    public function cropType()
-    {
-        return $this->belongsTo(CropType::class,'crop_type_id');
-    }
-
     public function category()
-    {
-        return $this->belongsTo(Category::class,'category_id');
-    }
+{
+    return $this->belongsTo(Category::class);
+}
 
-    public function season()
-    {
-        return $this->belongsTo(Season::class,'season_id');
-    }
+public function cropCategory()
+{
+    return $this->belongsTo(CropCategory::class);
+}
+
+public function cropType()
+{
+    return $this->belongsTo(CropType::class);
+}
+
+public function season()
+{
+    return $this->belongsTo(Season::class);
+}
+
+
     public function soilType()
     {
         return $this->belongsTo(SoilType::class);

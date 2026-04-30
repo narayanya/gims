@@ -55,7 +55,7 @@ class LotController extends Controller
 
     public function managementCreate()
     {
-        $lastRef = \App\Models\SeedQuantity::latest('id')->value('reference_number'); 
+        $lastRef = \App\Models\Lot::latest('id')->value('reference_number'); 
         return view('lot-management.create', array_merge($this->formData(), [
             'nextLotNo' => Lot::generateLotNumber(
                 'REF', 'REJUV', 'PFX', 'SMPID', 0
@@ -68,56 +68,42 @@ class LotController extends Controller
 
     public function managementStore(Request $request)
     {
+        // Validation — reference_number only required/unique for Rejuvenation
+        $refRules = $request->arrival_type === 'Rejuvenation'
+            ? ['required', 'distinct', Rule::unique('lots', 'reference_number')]
+            : ['nullable', 'string', 'max:255'];
+
         $request->validate([
-            'accession_id' => 'required|exists:accessions,id',
-            'storage_id'   => 'required|exists:storages,id',
-
+            'arrival_type'       => 'required|string',
+            'accession_id'       => 'required|exists:accessions,id',
+            'storage_id'         => 'required|exists:storages,id',
             'reference_number'   => 'nullable|array',
-            'reference_number.*' => [
-                'required',
-                'distinct', // ✅ no duplicate in same form
-                Rule::unique('lots', 'reference_number') // ✅ DB check
-                //->where(function ($query) use ($lot) {
-                  //  return $query->where('lot_id', '!=', $lot->id);
-                //}),
-            ],
-            //'reference_number.*' => ['nullable','string','distinct','max:255'],
-
+            'reference_number.*' => $refRules,
             'number_of_seeds'    => 'nullable|array',
-            'number_of_seeds.*'  => 'nullable|numeric|min:0|max:4',
-
-            'number_of_bags'    => 'nullable|array',
-            'number_of_bags.*'  => 'nullable|numeric|min:0|max:3',
-
+            'number_of_seeds.*'  => 'nullable|numeric|min:0',
+            'number_of_bags'     => 'nullable|array',
+            'number_of_bags.*'   => 'nullable|numeric|min:0',
             'per_seed_weight'    => 'nullable|array',
             'per_seed_weight.*'  => 'nullable|numeric|min:0',
-
             'quantity'           => 'required|array',
             'quantity.*'         => 'required|numeric|min:0',
-
             'unit_id'            => 'nullable|array',
             'unit_id.*'          => 'nullable|exists:units,id',
-
             'quantity_show'      => 'nullable|array',
             'quantity_show.*'    => 'nullable|numeric|min:0',
-
             'min_quantity'       => 'nullable|array',
             'min_quantity.*'     => 'nullable|numeric|min:0',
-
-            'status' => 'required',
+            'status'             => 'required',
         ]);
 
         $storage   = Storage::with('lots')->findOrFail($request->storage_id);
         $accession = Accession::findOrFail($request->accession_id);
-
 
         $used      = $storage->lots()->sum('quantity');
         $available = (float)$storage->capacity - $used;
 
         $qtys = array_values($request->quantity ?? []);
         $refs = array_values($request->reference_number ?? []);
-        $units = array_values($request->unit_id ?? []);
-        
 
         $totalQty = array_sum($qtys);
 
@@ -125,84 +111,101 @@ class LotController extends Controller
             return back()->withInput()
                 ->withErrors(['error' => "Not enough storage space! Available: {$available}"]);
         }
-        $runningSeq = null;
-        foreach ($qtys as $i => $qty) {
 
-            if (!$qty) continue;
+        DB::transaction(function () use ($request, $storage, $accession, $qtys, $refs, $totalQty) {
 
-            $reference = $refs[$i] ?? 'REF';
+            $runningSeq = null;
+            $sampleId   = $request->sample_id ?: $accession->sample_id;
 
-            // 👉 Only fetch last sequence ONCE
-            if ($runningSeq === null) {
+            foreach ($qtys as $i => $qty) {
 
-                $base = "{$request->rejuvenation_program}-{$request->prefix}-{$request->sample_id}-";
+                if (!$qty) continue;
 
-                $last = Lot::where('lot_number', 'like', $base . '%')
-                    ->orderByRaw("CAST(SUBSTRING_INDEX(lot_number, '-', -1) AS UNSIGNED) DESC")
-                    ->first();
+                $reference   = $refs[$i] ?? null;
+                $arrivalType = $request->arrival_type;
+                $rowNum      = $i + 1;
 
-                if ($last && preg_match('/-(\d{2})$/', $last->lot_number, $m)) {
-                    $runningSeq = (int)$m[1];
-                } else {
-                    $runningSeq = 0;
+                switch ($arrivalType) {
+                    case 'Rejuvenation':
+                        $middleSegment = "{$request->rejuvenation_program}/{$rowNum}-{$request->prefix}";
+                        $base          = "{$reference}-{$request->rejuvenation_program}-{$request->prefix}-{$sampleId}-";
+                        break;
+                    case 'Accession Arrival':
+                        $middleSegment = "Acca/{$rowNum}";
+                        $base          = "Acca-{$sampleId}-";
+                        break;
+                    case 'Return From Field':
+                        $middleSegment = "Rtn/{$rowNum}";
+                        $base          = "Rtn-{$sampleId}-";
+                        break;
+                    default:
+                        $middleSegment = "{$rowNum}";
+                        $base          = "{$sampleId}-";
                 }
-            }
 
-            // 👉 increment for each row
-            $runningSeq++;
-            
-            $exists = Lot::where('reference_number', $reference)->exists();
+                // Fetch running sequence once per batch
+                if ($runningSeq === null) {
+                    $last = Lot::where('lot_number', 'like', $base . '%')
+                        ->orderByRaw("CAST(SUBSTRING_INDEX(lot_number, '-', -1) AS UNSIGNED) DESC")
+                        ->first();
 
-            if ($exists) {
-                return back()->withInput()->withErrors([
-                    'reference_number' => "Reference number {$reference} already exists."
+                    $runningSeq = ($last && preg_match('/-(\d{2})$/', $last->lot_number, $m))
+                        ? (int)$m[1]
+                        : 0;
+                }
+
+                $runningSeq++;
+                $seq = str_pad($runningSeq, 2, '0', STR_PAD_LEFT);
+
+                // Build lot number per type
+                switch ($arrivalType) {
+                    case 'Rejuvenation':
+                        $lotNumber = "{$reference}-{$request->rejuvenation_program}/{$rowNum}-{$request->prefix}-{$sampleId}-{$seq}";
+                        break;
+                    case 'Accession Arrival':
+                        $lotNumber = "{$reference}-Acca/{$rowNum}-{$sampleId}-{$seq}";
+                        break;
+                    case 'Return From Field':
+                        $lotNumber = "{$reference}-Rtn/{$rowNum}-{$sampleId}-{$seq}";
+                        break;
+                    default:
+                        $lotNumber = "{$reference}-{$rowNum}-{$sampleId}-{$seq}";
+                }
+
+                $newLot = Lot::create([
+                    'lot_number'           => $lotNumber,
+                    'arrival_type'         => $arrivalType,
+                    'reference_number'     => $reference ?: null,
+                    'rejuvenation_program' => $arrivalType === 'Rejuvenation' ? $request->rejuvenation_program : null,
+                    'prefix'               => $arrivalType === 'Rejuvenation' ? $request->prefix : null,
+                    'sample_id'            => $sampleId,
+                    'accession_id'         => $request->accession_id,
+                    'storage_id'           => $request->storage_id,
+                    'section_id'           => $request->section_id,
+                    'rack_id'              => $request->rack_id,
+                    'bin_id'               => $request->bin_id,
+                    'container_id'         => $request->container_id,
+                    'quantity'             => $qty,
+                    'unit_id'              => $request->unit_id[$i] ?? null,
+                    'expiry_date'          => $request->expiry_date,
+                    'description'          => $request->description,
+                    'status'               => $request->status,
+                    'crop_id'              => $accession->crop_id,
                 ]);
+
+                if (!$newLot->id) {
+                    throw new \Exception("Lot creation failed for row {$rowNum}");
+                }
+
+                // Save seed quantities for this specific row index
+                $this->saveSeedQuantities($request, $newLot->id, $accession->id, $i);
+
+                // Save seed qualities — only the row matching this lot's index
+                $this->saveSeedQualitiesForRow($request, $newLot->id, $accession->id, $i);
             }
 
-            // 👉 Row index for RP
-            $rpWithRow = "{$request->rejuvenation_program}/" . ($i + 1);
-
-            $lotNumber = "{$reference}-{$rpWithRow}-{$request->prefix}-{$request->sample_id}-" 
-                . str_pad($runningSeq, 2, '0', STR_PAD_LEFT);
-
-            // ✅ Generate per row
-            /*$lotNumber = Lot::generateLotNumber(
-                $reference ?? 'REF',
-                $request->rejuvenation_program ?? 'GEN',
-                $request->prefix ?? 'DEF',
-                $request->sample_id ?? '0',
-                $i++ //
-            );*/
-
-            $lot = Lot::create([
-                'lot_number'    => $lotNumber,
-                'reference_number' => $reference,
-                'rejuvenation_program' => $request->rejuvenation_program,
-                'prefix'        => $request->prefix,
-                'sample_id'     => $request->sample_id,
-                'accession_id'  => $request->accession_id,
-                'storage_id'    => $request->storage_id,
-                'section_id'    => $request->section_id,
-                'rack_id'       => $request->rack_id,
-                'bin_id'        => $request->bin_id,
-                'container_id'  => $request->container_id,
-                'quantity'      => $qty,
-                'unit_id'       => $request->unit_id[$i] ?? null,
-                'expiry_date'   => $request->expiry_date,
-                'description'   => $request->description,
-                'status'        => $request->status,
-                'crop_id'       => $accession->crop_id,
-            ]);
-
-            // ✅ Save child data per lot
-            
-            $this->saveSeedQuantities($request, $lot->id, $accession->id, $i);
-            $this->saveSeedQualities($request, $lot->id, $accession->id);
-            
-        }
-        
-        
-        $storage->increment('current_usage', $totalQty);
+            $storage->increment('current_usage', $totalQty);
+        });
 
         return redirect()->route('lot-management')
             ->with('success', 'Lots created successfully.');
@@ -272,7 +275,8 @@ class LotController extends Controller
         $this->saveSeedQualities($request, $lot->id, $accession->id);
 
         $qtys = $request->quantity ?? [];
-        foreach (array_keys($qtys) as $i) {
+        foreach ($request->quantity as $i => $qty) {
+            
             $this->saveSeedQuantities($request, $lot->id, $accession->id, $i);
         }
 
@@ -291,42 +295,47 @@ class LotController extends Controller
         $germinations = $request->germination_percentage ?? [];
 
         foreach ($germinations as $i => $germination) {
-
-            $moisture = $request->moisture_content[$i] ?? null;
-            $purity   = $request->purity_percentage[$i] ?? null;
-
-            // Skip empty row
-            if (
-                ($germination === null || $germination === '') &&
-                ($moisture === null || $moisture === '') &&
-                ($purity === null || $purity === '')
-            ) {
-                continue;
-            }
-
-            $researcher = $request->researcher_id[$i] ?? null;
-            $resOther   = $request->researcher_other[$i] ?? null;
-
-            if ($researcher === 'Other') {
-                $researcher = null;
-            } else {
-                $resOther = null;
-            }
-
-            SeedQuality::create([
-                'lot_id'                 => $lotId,
-                'accession_id'           => $accessionId,
-                'germination_percentage' => $germination,
-                'moisture_content'       => $moisture,
-                'purity_percentage'      => $purity,
-                'viability_test_date'    => $request->viability_test_date[$i] ?? null,
-                'research_date'          => $request->research_date[$i] ?? null,
-                'seed_health_status'     => $request->seed_health_status[$i] ?? null,
-                'researcher_id'          => $researcher,
-                'researcher_other'       => $resOther,
-            ]);
+            $this->saveSeedQualitiesForRow($request, $lotId, $accessionId, $i);
         }
     }
+
+    private function saveSeedQualitiesForRow(Request $request, $lotId, $accessionId, $i): void
+    
+{
+    $germination = $request->germination_percentage[$i] ?? null;
+    $moisture    = $request->moisture_content[$i] ?? null;
+    $purity      = $request->purity_percentage[$i] ?? null;
+
+    if (
+        ($germination === null || $germination === '') &&
+        ($moisture === null || $moisture === '') &&
+        ($purity === null || $purity === '')
+    ) {
+        return;
+    }
+
+    $researcher = $request->researcher_id[$i] ?? null;
+    $resOther   = $request->researcher_other[$i] ?? null;
+
+    if ($researcher === 'Other') {
+        $researcher = null;
+    } else {
+        $resOther = null;
+    }
+
+    SeedQuality::create([
+        'lot_id'                 => $lotId,
+        'accession_id'           => $accessionId,
+        'germination_percentage' => $germination,
+        'moisture_content'       => $moisture,
+        'purity_percentage'      => $purity,
+        'viability_test_date'    => $request->viability_test_date[$i] ?? null,
+        'research_date'          => $request->research_date[$i] ?? null,
+        'seed_health_status'     => $request->seed_health_status[$i] ?? null,
+        'researcher_id'          => $researcher,
+        'researcher_other'       => $resOther,
+    ]);
+}
 
     private function saveSeedQuantities(Request $request, $lotId, $accessionId, $i): void
     {
@@ -392,11 +401,12 @@ class LotController extends Controller
         $sq  = SeedQuality::where('accession_id',$id)->orderByDesc('updated_at')->first();
         return response()->json([
             'id'                     => $acc->id,
+            'sample_id'              => $acc->sample_id,
             'accession_number'       => $acc->accession_number,
             'accession_name'         => $acc->accession_name,
             'crop'                   => $acc->crop?->crop_name,
             'storage_time'           => $acc->storageTime?->name,
-            'scientific_name'        => $acc->scientific_name,
+            'scientific_name'        => $acc->crop?->scientific_name,
             'quantity' => $totalQty, // raw value
             'quantity_show' => number_format($totalQty, 2), // formatted
             //'quantity'               => $acc->quantity,
@@ -412,6 +422,7 @@ class LotController extends Controller
             'biological_status'      => $acc->biological_status,
             'sample_type'            => $acc->sample_type,
             'collection_site'        => $acc->collection_site,
+            'recheck_date'           => $acc->recheck_date?->format('d M Y'),
         ]);
     }
 

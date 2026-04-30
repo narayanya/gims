@@ -55,6 +55,7 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                
 
                                 <div class="mb-3 col-md-6">
                                     <label class="form-label">Employees <span class="text-danger">*</span></label>
@@ -71,7 +72,7 @@
                                                 data-empId="{{ $emp->employee_id }}"
                                                 data-mobile="{{ $emp->emp_contact }}"
                                             >
-                                                {{ $emp->emp_name }}
+                                                {{ $emp->emp_name }}({{ $emp->employee_id }})
                                             </option>
                                         @endforeach
                                     </select>
@@ -367,67 +368,113 @@
     }
 </style>
 <script>
+document.addEventListener('DOMContentLoaded', function () {
 
-    document.getElementById('department').addEventListener('change', function () {
-        let selectedDept = this.value;
-        let employeeSelect = document.getElementById('employee');
-        let options = employeeSelect.querySelectorAll('option');
+    const department = document.getElementById('department');
+    const employee   = document.getElementById('employee');
+    const card       = document.getElementById('reportingManagerCard');
 
-        options.forEach(option => {
-            if (!option.value) return; // skip placeholder
+    // Store all employee options (original)
+    const allOptions = Array.from(employee.querySelectorAll('option'));
 
-            let dept = option.getAttribute('data-dept');
+    // ---------- RESET FUNCTION ----------
+    function resetEmployeeDetails() {
+        document.getElementById('name').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('mobile_number').value = '';
+        document.getElementById('emp_code').value = '';
+        document.getElementById('emp_reporting').value = '';
+        document.getElementById('employee_id').value = '';
+        document.getElementById('password').value = '';
+        card.classList.add('d-none');
+    }
 
-            if (selectedDept === '' || dept === selectedDept) {
-                option.style.display = 'block';
-            } else {
-                option.style.display = 'none';
+    // ---------- FILTER EMPLOYEES ----------
+    function filterEmployees(dept, keepSelected = false) {
+        let selectedValue = keepSelected ? employee.value : '';
+
+        employee.innerHTML = '<option value="">Select Employee</option>';
+
+        allOptions.forEach(option => {
+            if (!option.value) return;
+
+            let empDept = option.getAttribute('data-dept');
+
+            if (dept === '' || empDept === dept) {
+                let clone = option.cloneNode(true);
+
+                if (keepSelected && option.value === selectedValue) {
+                    clone.selected = true;
+                }
+
+                employee.appendChild(clone);
             }
         });
 
-        employeeSelect.value = ''; // reset selection
+        if (!keepSelected) {
+            employee.value = '';
+            resetEmployeeDetails();
+        }
+    }
+
+    // ---------- CASE 1 ----------
+    // First load → show all employees
+    filterEmployees('');
+
+    // ---------- CASE 2 ----------
+    // Department change → filter employees + reset
+    department.addEventListener('change', function () {
+        filterEmployees(this.value);
     });
 
-    document.getElementById('employee').addEventListener('change', function () {
+    // ---------- CASE 3 ----------
+    // Employee selected → auto-select department + fill details
+    employee.addEventListener('change', function () {
         let selected = this.options[this.selectedIndex];
+        if (!selected.value) return;
 
-        let name = selected.getAttribute('data-name');
-        let email = selected.getAttribute('data-email');
-        let mobile = selected.getAttribute('data-mobile');
-        let code = selected.getAttribute('data-code');
-        let reporting = selected.getAttribute('data-reporting');
-        let empId = selected.getAttribute('data-empId');
+        let empDept = selected.getAttribute('data-dept');
 
-        document.getElementById('name').value = name || '';
-        document.getElementById('email').value = email || '';
-        document.getElementById('mobile_number').value = mobile || '';
-        document.getElementById('emp_code').value = code || '';
-        document.getElementById('emp_reporting').value = reporting || '';
-        document.getElementById('employee_id').value = empId || '';
-        document.getElementById('password').value = mobile || '';
+        // Auto select department
+        if (empDept && department.value !== empDept) {
+            department.value = empDept;
+            filterEmployees(empDept, true); // keep selected employee
+        }
 
-        // Load reporting manager details
-        const card = document.getElementById('reportingManagerCard');
-        if (reporting && reporting !== '0' && reporting !== '') {
+        // Fill details
+        document.getElementById('name').value = selected.dataset.name || '';
+        document.getElementById('email').value = selected.dataset.email || '';
+        document.getElementById('mobile_number').value = selected.dataset.mobile || '';
+        document.getElementById('emp_code').value = selected.dataset.code || '';
+        document.getElementById('emp_reporting').value = selected.dataset.reporting || '';
+        document.getElementById('employee_id').value = selected.dataset.empid || '';
+        document.getElementById('password').value = selected.dataset.mobile || '';
+
+        // Reporting manager
+        let reporting = selected.dataset.reporting;
+
+        if (reporting && reporting !== '0') {
             fetch(`/employee/${reporting}`)
                 .then(r => r.json())
                 .then(m => {
-                    if (!m) { card.classList.add('d-none'); return; }
-                    document.getElementById('rm_name').textContent   = m.emp_name        || '—';
-                    document.getElementById('rm_code').textContent   = m.emp_code        || '—';
-                    document.getElementById('rm_email').textContent  = m.emp_email       || '—';
-                    document.getElementById('rm_mobile').textContent = m.emp_contact     || '—';
-                    document.getElementById('rm_dept').textContent   = m.emp_department  || '—';
+                    if (!m) return card.classList.add('d-none');
+
+                    document.getElementById('rm_name').textContent   = m.emp_name || '—';
+                    document.getElementById('rm_code').textContent   = m.emp_code || '—';
+                    document.getElementById('rm_email').textContent  = m.emp_email || '—';
+                    document.getElementById('rm_mobile').textContent = m.emp_contact || '—';
+                    document.getElementById('rm_dept').textContent   = m.emp_department || '—';
                     document.getElementById('rm_desig').textContent  = m.emp_designation || '—';
-                    // Check if manager is already a user
+
                     fetch(`/check-user?emp_code=${m.emp_code}`)
                         .then(r => r.json())
                         .then(u => {
-                            const badge = document.getElementById('rm_user_badge');
-                            badge.innerHTML = u.exists
-                                ? '<span class="badge bg-success"><i class="ri-check-line me-1"></i>Already a User</span>'
-                                : '<span class="badge bg-warning text-dark"><i class="ri-user-add-line me-1"></i>Will be created as User</span>';
+                            document.getElementById('rm_user_badge').innerHTML =
+                                u.exists
+                                ? '<span class="badge bg-success">Already a User</span>'
+                                : '<span class="badge bg-warning text-dark">Will be created</span>';
                         });
+
                     card.classList.remove('d-none');
                 })
                 .catch(() => card.classList.add('d-none'));
@@ -435,15 +482,10 @@
             card.classList.add('d-none');
         }
     });
-document.querySelectorAll('.role-checkbox').forEach(function(checkbox) {
-    checkbox.addEventListener('change', function() {
 
-        // uncheck all others
-        document.querySelectorAll('.role-checkbox').forEach(function(cb) {
-            if (cb !== checkbox) cb.checked = false;
-        });
+    // ---------- CASE 4 ----------
+    // If department changes AFTER selecting employee → reset everything handled in filterEmployees()
 
-    });
 });
 </script>
 @endsection
