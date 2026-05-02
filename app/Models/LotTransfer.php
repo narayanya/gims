@@ -17,7 +17,10 @@ class LotTransfer extends Model
     'f_quantity',
     'f_balance_capacity',
         'available_capacity', 'balance_capacity',
-        'quantity', 'remarks', 'transferred_by',
+        'quantity',
+        'from_o_quantity', 'from_c_quantity', 'from_b_quantity',
+        'to_o_quantity', 'to_c_quantity', 'to_b_quantity',
+        'remarks', 'transferred_by',
     ];
 
     public function lot()         { return $this->belongsTo(Lot::class); }

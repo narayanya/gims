@@ -35,14 +35,13 @@ Auth::routes();
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/reports', [ReportController::class, 'index'])->name('report.reports');
-
-    Route::get('/reports/request', [ReportController::class, 'requestReport'])->name('report.request');
-    Route::get('/reports/request/download', [ReportController::class, 'downloadRequestReport'])->name('report.request.download');
-    Route::get('/reports/expiry-report', [ReportController::class, 'expiryReport'])->name('expiry.report');
-    Route::get('/reports/expiry-report/download', [ReportController::class, 'downloadExpiryReport'])->name('expiry.report.download');
-    Route::get('/reports/transaction/{type}', [ReportController::class, 'transactionReport'])->name('report.transaction');
-    Route::get('/reports/transaction/{type}/download', [ReportController::class, 'downloadTransactionReport'])->name('report.transaction.download');
+    Route::get('/reports', [ReportController::class, 'index'])->name('report.reports')->middleware('permission:report.view');
+    Route::get('/reports/request', [ReportController::class, 'requestReport'])->name('report.request')->middleware('permission:report.view');
+    Route::get('/reports/request/download', [ReportController::class, 'downloadRequestReport'])->name('report.request.download')->middleware('permission:report.export');
+    Route::get('/reports/expiry-report', [ReportController::class, 'expiryReport'])->name('expiry.report')->middleware('permission:report.expiry');
+    Route::get('/reports/expiry-report/download', [ReportController::class, 'downloadExpiryReport'])->name('expiry.report.download')->middleware('permission:report.export');
+    Route::get('/reports/transaction/{type}', [ReportController::class, 'transactionReport'])->name('report.transaction')->middleware('permission:report.transaction');
+    Route::get('/reports/transaction/{type}/download', [ReportController::class, 'downloadTransactionReport'])->name('report.transaction.download')->middleware('permission:report.export');
  
     // AJAX helpers
     Route::get('/get-states/{countryId}',   [AccessionController::class, 'getStatesByCountry']);
@@ -59,28 +58,28 @@ Route::middleware('auth')->group(function () {
 
     // Accession routes (static paths before wildcard)
     Route::get('/accessions', function () { return redirect()->route('accession.accession-list'); });
-    Route::get('/accession-list',            [AccessionController::class, 'index'])->name('accession.accession-list');
-    Route::get('/accessionform',             [AccessionController::class, 'create'])->name('accessionform');
-    Route::post('/accessions',               [AccessionController::class, 'store'])->name('accessions.store');
-    Route::post('/accessions/import',        [AccessionController::class, 'import'])->name('accessions.import');
-    Route::get('/accessions/export',         [AccessionController::class, 'export'])->name('accessions.export');
+    Route::get('/accession-list',            [AccessionController::class, 'index'])->name('accession.accession-list')->middleware('permission:accession.view');
+    Route::get('/accessionform',             [AccessionController::class, 'create'])->name('accessionform')->middleware('permission:accession.create');
+    Route::post('/accessions',               [AccessionController::class, 'store'])->name('accessions.store')->middleware('permission:accession.create');
+    Route::post('/accessions/import',        [AccessionController::class, 'import'])->name('accessions.import')->middleware('permission:accession.import');
+    Route::get('/accessions/export',         [AccessionController::class, 'export'])->name('accessions.export')->middleware('permission:accession.export');
     Route::get('/accessions/sample-template', function () {
         return response()->download(public_path('templates/accessions_sample.csv'));
     })->name('accessions.template');
     Route::get('/accessions/passport-template', function () {
         return response()->download(public_path('templates/accessions_passport_sample.csv'));
     })->name('accessions.passport-template');
-    Route::get('/accessions/{id}',           [AccessionController::class, 'show'])->name('accessions.show');
-    Route::get('/accessions/{id}/edit',      [AccessionController::class, 'edit'])->name('accessions.edit');
-    Route::put('/accessions/{id}',           [AccessionController::class, 'update'])->name('accessions.update');
+    Route::get('/accessions/{id}',           [AccessionController::class, 'show'])->name('accessions.show')->middleware('permission:accession.view');
+    Route::get('/accessions/{id}/edit',      [AccessionController::class, 'edit'])->name('accessions.edit')->middleware('permission:accession.edit');
+    Route::put('/accessions/{id}',           [AccessionController::class, 'update'])->name('accessions.update')->middleware('permission:accession.edit');
 
 Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
 
-    Route::get('/users', [App\Http\Controllers\UserController::class, 'index'])->name('users');
-    Route::post('/users', [App\Http\Controllers\UserController::class, 'store'])->name('users.store');
-    Route::post('/users/{user}/roles', [App\Http\Controllers\UserController::class, 'assignRole'])->name('users.assignRole');
-    Route::post('/users/{user}/remove-role', [App\Http\Controllers\UserController::class, 'removeRole'])->name('users.removeRole');
-    Route::delete('/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->name('users.destroy');
+    Route::get('/users', [App\Http\Controllers\UserController::class, 'index'])->name('users')->middleware('permission:menu.users');
+    Route::post('/users', [App\Http\Controllers\UserController::class, 'store'])->name('users.store')->middleware('permission:user.create');
+    Route::post('/users/{user}/roles', [App\Http\Controllers\UserController::class, 'assignRole'])->name('users.assignRole')->middleware('permission:user.edit');
+    Route::post('/users/{user}/remove-role', [App\Http\Controllers\UserController::class, 'removeRole'])->name('users.removeRole')->middleware('permission:user.edit');
+    Route::delete('/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:user.delete');
     Route::post('/users/sync', [UserController::class, 'syncEmployees'])->name('users.sync');
 
     // Storage Routes
@@ -91,11 +90,11 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
         'storage-management' => 'storage'
     ]);
 
-    Route::get('/lot-management', [App\Http\Controllers\LotController::class, 'managementIndex'])->name('lot-management');
-    Route::get('/lot-management/create', [App\Http\Controllers\LotController::class, 'managementCreate'])->name('lot-management.create');
-    Route::get('/lot-management/{id}/edit', [App\Http\Controllers\LotController::class, 'managementEdit'])->name('lot-management.edit');
-    Route::post('/lot-management', [App\Http\Controllers\LotController::class, 'managementStore'])->name('lot-management.store');
-    Route::put('/lot-management/{id}', [App\Http\Controllers\LotController::class, 'managementUpdate'])->name('lot-management.update');
+    Route::get('/lot-management', [App\Http\Controllers\LotController::class, 'managementIndex'])->name('lot-management')->middleware('permission:lot.view');
+    Route::get('/lot-management/create', [App\Http\Controllers\LotController::class, 'managementCreate'])->name('lot-management.create')->middleware('permission:lot.create');
+    Route::get('/lot-management/{id}/edit', [App\Http\Controllers\LotController::class, 'managementEdit'])->name('lot-management.edit')->middleware('permission:lot.edit');
+    Route::post('/lot-management', [App\Http\Controllers\LotController::class, 'managementStore'])->name('lot-management.store')->middleware('permission:lot.create');
+    Route::put('/lot-management/{id}', [App\Http\Controllers\LotController::class, 'managementUpdate'])->name('lot-management.update')->middleware('permission:lot.edit');
     Route::get('/lot-management/storage/{id}', [App\Http\Controllers\LotController::class, 'getStorageDetails'])->name('lot-management.storage');
     Route::get('/lot-management/accession/{id}', [App\Http\Controllers\LotController::class, 'getAccessionDetails'])->name('lot-management.accession');
     Route::get('/lot-management/{id}/quality', [App\Http\Controllers\LotController::class, 'getLotQualityDetails'])->name('lot-management.quality');
@@ -154,9 +153,8 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::get('/get-accession-storages/{accessionId}', [App\Http\Controllers\LotTransferController::class, 'getAccessionStorages']);
 
     // Lot Inter-Transfer
-    Route::get('/warehouse-transfer', [App\Http\Controllers\WarehouseTransferController::class, 'index'])->name('warehouse-transfer.index');
-    Route::post('/warehouse-transfer', [WarehouseTransferController::class, 'store'])
-    ->name('warehouse-transfer.store');
+    Route::get('/warehouse-transfer', [App\Http\Controllers\WarehouseTransferController::class, 'index'])->name('warehouse-transfer.index')->middleware('permission:storage.transfer');
+    Route::post('/warehouse-transfer', [WarehouseTransferController::class, 'store'])->name('warehouse-transfer.store')->middleware('permission:storage.transfer');
     Route::get('/get-lots-by-warehouse', [WarehouseTransferController::class, 'getLotsByWarehouse']);
     Route::get('/get-storages-by-warehouse', [WarehouseTransferController::class, 'getStoragesByWarehouse']);
     Route::get('/get-warehouse-by-storage', [WarehouseTransferController::class, 'getWarehouseByStorage']);
@@ -273,12 +271,12 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
 
     Route::get('/settings', function () {
         return view('settings.index');
-    })->name('settings');
+    })->name('settings')->middleware('permission:menu.settings');
 
     // Log Report
-    Route::get('/logs', [LogReportController::class, 'index'])->name('logs.index');
-    Route::get('/logs/export', [LogReportController::class, 'export'])->name('logs.export');
-    Route::get('/logs/{id}', [LogReportController::class, 'show'])->name('logs.show');
+    Route::get('/logs', [LogReportController::class, 'index'])->name('logs.index')->middleware('permission:menu.logs');
+    Route::get('/logs/export', [LogReportController::class, 'export'])->name('logs.export')->middleware('permission:menu.logs');
+    Route::get('/logs/{id}', [LogReportController::class, 'show'])->name('logs.show')->middleware('permission:menu.logs');
     Route::post('/logs/page-exit', [LogReportController::class, 'pageExit'])->name('logs.page-exit');
 
      //========================Core API=======================
@@ -288,27 +286,27 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
 
     Route::prefix('roles')->group(function () {
 
-        Route::get('/', [RoleController::class, 'index'])->name('settings.role');
+        Route::get('/', [RoleController::class, 'index'])->name('settings.role')->middleware('permission:menu.roles');
 
-        Route::get('/create', [RoleController::class, 'create'])->name('settings.create');
+        Route::get('/create', [RoleController::class, 'create'])->name('settings.create')->middleware('permission:role.create');
 
-        Route::post('/store', [RoleController::class, 'store'])->name('settings.store');
+        Route::post('/store', [RoleController::class, 'store'])->name('settings.store')->middleware('permission:role.create');
 
-        Route::get('/edit/{id}', [RoleController::class, 'edit'])->name('roles.edit');
+        Route::get('/edit/{id}', [RoleController::class, 'edit'])->name('roles.edit')->middleware('permission:role.edit');
 
-        Route::put('/update/{id}', [RoleController::class, 'update'])->name('roles.update');
+        Route::put('/update/{id}', [RoleController::class, 'update'])->name('roles.update')->middleware('permission:role.edit');
 
-        Route::delete('/delete/{id}', [RoleController::class, 'destroy'])->name('roles.delete');
+        Route::delete('/delete/{id}', [RoleController::class, 'destroy'])->name('roles.delete')->middleware('permission:role.delete');
 
     });
 
     Route::prefix('permission')->group(function () {
-        Route::get('/', [PermissionController::class, 'index'])->name('settings.permission');
-        Route::post('/save', [PermissionController::class, 'update'])->name('settings.permission.save');
+        Route::get('/', [PermissionController::class, 'index'])->name('settings.permission')->middleware('permission:menu.permissions');
+        Route::post('/save', [PermissionController::class, 'update'])->name('settings.permission.save')->middleware('permission:menu.permissions');
     });
 
     Route::get('/dispatch-orders', [DispatchController::class, 'index'])
-    ->name('dispatch-management.index');
+    ->name('dispatch-management.index')->middleware('permission:dispatch.view');
 
     Route::post('/dispatch/{id}', [DispatchController::class, 'dispatch'])
         ->name('dispatch-management.send');

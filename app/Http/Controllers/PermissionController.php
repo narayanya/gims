@@ -12,7 +12,43 @@ class PermissionController extends Controller
     {
         $roles       = Role::with('permissions')->orderBy('id')->get();
         $permissions = Permission::orderBy('slug')->get();
-        $modules     = ['crop', 'variety', 'lot', 'storage', 'accession', 'request', 'dispatch'];
+
+        // Structured module config: module => [ group => [actions] ]
+        $modules = [
+            'accession' => [
+                'core'    => ['view', 'create', 'edit', 'delete'],
+                'data'    => ['import', 'export', 'report'],
+            ],
+            'lot' => [
+                'core'    => ['view', 'create', 'edit', 'delete'],
+                'data'    => ['import', 'export', 'transfer'],
+            ],
+            'crop' => [
+                'core'    => ['view', 'create', 'edit', 'delete'],
+                'data'    => ['import', 'export'],
+            ],
+            'storage' => [
+                'core'    => ['view', 'create', 'edit', 'delete'],
+                'data'    => ['export', 'transfer'],
+            ],
+            'request' => [
+                'core'    => ['view', 'create', 'edit', 'delete'],
+                'workflow'=> ['approve', 'receive', 'return', 'export'],
+            ],
+            'dispatch' => [
+                'core'    => ['view', 'create', 'edit', 'delete'],
+                'workflow'=> ['mrn', 'export'],
+            ],
+            'report' => [
+                'access'  => ['view', 'export', 'expiry', 'transaction'],
+            ],
+            'menu' => [
+                'access'  => ['dashboard', 'accession', 'lot', 'storage', 'dispatch', 'request', 'reports', 'masters', 'settings', 'logs'],
+            ],
+            'settings' => [
+                'admin'   => ['view', 'users', 'roles', 'permissions', 'masters'],
+            ],
+        ];
 
         return view('settings.permission', compact('roles', 'permissions', 'modules'));
     }

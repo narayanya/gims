@@ -16,6 +16,7 @@ class Accession extends Model
         'accession_name',
         'acc_source',
         'ext_source',
+        'source_document_path',
         'requester_show',
         'crop_id',
 

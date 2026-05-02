@@ -206,6 +206,8 @@ class AccessionController extends Controller
             $validated = $request->validate([
                 // Basic Information
                 'acc_source' => 'required|in:internal,external',
+                'ext_source' => 'required_if:acc_source,external|nullable|string|max:255',
+                'source_document' => 'required_if:acc_source,external|nullable|mimes:pdf,doc,docx,csv|max:5120',
                 'sample_id' => 'required|string|max:100',
                 'regen_year' => 'nullable|integer|min:1|max:100',
                 'requester_show' => 'required|in:yes,no',
@@ -232,11 +234,7 @@ class AccessionController extends Controller
                 'biological_status' => 'nullable|in:Wild,Landrace,Breeding Material,Improved Variety',
                 'sample_type' => 'nullable|in:Seed,Plant,Tissue',
                 'reproductive_type' => 'nullable|in:Self Pollinated,Cross Pollinated',
-                
-                // Quantity Information
-                //'quantity' => 'nullable|numeric|min:0',
-                //'capacity_unit_id' => 'nullable|exists:units,id',
-                //'quantity_show' => 'nullable|numeric|min:0',
+
                 
                 // Storage Information
                 'warehouse_id'         => 'nullable|exists:warehouses,id',
@@ -246,14 +244,6 @@ class AccessionController extends Controller
                 'storage_type_id'      => 'nullable|exists:storage_types,id',
                 'altitude'             => 'nullable|integer',
                 
-                // Seed Quality (ARRAY)
-                //'germination_percentage.*' => 'nullable|numeric|min:0|max:100',
-                //'moisture_content.*' => 'nullable|numeric|min:0|max:100',
-                //'purity_percentage.*' => 'nullable|numeric|min:0|max:100',
-                //'viability_test_date.*' => 'nullable|date',
-                //'seed_health_status.*' => 'nullable|in:Healthy,Infected,Damaged,Under Treatment',
-                //'researcher_id.*' => 'nullable',
-                //'researcher_other.*' => 'nullable|string|max:255',
                 
                 // Documentation
                 'barcode_type' => 'required|in:auto,manual,existing,scan,none',
@@ -280,22 +270,11 @@ class AccessionController extends Controller
             // Set defaults
             if (!$request->entry_date) $validated['entry_date'] = now();
             if (!$request->entered_by) $validated['entered_by'] = Auth::id();
-
-            // Extract array fields before create
-            //$germinationData = $validated['germination_percentage'] ?? [];
-            //$moistureData    = $validated['moisture_content'] ?? [];
-            //$purityData      = $validated['purity_percentage'] ?? [];
-            //$viabilityData   = $validated['viability_test_date'] ?? [];
-            //$healthData      = $validated['seed_health_status'] ?? [];
-            //$researcherData  = $validated['researcher_id'] ?? [];
-            //$researcherOther = $validated['researcher_other'] ?? [];
+            
             $passportData    = $request->input('passport', []);
 
             unset(
-                //$validated['germination_percentage'], $validated['moisture_content'],
-                //$validated['purity_percentage'],      $validated['viability_test_date'],
-                //$validated['seed_health_status'],     $validated['researcher_id'],
-                //$validated['researcher_other'],       
+                 
                 $validated['images'],
                 $validated['passport_file']
             );
@@ -350,6 +329,16 @@ class AccessionController extends Controller
                 $accession->update(['passport_file_path' => $pfName]);
             }
 
+            if ($request->hasFile('source_document')) {
+                $docName = 'src_' . str_pad($accession->id, 3, '0', STR_PAD_LEFT) . '_' . now()->format('dmY') . '.' . $request->file('source_document')->getClientOriginalExtension();
+
+                $request->file('source_document')->storeAs('accessions/source_docs', $docName, 'public');
+
+                $accession->update([
+                    'source_document_path' => $docName
+                ]);
+            }
+
             // Save passport rows
             foreach ($passportData as $row) {
                 if (!empty($row['sample_name']) || !empty($row['passport_no'])) {
@@ -363,23 +352,6 @@ class AccessionController extends Controller
                 }
             }
 
-            // Save seed quality rows
-            /*foreach ($germinationData as $key => $value) {
-                if (empty($value) && empty($moistureData[$key]) && empty($purityData[$key])) continue;
-                $rId = $researcherData[$key] ?? null;
-                $rOther = null;
-                if ($rId === 'other') { $rOther = $researcherOther[$key] ?? null; $rId = null; }
-                SeedQuality::create([
-                    'accession_id'           => $accession->id,
-                    'germination_percentage' => $value,
-                    'moisture_content'       => $moistureData[$key] ?? null,
-                    'purity_percentage'      => $purityData[$key] ?? null,
-                    'viability_test_date'    => $viabilityData[$key] ?? null,
-                    'seed_health_status'     => $healthData[$key] ?? null,
-                    'researcher_id'          => $rId,
-                    'researcher_other'       => $rOther,
-                ]);
-            }*/
 
             DB::commit();
             return redirect()->route('accession.accession-list')

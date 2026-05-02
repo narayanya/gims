@@ -123,7 +123,7 @@
                                             <div class="form-check form-check-inline">
                                                 <input class="form-check-input" type="radio" name="acc_source"
                                                     value="external" id="sourceExternal"
-                                                    {{ old('acc_source', $accession->acc_source ?? '') == 'external' ? 'checked' : '' }}>
+                                                    {{ old('ext_source', $accession->ext_source ?? '') == 'external' ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="sourceExternal">External</label>
                                             </div>
                                         </div>
@@ -132,16 +132,16 @@
                                         <select name="ext_source" id="sourceSelect" class="form-select mb-2" style="display:none;">
                                             <option value="">Select Source</option>
                                             <option value="Invoice"
-                                                {{ old('source', $accession->source ?? '') == 'Invoice' ? 'selected' : '' }}>
+                                                {{ old('ext_source', $accession->ext_source ?? '') == 'Invoice' ? 'selected' : '' }}>
                                                 Invoice</option>
                                             <option value="Recive"
-                                                {{ old('source', $accession->source ?? '') == 'Recive' ? 'selected' : '' }}>Recive
+                                                {{ old('ext_source', $accession->ext_source ?? '') == 'Recive' ? 'selected' : '' }}>Recive
                                             </option>
                                             <option value="Agriments"
-                                                {{ old('source', $accession->source ?? '') == 'Agriments' ? 'selected' : '' }}>
+                                                {{ old('ext_source', $accession->ext_source ?? '') == 'Agriments' ? 'selected' : '' }}>
                                                 Agriments</option>
                                             <option value="Import License"
-                                                {{ old('source', $accession->source ?? '') == 'Import License' ? 'selected' : '' }}>
+                                                {{ old('ext_source', $accession->ext_source ?? '') == 'Import License' ? 'selected' : '' }}>
                                                 Import License</option>
                                         </select>
                                         <input type="file" name="source_document" id="sourceDocument" class="form-control" style="display:none;"
@@ -987,25 +987,32 @@
             // =========================
             // SOURCE TOGGLE
             // =========================
-            const internal = $('sourceInternal');
-            const external = $('sourceExternal');
-            const dropdown = $('sourceSelect');
-            const sourceDocument = $('sourceDocument');
+            const internal = document.getElementById('sourceInternal');
+            const external = document.getElementById('sourceExternal');
+            const dropdown = document.getElementById('sourceSelect');
+            const sourceDocument = document.getElementById('sourceDocument');
 
             function toggleSource() {
-                if (!dropdown) return;
-                dropdown.style.display = external && external.checked ? 'block' : 'none';
-                sourceDocument.style.display = external && external.checked ? 'block' : 'none';
-            }
+                if (!dropdown || !sourceDocument) return;
 
+                if (external.checked) {
+                    dropdown.style.display = 'block';
+                    sourceDocument.style.display = 'block';
+                } else {
+                    dropdown.style.display = 'none';
+                    sourceDocument.style.display = 'none';
+
+                    // reset values (important)
+                    dropdown.value = '';
+                    sourceDocument.value = '';
+                }
+            }
 
             if (internal && external) {
                 internal.addEventListener('change', toggleSource);
                 external.addEventListener('change', toggleSource);
-                toggleSource();
+                toggleSource(); // run on load
             }
-
-
 
             // =========================
             // REQUESTER TOGGLE

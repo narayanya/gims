@@ -244,24 +244,36 @@
         <table class="table table-bordered table-striped">
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Crop</th>
-                    <th>Accession No.</th>
-                    <th>Lot</th>
-                    <th>Storage From</th>
+                    <th rowspan="2">Date</th>
+                    <th rowspan="2" >Crop</th>
+                    <th rowspan="2">Accession No.</th>
+                    <th rowspan="2">Lot</th>
+                    <th colspan="7" class="text-center">Storage From</th>
+                    
+                    <th colspan="7" class="text-center">Storage To</th>
+                    <th rowspan="2">Section</th>
+                    <th rowspan="2">Rack</th>
+                    <th rowspan="2">Bin</th>
+                    <th rowspan="2">Container</th>
+                    <th rowspan="2">User</th>
+                </tr>
+                <tr>
+                    <th>Name</th>
                     <th>Avlb. Capacity</th>
                     <th>Pick Qty.</th>
                     <th>Bal. Capacity</th>
-                    <th>Storage To</th>
+                     <th>Opening Qty</th>
+                    <th>Closing Qty</th>
+                    <th>Balance Qty</th>
+
+                    <th>Name</th>
                     <th>Avlb. Capacity</th>
                     <th>Tnf Qty.</th>
                     <th>Bal. Capacity</th>
-                    <th>Section</th>
-                    <th>Rack</th>
-                    <th>Bin</th>
-                    <th>Container</th>
-                    <th>User</th>
-                </tr>
+                    <th>Opening Qty</th>
+                    <th>Closing Qty</th>
+                    <th>Balance Qty</th>
+                </tr>  
             </thead>
             <tbody>
                 @forelse($transfers as $t)
@@ -270,14 +282,25 @@
                         <td>{{ $t->lot->crop->crop_name ?? '-' }}</td>
                         <td>{{ $t->lot->accession->accession_number ?? '-' }}</td>
                         <td>{{ $t->lot->lot_number ?? '-' }}</td>
-                        <td>{{ $t->fromStorage->name ?? '-' }}</td>
+
+                        <td >{{ $t->fromStorage->name ?? '-' }}</td>
                         <td>{{ $t->f_available_capacity }}</td>
                         <td>{{ $t->f_quantity }}</td>
                         <td>{{ $t->f_balance_capacity }}</td>
-                        <td>{{ $t->toStorage->name ?? '-' }}</td>
+                        <td>{{ $t->from_o_quantity }}</td>
+                        <td>{{ $t->from_c_quantity }}</td>
+                        <td>{{ $t->from_b_quantity }}</td>
+
+                         <td >{{ $t->toStorage->name ?? '-' }}</td>
                         <td>{{ $t->available_capacity }}</td>
                         <td>{{ $t->quantity }}</td>
                         <td>{{ $t->balance_capacity }}</td>
+                        <td>{{ $t->to_o_quantity }}</td>
+                        <td>{{ $t->to_c_quantity }}</td>
+                        <td>{{ $t->to_b_quantity }}</td>
+                       
+                        
+
                         <td>{{ $t->toSection->name ?? '-' }}</td>
                         <td>{{ $t->toRack->name ?? '-' }}</td>
                         <td>{{ $t->toBin->name ?? '-' }}</td>

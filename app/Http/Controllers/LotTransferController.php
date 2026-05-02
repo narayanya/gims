@@ -107,9 +107,20 @@ public function transfer(Request $request)
             ]);
         }
 
+        // Opening = current_usage of FROM storage before transfer
+        // Closing = lot quantity being picked/moved out
+        // Balance = Opening - Closing = remaining current_usage after transfer
+        $fromOpen    = (float) $fromStorage->current_usage;  // current stock in FROM storage
+        $fromClose   = $lotQty;                               // quantity leaving
+        $fromBalance = $fromOpen - $fromClose;                        // remaining after transfer
+
+        $toOpen    = (float) $toStorage->current_usage;  // current stock in TO storage
+        $toClose   = $lotQty;                               // quantity leaving
+        $toBalance = $toOpen + $toClose;                        // remaining after transfer
+
         // ✅ AFTER TRANSFER
-        $fbalanceCapacity = $favailableCapacity + $lotQty; // FROM → space increases
-        $balanceCapacity  = $availableCapacity - $lotQty;  // TO → space decreases
+        $fbalanceCapacity = $favailableCapacity + $lotQty; // FROM → space increases (lot leaves)
+        $balanceCapacity  = $availableCapacity - $lotQty;  // TO → space decreases (lot arrives)
 
         DB::beginTransaction();
 
@@ -145,6 +156,14 @@ public function transfer(Request $request)
                 'available_capacity'   => $availableCapacity,
                 'quantity'             => $lotQty,
                 'balance_capacity'     => $balanceCapacity,
+
+                'from_o_quantity'           => $fromOpen,
+                'from_c_quantity'           => $fromClose,
+                'from_b_quantity'           => $fromBalance,
+
+                'to_o_quantity'           => $toOpen,
+                'to_c_quantity'           => $toClose,
+                'to_b_quantity'           => $toBalance,
 
                 'remarks'              => $request->remarks,
                 'transferred_by'       => auth()->id(),
