@@ -221,4 +221,7 @@ color: #6a6e6b;
 svg {
     max-width: 20px;
     height: auto;
-}       
+}  
+.menu-visible{
+  visibility: visible !important;
+}   

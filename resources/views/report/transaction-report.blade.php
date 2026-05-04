@@ -85,12 +85,18 @@
                                 <th>Lot Number</th>
                                 <th>Crop</th>
                                 <th>From</th>
+                                <th>Opening</th>
+                                <th>Closing</th>
+                                <th>Balance</th>
                                 <th>To</th>
+                                <th>Opening</th>
+                                <th>Closing</th>
+                                <th>Balance</th>
                                 <th>Section</th>
                                 <th>Rack</th>
                                 <th>Bin</th>
                                 <th>Container</th>
-                                <th>Quantity</th>
+                                
                                 <th>User</th>
                                 <th>Date</th>
                             </tr>
@@ -138,17 +144,25 @@
                             <tr>   
                                 <td>{{ $i + 1 }}</td>
                                 <td><span class="badge bg-primary">{{ $r->lot->lot_number }}</span></td>
-                                <td>{{ $r->lot->accession->crop->name ?? '-' }}</td>
+                                <td>{{ $r->crop?->crop_name ?? '—' }}</td>
 
                                 <td>{{ $r->fromStorage->name ?? '-' }}</td>
+                                <td>{{ $r->from_o_quantity }}</td>
+                                <td>{{ $r->from_c_quantity }}</td>
+                                <td>{{ $r->from_b_quantity }}</td>
+
                                 <td>{{ $r->toStorage->name ?? '-' }}</td>
+                                <td>{{ $r->to_o_quantity }}</td>
+                                <td>{{ $r->to_c_quantity }}</td>
+                                <td>{{ $r->to_b_quantity }}</td>
 
                                 <td>{{ $r->toSection->name ?? '-' }}</td>
                                 <td>{{ $r->toRack->name ?? '-' }}</td>
                                 <td>{{ $r->toBin->name ?? '-' }}</td>
                                 <td>{{ $r->toContainer->name ?? '-' }}</td>
 
-                                <td>{{ $r->quantity }}</td>
+                                
+
                                 <td>{{ $r->user->name ?? '-' }}</td>
                                 <td>{{ $r->created_at?->format('d M Y') }}</td>
                             </tr>

@@ -50,7 +50,7 @@ class  SeedRequest extends Model
 
     public function crop(): BelongsTo
     {
-        return $this->belongsTo(Crop::class);
+        return $this->belongsTo(Crop::class, 'crop_id');
     }
 
 

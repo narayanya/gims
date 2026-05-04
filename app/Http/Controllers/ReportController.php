@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 use App\Models\SeedRequest;
+use App\Models\SeedQuantity;
+use App\Models\Dispatch;
+use App\Models\Accession;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Carbon\Carbon;
-use App\Models\Accession;
 use App\Models\LotTransfer;
 
 use Illuminate\Http\Request;
@@ -14,9 +16,39 @@ class ReportController extends Controller
 {
     public function index()
     {
-        $today = Carbon::now();   
+        $today = Carbon::now();  
+        $lots = LotTransfer::all()->count();
+        $totalRequested = SeedRequest::where('status', 'pending')->sum('quantity') ?? 0;    // pending/total requests
+        $totalAvailable = SeedQuantity::sum('quantity') ?? 0;    // available seeds
+        $totalDispatched = Dispatch::sum('quantity') ?? 0;       // dispatched seeds
 
-        return view('report.reports', compact('today'));
+        $days = collect();
+        $latestDate = DB::table('dispatches')->max('dispatched_at');
+        $startDate = $latestDate
+            ? Carbon::parse($latestDate)->startOfDay()->subDays(14)
+            : Carbon::today()->subDays(14);
+
+        for ($i = 0; $i < 15; $i++) {
+            $date = $startDate->copy()->addDays($i);
+
+            $days->push([
+                'date' => $date->format('d M'),
+
+                'arrival' => (float) DB::table('lots')
+                    ->whereDate('created_at', $date)
+                    ->sum('quantity'),
+
+                'dispatch' => (float) DB::table('dispatches')
+                    ->whereDate('dispatched_at', $date)
+                    ->sum('quantity'),
+
+                'request' => (float) DB::table('requests')
+                    ->whereDate('request_date', $date)
+                    ->sum('quantity'),
+            ]);
+        }
+       
+        return view('report.reports', compact('today', 'totalRequested', 'totalAvailable', 'totalDispatched', 'lots' ))->with('chartData', $days);
     }
 
     // View Request Report
@@ -145,34 +177,34 @@ class ReportController extends Controller
         switch ($type) {
             case 'arrival':
                 // Accessions with acc_source = external (arrived from outside)
-                $query = Accession::with(['crop', 'variety', 'warehouse'])
+                $query = Accession::with(['crop', 'warehouse'])
                     ->where('acc_source', 'external');
                 if ($dateFrom) $query->whereDate('created_at', '>=', $dateFrom);
                 if ($dateTo)   $query->whereDate('created_at', '<=', $dateTo);
                 return $query->latest()->get();
 
             case 'accessioning':
-                $query = Accession::with(['crop', 'variety', 'warehouse', 'storageType']);
+                $query = Accession::with(['crop', 'warehouse', 'storageType']);
                 if ($dateFrom) $query->whereDate('entry_date', '>=', $dateFrom);
                 if ($dateTo)   $query->whereDate('entry_date', '<=', $dateTo);
                 return $query->latest()->get();
 
             case 'request':
-                $query = SeedRequest::with(['user', 'crop', 'variety']);
+                $query = SeedRequest::with(['user', 'crop',]);
                 if ($dateFrom) $query->whereDate('created_at', '>=', $dateFrom);
                 if ($dateTo)   $query->whereDate('created_at', '<=', $dateTo);
                 return $query->latest()->get();
 
             case 'dispatch':
                 // Approved/dispatched requests
-                $query = SeedRequest::with(['user', 'crop', 'variety'])
+                $query = SeedRequest::with(['user', 'crop',])
                     ->whereIn('status', ['approved', 'dispatched', 'completed']);
                 if ($dateFrom) $query->whereDate('approved_at', '>=', $dateFrom);
                 if ($dateTo)   $query->whereDate('approved_at', '<=', $dateTo);
                 return $query->latest()->get();
 
             case 'return':
-                $query = SeedRequest::with(['user', 'crop', 'variety'])
+                $query = SeedRequest::with(['user', 'crop',])
                     ->where('status', 'returned');
                 if ($dateFrom) $query->whereDate('updated_at', '>=', $dateFrom);
                 if ($dateTo)   $query->whereDate('updated_at', '<=', $dateTo);
@@ -188,7 +220,7 @@ class ReportController extends Controller
                 return $query->latest()->get();
 
             case 'disposal':
-                $query = Accession::with(['crop', 'variety'])
+                $query = Accession::with(['crop'])
                     ->where('status', 'depleted');
                 if ($dateFrom) $query->whereDate('updated_at', '>=', $dateFrom);
                 if ($dateTo)   $query->whereDate('updated_at', '<=', $dateTo);
@@ -268,13 +300,12 @@ class ReportController extends Controller
 
             // Dynamic columns per type
             if (in_array($type, ['arrival', 'accessioning', 'disposal'])) {
-                fputcsv($file, ['Accession No', 'Accession Name', 'Crop', 'Variety', 'Quantity', 'Warehouse', 'Status', 'Date']);
+                fputcsv($file, ['Accession No', 'Accession Name', 'Crop', 'Quantity', 'Warehouse', 'Status', 'Date']);
                 foreach ($records as $r) {
                     fputcsv($file, [
                         $r->accession_number,
                         $r->accession_name,
                         $r->crop?->crop_name ?? '',
-                        $r->variety?->variety_name ?? '',
                         $r->quantity,
                         $r->warehouse?->name ?? '',
                         $r->status,
@@ -282,13 +313,12 @@ class ReportController extends Controller
                     ]);
                 }
             } elseif (in_array($type, ['request', 'dispatch', 'return'])) {
-                fputcsv($file, ['Request No', 'Requester', 'Crop', 'Variety', 'Quantity', 'Status', 'Date']);
+                fputcsv($file, ['Request No', 'Requester', 'Crop', 'Quantity', 'Status', 'Date']);
                 foreach ($records as $r) {
                     fputcsv($file, [
                         $r->request_number,
                         $r->user?->name ?? $r->requester_name ?? '',
                         $r->crop?->crop_name ?? '',
-                        $r->variety?->variety_name ?? '',
                         $r->quantity,
                         $r->status,
                         $r->created_at?->format('Y-m-d'),
@@ -300,7 +330,7 @@ class ReportController extends Controller
                     fputcsv($file, [
                         $r->lot_number,
                         $r->accession?->accession_number ?? '',
-                        $r->crop?->crop_name ?? '',
+                        $r->core_crop?->crop_name ?? '',
                         $r->lotType?->name ?? '',
                         $r->quantity,
                         $r->storage?->name ?? '',

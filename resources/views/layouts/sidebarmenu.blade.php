@@ -48,7 +48,7 @@
                                href="#sidebarMaster" data-bs-toggle="collapse" role="button">
                                 <i class="ri-dashboard-2-line"></i> <span>Master</span>
                             </a>
-                            <div class="collapse menu-dropdown {{ request()->is('crops*','varieties*') ? 'show' : '' }}" id="sidebarMaster">
+                            <div class="collapse menu-visible menu-dropdown {{ request()->is('crops*','varieties*') ? 'show' : '' }}" id="sidebarMaster">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
                                         <a href="{{ route('crops.index') }}" class="nav-link {{ request()->routeIs('crops.*') ? 'active' : '' }}">Crop Master</a>
@@ -62,7 +62,7 @@
                                href="#sidebarMasterSetting" data-bs-toggle="collapse" role="button">
                                 <i class="ri-dashboard-2-line"></i> <span>Master Settings</span>
                             </a>
-                            <div class="collapse menu-dropdown {{ request()->is('categories*','crop-categories*','crop-types*','variety-types*','seasons*','seed-classes*','units*','soil-types*','arrival-types*','location*','employees*') ? 'show' : '' }}" id="sidebarMasterSetting">
+                            <div class="collapse menu-visible menu-dropdown {{ request()->is('categories*','crop-categories*','crop-types*','variety-types*','seasons*','seed-classes*','units*','soil-types*','arrival-types*','location*','employees*') ? 'show' : '' }}" id="sidebarMasterSetting">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item"><a href="{{ route('categories.index') }}" class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}">Category Master</a></li>
                                     <li class="nav-item"><a href="{{ route('crop-categories.index') }}" class="nav-link {{ request()->routeIs('crop-categories.*') ? 'active' : '' }}">Crop Category</a></li>
@@ -87,7 +87,7 @@
                                href="#sidebarSync" data-bs-toggle="collapse" role="button">
                                 <i class="ri-refresh-line"></i> <span>CoreData Sync</span>
                             </a>
-                            <div class="collapse menu-dropdown {{ request()->is('sync*','core_api*') ? 'show' : '' }}" id="sidebarSync">
+                            <div class="collapse menu-visible menu-dropdown {{ request()->is('sync*','core_api*') ? 'show' : '' }}" id="sidebarSync">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
                                         <a class="nav-link {{ request()->routeIs('core_api.*') ? 'active' : '' }}" href="{{ route('core_api.index') }}">Core Api</a>
@@ -113,7 +113,7 @@
                                href="#sidebarMasterLot" data-bs-toggle="collapse" role="button">
                                 <i class="ri-layout-3-line"></i> <span>Lot / Batch Management</span>
                             </a>
-                            <div class="collapse menu-dropdown {{ request()->is('lot-management','lot-transfer','warehouse-transfer','lot-types*','lots*') ? 'show' : '' }}" id="sidebarMasterLot">
+                            <div class="collapse menu-visible menu-dropdown {{ request()->is('lot-management','lot-transfer','warehouse-transfer','lot-types*','lots*') ? 'show' : '' }}" id="sidebarMasterLot">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('lot-management') ? 'active' : '' }}" href="{{ route('lot-management') }}">Lot List</a></li>
                                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('lot-transfer.*') ? 'active' : '' }}" href="{{ route('lot-transfer.index') }}">Lot Inter-Transfer</a></li>
@@ -132,7 +132,7 @@
                                href="#sidebarMasterStorage" data-bs-toggle="collapse" role="button">
                                 <i class="ri-account-circle-line"></i> <span>Storage Management</span>
                             </a>
-                            <div class="collapse menu-dropdown {{ request()->is('storage-management','storage-locations*','warehouses*','storage-types*','storage-times*','storage-conditions*','storage-location-master*') ? 'show' : '' }}" id="sidebarMasterStorage">
+                            <div class="collapse menu-visible menu-dropdown {{ request()->is('storage-management','storage-locations*','warehouses*','storage-types*','storage-times*','storage-conditions*','storage-location-master*') ? 'show' : '' }}" id="sidebarMasterStorage">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('storage-management.*') ? 'active' : '' }}" href="{{ route('storage-management.index') }}">Storage List</a></li>
                                     <li class="nav-item"><a href="{{ route('warehouses.index') }}" class="nav-link {{ request()->routeIs('warehouses.*') ? 'active' : '' }}">Warehouse Master</a></li>
@@ -179,7 +179,7 @@
                                href="#settings" data-bs-toggle="collapse" role="button">
                                 <i class="ri-settings-4-line"></i> <span>Settings</span>
                             </a>
-                            <div class="collapse menu-dropdown {{ request()->is('settings*','user*','logs*','roles*','permission*') ? 'show' : '' }}" id="settings">
+                            <div class="collapse menu-visible menu-dropdown {{ request()->is('settings*','user*','logs*','roles*','permission*') ? 'show' : '' }}" id="settings">
                                 <ul class="nav nav-sm flex-column">
                                     @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasPermission('settings.roles'))
                                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('settings.role') ? 'active' : '' }}" href="{{ route('settings.role') }}">Roles</a></li>

@@ -249,9 +249,56 @@
                             </div>-->
                         </div>
                     </div>
+                </div>        
+
+            </div>
+            <div class="card mt-2 ">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <h5 class="card-title mb-2">Total Available Quantity</h5>
+                            <h4 class="mb-0 text-success">
+                                {{ formatWeight($totalAvailable) }}
+                            </h4>
+                        </div>
+                        <div class="col-md-3">
+                            <h5 class="card-title mb-2">Total Dispatched Quantity</h5>
+                            <h4 class="mb-0 text-danger">
+                                {{ formatWeight($totalDispatched) }}
+                            </h4>
+                        </div>
+                        <div class="col-md-3">
+                            <h5 class="card-title mb-2">Total Pending Requests</h5>
+                            <h4 class="mb-0 text-warning">
+                                {{ formatWeight($totalRequested) }}
+                            </h4>
+                        </div>
+                        <div class="col-md-3">
+                            <h5 class="card-title mb-2">Total Lots Transferred</h5>
+                            <h4 class="mb-0 text-info">
+                                {{ $lots }}
+                            </h4>
+                        </div>
+                    </div>
                 </div>
             </div>
+            <div class="card mt-3 ">
+                <div class="card-body">
+                    <h5 class="card-title mb-2">Report Filters</h5>
+                    <p class="text-muted mb-0">
+                    @if(request('date_from') && request('date_to'))
+                        From <strong>{{ \Carbon\Carbon::parse(request('date_from'))->format('d M Y') }}</strong> to <strong>{{ \Carbon\Carbon::parse(request('date_to'))->format('d M Y') }}</strong>   
+                    @elseif(request('date_from'))
+                        From <strong>{{ \Carbon\Carbon::parse(request('date_from'))->format('d M Y') }}</strong> onwards
+                    @elseif(request('date_to'))
+                        Up to <strong>{{ \Carbon\Carbon::parse(request('date_to'))->format('d M Y') }}</strong>
+                    @endif
+                    </p>
 
+                    <canvas id="movementChart" style="max-height:300px;"></canvas>
+                </div>
+
+            </div>
             <!-- Recent Reports Table -->
             <div class="card mt-3 ">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
@@ -308,30 +355,80 @@
             </div>
         </div>
     </div>
-<style>
-    .hover-shadow {
-        transition: box-shadow 0.3s ease;
-    }
-    .hover-shadow:hover {
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
-    }
-    .bg-primary-transparent {
-        background-color: rgba(13, 110, 253, 0.1) !important;
-    }
-    .bg-info-transparent {
-        background-color: rgba(23, 162, 184, 0.1) !important;
-    }
-    .bg-success-transparent {
-        background-color: rgba(25, 135, 84, 0.1) !important;
-    }
-    .bg-warning-transparent {
-        background-color: rgba(255, 193, 7, 0.1) !important;
-    }
-    .bg-danger-transparent {
-        background-color: rgba(220, 53, 69, 0.1) !important;
-    }
-    .bg-secondary-transparent {
-        background-color: rgba(108, 117, 125, 0.1) !important;
-    }
-</style>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const data = @json($chartData ?? []);
+
+    if (!data.length) return;
+
+    new Chart(document.getElementById('movementChart'), {
+        type: 'line',
+        data: {
+            labels: data.map(d => d.date),
+            datasets: [
+                {
+                    label: 'Arrival (Lots)',
+                    data: data.map(d => d.arrival),
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13,110,253,0.08)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 4,
+                },
+                {
+                    label: 'Dispatch',
+                    data: data.map(d => d.dispatch),
+                    borderColor: '#198754',
+                    backgroundColor: 'rgba(25,135,84,0.08)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 4,
+                },
+                {
+                    label: 'Requests',
+                    data: data.map(d => d.request),
+                    borderColor: '#ffc107',
+                    backgroundColor: 'rgba(255,193,7,0.08)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 4,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                title: {
+                    display: true,
+                    text: 'Movement Chart — Last 15 Days'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 }
+                }
+            }
+        }
+    });
+});
+</script>
+@endpush
+
+
+<style>
+    .hover-shadow { transition: box-shadow 0.3s ease; }
+    .hover-shadow:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important; }
+    .bg-primary-transparent   { background-color: rgba(13,110,253,0.1) !important; }
+    .bg-info-transparent      { background-color: rgba(23,162,184,0.1) !important; }
+    .bg-success-transparent   { background-color: rgba(25,135,84,0.1)  !important; }
+    .bg-warning-transparent   { background-color: rgba(255,193,7,0.1)  !important; }
+    .bg-danger-transparent    { background-color: rgba(220,53,69,0.1)  !important; }
+    .bg-secondary-transparent { background-color: rgba(108,117,125,0.1)!important; }
+</style>
+
