@@ -11,6 +11,9 @@ use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\SeedRequestMail;
+
 
 class RequestController extends Controller
 {
@@ -222,7 +225,7 @@ class RequestController extends Controller
             }
 
             $requestNumber = SeedRequest::generateRequestNumber();
-
+            $createdRequests = [];
             foreach ($httpRequest->accession_id as $i => $accessionId) {
 
                 $accession = Accession::find($accessionId);
@@ -264,6 +267,53 @@ class RequestController extends Controller
                 ]);
             }
 
+            /*******mail fuction to  requesters****** */
+           
+
+            // Prepare email data
+            $emailRows = [];
+
+            foreach ($createdRequests as $req) {
+                $emailRows[] = [
+                    'crop' => $req->crop->name ?? '',
+                    'quantity' => $req->quantity,
+                    'unit' => $req->unit->name ?? '',
+                ];
+            }
+
+            $emailData = [
+                'requester_name' => $user->name,
+                'reporting_user' => $user->reportingTo ? $user->reportingTo->name : 'N/A',
+
+                'rows' => $emailRows,
+                'purpose' => $httpRequest->purpose,
+                'purpose_details' => $httpRequest->purpose_details,
+            ];
+
+
+            // Normal user
+            if (!$httpRequest->user_id) {
+
+                $reporting = Auth::user()->reportingTo;
+
+                if ($reporting && $reporting->email) {
+                    Mail::to($reporting->email)->send(new SeedRequestMail($emailData));
+                }
+
+            } else {
+
+                $selectedUser = User::find($httpRequest->user_id);
+
+                if ($selectedUser && $selectedUser->email) {
+                    Mail::to($selectedUser->email)->send(new SeedRequestMail($emailData));
+                }
+
+                if ($selectedUser && $selectedUser->reportingTo && $selectedUser->reportingTo->email) {
+                    Mail::to($selectedUser->reportingTo->email)->send(new SeedRequestMail($emailData));
+                }
+            }
+            /*****end*/
+
             $admins = User::whereHas('role', function ($q) {
             $q->whereIn('slug',['admin']);
             })->get();
@@ -282,6 +332,8 @@ class RequestController extends Controller
             return redirect()->route('requests.index')
                 ->with('success', 'Request created successfully.');
         }
+
+        
 
     public function show(SeedRequest $seedRequest)
         {

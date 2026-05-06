@@ -86,6 +86,7 @@
 
                                         <div class="col-6"><span class="text-muted">Capacity:</span> <span id="from_capacity">—</span></div>
                                         <div class="col-6"><span class="text-muted">Available Capacity:</span> <span id="from_available">—</span></div>
+                                        <div class="col-6"><span class="text-muted">Total Lot Quantity:</span> <span id="total_lot_qty">—</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -215,7 +216,8 @@
             </div>
         </form>
     </div>
-    <div class="col-md-12">
+    <div class="col-md-12 ">
+
         <div class="card mt-4">
     <div class="card-header d-flex justify-content-between">
         <h5 class="mb-0">Last 10 Transfers</h5>
@@ -248,9 +250,9 @@
                     <th rowspan="2" >Crop</th>
                     <th rowspan="2">Accession No.</th>
                     <th rowspan="2">Lot</th>
-                    <th colspan="7" class="text-center">Storage From</th>
+                    <th colspan="4" class="text-center">Storage From</th>
                     
-                    <th colspan="7" class="text-center">Storage To</th>
+                    <th colspan="4" class="text-center">Storage To</th>
                     <th rowspan="2">Section</th>
                     <th rowspan="2">Rack</th>
                     <th rowspan="2">Bin</th>
@@ -259,19 +261,19 @@
                 </tr>
                 <tr>
                     <th>Name</th>
-                    <th>Avlb. Capacity</th>
+                    <!--<th>Avlb. Capacity</th>
                     <th>Pick Qty.</th>
-                    <th>Bal. Capacity</th>
-                     <th>Opening Qty</th>
-                    <th>Closing Qty</th>
+                    <th>Bal. Capacity</th>-->
+                     <th>Opening. Qty(Bal.)</th>
+                    <th>Closing Qty(Pick)</th>
                     <th>Balance Qty</th>
 
                     <th>Name</th>
-                    <th>Avlb. Capacity</th>
-                    <th>Tnf Qty.</th>
-                    <th>Bal. Capacity</th>
-                    <th>Opening Qty</th>
-                    <th>Closing Qty</th>
+                    <!--<th>Avlb. Capacity</th>
+                    <th>Pick Qty.</th>
+                    <th>Bal. Capacity</th>-->
+                     <th>Opening Qty(Bal)</th>
+                    <th>Closing Qty(Trns)</th>
                     <th>Balance Qty</th>
                 </tr>  
             </thead>
@@ -284,17 +286,17 @@
                         <td>{{ $t->lot->lot_number ?? '-' }}</td>
 
                         <td >{{ $t->fromStorage->name ?? '-' }}</td>
-                        <td>{{ $t->f_available_capacity }}</td>
+                        {{--<td>{{ $t->f_available_capacity }}</td>
                         <td>{{ $t->f_quantity }}</td>
-                        <td>{{ $t->f_balance_capacity }}</td>
+                        <td>{{ $t->f_balance_capacity }}</td> --}}
                         <td>{{ $t->from_o_quantity }}</td>
                         <td>{{ $t->from_c_quantity }}</td>
                         <td>{{ $t->from_b_quantity }}</td>
 
                          <td >{{ $t->toStorage->name ?? '-' }}</td>
-                        <td>{{ $t->available_capacity }}</td>
+                        {{--<td>{{ $t->available_capacity }}</td>
                         <td>{{ $t->quantity }}</td>
-                        <td>{{ $t->balance_capacity }}</td>
+                        <td>{{ $t->balance_capacity }}</td>--}}
                         <td>{{ $t->to_o_quantity }}</td>
                         <td>{{ $t->to_c_quantity }}</td>
                         <td>{{ $t->to_b_quantity }}</td>
@@ -381,7 +383,13 @@ document.addEventListener('DOMContentLoaded', function () {
         lotSel.innerHTML = '<option value="">Loading...</option>';
         document.getElementById('from_lotInfo').classList.add('d-none');
 
-        if (!id) { infoBox.classList.add('d-none'); lotSel.innerHTML = '<option value="">Select Lot</option>'; return; }
+        if (!id) {
+            infoBox.classList.add('d-none');
+            lotSel.innerHTML = '<option value="">Select Lot</option>';
+            document.getElementById('storageQtyDisplay').textContent = '—';
+            document.getElementById('storageQtyLabel').textContent = 'Select FROM storage';
+            return;
+        }
 
         fetch(`/get-storage-lots/${id}`)
             .then(r => r.json())
@@ -401,6 +409,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('from_capacity').textContent  = d.storage.capacity ? `${d.storage.capacity} ${d.unit||''}` : '—';
                 document.getElementById('from_available').textContent = d.available ? `${d.available} ${d.unit||''}` : '—';
                 infoBox.classList.remove('d-none');
+
+                // Calculate total lot quantity for this storage from lots array
+                const storageTotalQty = d.lots.reduce((sum, lot) => {
+                    const sq = lot.seed_quantities?.[0];
+                    return sum + parseFloat(sq?.quantity ?? lot.quantity ?? 0);
+                }, 0);
+                const storageUnit = d.lots[0]?.seed_quantities?.[0]?.unit?.name ?? d.unit ?? '';
+
+                // Update inline storage info card
+                document.getElementById('total_lot_qty').textContent =
+                    storageTotalQty > 0 ? `${storageTotalQty.toFixed(2)} ${storageUnit}` : '0';
+
+                // Update summary card (Total Lot Quantity)
+                document.getElementById('storageQtyDisplay').textContent =
+                    storageTotalQty > 0 ? `${storageTotalQty.toFixed(2)} ${storageUnit}` : '0';
+                document.getElementById('storageQtyLabel').textContent = d.storage.name || 'Selected storage';
 
                 lotSel.innerHTML = '<option value="">Select Lot</option>';
                 d.lots.forEach(lot => {

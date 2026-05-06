@@ -267,7 +267,7 @@ $role = optional(auth()->user()->role)->slug;
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label for="purpose_details" class="form-label">Purpose Details</label>
+                        <label for="purpose_details" class="form-label">Purpose Details <span class="text-danger">*</span></label>
                         <input type="text" name="purpose_details" value="{{ old('purpose_details',$seedRequest->purpose_details ?? '') }}" id="purpose_details" class="form-control">
                         @error('purpose_details')
                             <div class="invalid-feedback">{{ $message }}</div>

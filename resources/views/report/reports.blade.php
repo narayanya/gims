@@ -252,32 +252,38 @@
                 </div>        
 
             </div>
-            <div class="card mt-2 ">
+            <div class="card mt-2">
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <h5 class="card-title mb-2">Total Available Quantity</h5>
-                            <h4 class="mb-0 text-success">
-                                {{ formatWeight($totalAvailable) }}
-                            </h4>
+                    <div class="row g-3">
+                        <div class="col-md-2 col-sm-6">
+                            <div class="border rounded p-3 h-100">
+                                <p class="text-muted small mb-1">Total Available Qty</p>
+                                <h4 class="mb-0 text-success fw-bold">{{ formatWeight($totalAvailable) }}</h4>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <h5 class="card-title mb-2">Total Dispatched Quantity</h5>
-                            <h4 class="mb-0 text-danger">
-                                {{ formatWeight($totalDispatched) }}
-                            </h4>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="border rounded p-3 h-100">
+                                <p class="text-muted small mb-1">Total Lot Quantity</p>
+                                <h4 class="mb-0 text-primary fw-bold">{{ formatWeight($totalLotQty) }}</h4>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <h5 class="card-title mb-2">Total Pending Requests</h5>
-                            <h4 class="mb-0 text-warning">
-                                {{ formatWeight($totalRequested) }}
-                            </h4>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="border rounded p-3 h-100">
+                                <p class="text-muted small mb-1">Total Dispatched Qty</p>
+                                <h4 class="mb-0 text-danger fw-bold">{{ formatWeight($totalDispatched) }}</h4>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <h5 class="card-title mb-2">Total Lots Transferred</h5>
-                            <h4 class="mb-0 text-info">
-                                {{ $lots }}
-                            </h4>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="border rounded p-3 h-100">
+                                <p class="text-muted small mb-1">Total Pending Requests</p>
+                                <h4 class="mb-0 text-warning fw-bold">{{ formatWeight($totalRequested) }}</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="border rounded p-3 h-100">
+                                <p class="text-muted small mb-1">Total Lots Transferred</p>
+                                <h4 class="mb-0 text-info fw-bold">{{ $lots }}</h4>
+                            </div>
                         </div>
                     </div>
                 </div>

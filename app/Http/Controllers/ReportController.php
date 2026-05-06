@@ -18,9 +18,10 @@ class ReportController extends Controller
     {
         $today = Carbon::now();  
         $lots = LotTransfer::all()->count();
-        $totalRequested = SeedRequest::where('status', 'pending')->sum('quantity') ?? 0;    // pending/total requests
-        $totalAvailable = SeedQuantity::sum('quantity') ?? 0;    // available seeds
-        $totalDispatched = Dispatch::sum('quantity') ?? 0;       // dispatched seeds
+        $totalRequested  = SeedRequest::where('status', 'pending')->sum('quantity') ?? 0;
+        $totalAvailable  = SeedQuantity::sum('quantity') ?? 0;
+        $totalDispatched = Dispatch::sum('quantity') ?? 0;
+        $totalLotQty     = \App\Models\SeedQuantity::sum('quantity') ?? 0; // total across all lots
 
         $days = collect();
         $latestDate = DB::table('dispatches')->max('dispatched_at');
@@ -48,10 +49,247 @@ class ReportController extends Controller
             ]);
         }
        
-        return view('report.reports', compact('today', 'totalRequested', 'totalAvailable', 'totalDispatched', 'lots' ))->with('chartData', $days);
+        return view('report.reports', compact('today', 'totalRequested', 'totalAvailable', 'totalDispatched', 'lots', 'totalLotQty'))->with('chartData', $days);
     }
 
-    // View Request Report
+    public function summary()
+    {
+        $crops = DB::table('core_crop')->where('update_status', '=', 1)->orderBy('crop_name')->get();
+        $accessions = Accession::with('crop')->get();
+        $lots = DB::table('lots')->get();
+        $summary = DB::table('accessions')
+            ->join('core_crop', 'accessions.crop_id', '=', 'core_crop.id')
+            ->leftJoin('lots', 'lots.accession_id', '=', 'accessions.id')
+
+            ->select(
+                'core_crop.id as crop_id', // ✅ IMPORTANT (needed for details)
+                'core_crop.crop_name',
+
+                DB::raw('COUNT(DISTINCT accessions.id) as total_accessions'),
+                DB::raw('COUNT(DISTINCT lots.id) as total_lots'),
+
+                DB::raw('SUM(accessions.quantity) as accession_quantity'),
+                DB::raw('SUM(lots.quantity) as lot_quantity'),
+
+                DB::raw('COALESCE(SUM(lots.quantity),0)
+                    as total_quantity
+                ')
+            )
+
+            ->groupBy('core_crop.id', 'core_crop.crop_name')
+            ->orderBy('core_crop.crop_name')
+            ->get();
+
+        // ✅ Attach details for collapse
+        foreach ($summary as $row) {
+
+            $row->details = DB::table('accessions')
+                ->leftJoin('lots', 'lots.accession_id', '=', 'accessions.id')
+                ->where('accessions.crop_id', $row->crop_id)
+                ->select(
+                    'accessions.id as accession_id',
+                    'accessions.accession_number',
+                    'lots.id as lot_id',
+                    'lots.lot_number',
+                    DB::raw('COALESCE(lots.quantity, accessions.quantity) as quantity')
+                )
+                ->orderBy('accessions.accession_number')
+                ->get();
+        }
+
+        return view('report.summary', compact('summary', 'crops', 'accessions', 'lots'));
+    }
+
+    public function accessionHistory($id)
+    {
+        $accession = \App\Models\Accession::with([
+            'crop', 'country', 'state', 'district', 'city',
+            'storageTime', 'capacityUnit', 'images',
+        ])->findOrFail($id);
+
+        // All lots for this accession
+        $lots = \App\Models\Lot::with(['storage', 'section', 'rack', 'bin', 'container', 'seedQuantities.unit'])
+            ->where('accession_id', $id)
+            ->orderBy('created_at')
+            ->get();
+
+        // Seed quantities history
+        $seedQuantities = \App\Models\SeedQuantity::where('accession_id', $id)
+            ->orderBy('created_at')
+            ->get();
+
+        // Lot transfers (movements)
+        $transfers = \App\Models\LotTransfer::with(['fromStorage', 'toStorage', 'toSection', 'toRack', 'toBin', 'user'])
+            ->whereIn('lot_id', $lots->pluck('id'))
+            ->orderBy('created_at')
+            ->get();
+
+        // Warehouse transfers
+        $warehouseTransfers = \App\Models\WarehouseTransfer::with(['fromWarehouse', 'toWarehouse', 'fromStorage', 'toStorage', 'user'])
+            ->where('accession_id', $id)
+            ->orderBy('created_at')
+            ->get();
+
+        // Seed requests
+        $requests = \App\Models\SeedRequest::with(['user'])
+            ->where('accession_id', $id)
+            ->orderBy('created_at')
+            ->get();
+
+        // Dispatches
+        $dispatches = \App\Models\Dispatch::with(['itn'])
+            ->where('accession_id', $id)
+            ->orderBy('created_at')
+            ->get();
+
+        // Build unified timeline
+        $timeline = collect();
+
+        // Accession created
+        $timeline->push([
+            'date'  => $accession->created_at,
+            'type'  => 'accession',
+            'icon'  => 'ri-seedling-line',
+            'color' => 'success',
+            'title' => 'Accession Created',
+            'body'  => "Accession <strong>{$accession->accession_number}</strong> registered.",
+        ]);
+
+        // Lots created
+        foreach ($lots as $lot) {
+            $qty = $lot->seedQuantities->sum('quantity');
+            $timeline->push([
+                'date'  => $lot->created_at,
+                'type'  => 'lot',
+                'icon'  => 'ri-stack-line',
+                'color' => 'primary',
+                'title' => 'Lot Created',
+                'body'  => "Lot <strong>{$lot->lot_number}</strong> created with qty <strong>{$qty}</strong> in storage <strong>{$lot->storage?->name}</strong>.",
+            ]);
+        }
+
+        // Lot transfers
+        foreach ($transfers as $t) {
+            $timeline->push([
+                'date'  => $t->created_at,
+                'type'  => 'transfer',
+                'icon'  => 'ri-swap-box-line',
+                'color' => 'info',
+                'title' => 'Lot Transfer',
+                'body'  => "Moved from <strong>{$t->fromStorage?->name}</strong> → <strong>{$t->toStorage?->name}</strong>. Qty: <strong>{$t->quantity}</strong>. By: {$t->user?->name}.",
+            ]);
+        }
+
+        // Warehouse transfers
+        foreach ($warehouseTransfers as $wt) {
+            $timeline->push([
+                'date'  => $wt->created_at,
+                'type'  => 'warehouse',
+                'icon'  => 'ri-building-line',
+                'color' => 'warning',
+                'title' => 'Warehouse Transfer',
+                'body'  => "Warehouse: <strong>{$wt->fromWarehouse?->name}</strong> → <strong>{$wt->toWarehouse?->name}</strong>. Storage: {$wt->fromStorage?->name} → {$wt->toStorage?->name}.",
+            ]);
+        }
+
+        // Requests
+        foreach ($requests as $r) {
+            $timeline->push([
+                'date'  => $r->created_at,
+                'type'  => 'request',
+                'icon'  => 'ri-file-list-3-line',
+                'color' => 'secondary',
+                'title' => 'Seed Request — ' . ucfirst($r->status),
+                'body'  => "Request <strong>{$r->request_number}</strong> by {$r->requester_name}. Qty: {$r->quantity}. Status: <span class='badge bg-" . ($r->status === 'approved' ? 'success' : ($r->status === 'rejected' ? 'danger' : 'warning')) . "'>{$r->status}</span>",
+            ]);
+        }
+
+        // Dispatches
+        foreach ($dispatches as $d) {
+            $timeline->push([
+                'date'  => $d->created_at,
+                'type'  => 'dispatch',
+                'icon'  => 'ri-truck-line',
+                'color' => 'danger',
+                'title' => 'Dispatched — MRN: ' . $d->mrn_number,
+                'body'  => "Dispatch <strong>{$d->dispatch_number}</strong>. Qty: {$d->quantity}. Courier: {$d->courier_name}.",
+            ]);
+        }
+
+        // Sort by date ascending
+        $timeline = $timeline->sortBy('date')->values();
+
+        return view('report.accession-history', compact(
+            'accession', 'lots', 'seedQuantities', 'transfers',
+            'warehouseTransfers', 'requests', 'dispatches', 'timeline'
+        ));
+    }
+
+    public function lotHistory($id)
+    {
+        $lot = \App\Models\Lot::with([
+            'accession.crop', 'storage',
+            'section', 'rack', 'bin', 'container',
+            'seedQuantities.unit', 'seedQualities',
+        ])->findOrFail($id);
+
+        $seedQuantities    = \App\Models\SeedQuantity::where('lot_id', $id)->orderBy('created_at')->get();
+        $qualities         = \App\Models\SeedQuality::where('lot_id', $id)->orderBy('created_at')->get();
+        $transfers         = \App\Models\LotTransfer::with(['fromStorage','toStorage','fromSection','toSection','fromRack','toRack','fromBin','toBin','fromContainer','toContainer','user'])->where('lot_id', $id)->orderBy('created_at')->get();
+        $warehouseTransfers= \App\Models\WarehouseTransfer::with(['fromWarehouse','toWarehouse','fromStorage','toStorage','user'])->where('lot_id', $id)->orderBy('created_at')->get();
+        $requests          = \App\Models\SeedRequest::with(['user'])->where('accession_id', $lot->accession_id)->orderBy('created_at')->get();
+        $dispatches        = \App\Models\Dispatch::with(['itn'])->where('lot_id', $id)->orderBy('created_at')->get();
+
+        $timeline = collect();
+
+        // Lot created
+        $timeline->push(['date'=>$lot->created_at,'type'=>'created','icon'=>'ri-stack-line','color'=>'success',
+            'title'=>'Lot Created',
+            'body'=>"Lot <strong>{$lot->lot_number}</strong> created. Qty: <strong>{$seedQuantities->sum('quantity')}</strong>. Storage: <strong>{$lot->storage?->name}</strong>. Arrival: {$lot->arrival_type}."]);
+
+        // Quality tests
+        foreach ($qualities as $q) {
+            $timeline->push(['date'=>$q->created_at,'type'=>'quality','icon'=>'ri-test-tube-line','color'=>'info',
+                'title'=>'Quality Test Recorded',
+                'body'=>"Germination: <strong>{$q->germination_percentage}%</strong> | Moisture: {$q->moisture_content}% | Purity: {$q->purity_percentage}% | Health: {$q->seed_health_status}."]);
+        }
+
+        // Lot transfers
+        foreach ($transfers as $t) {
+            $from = implode(' › ', array_filter([$t->fromStorage?->name, $t->fromSection?->name, $t->fromRack?->name, $t->fromBin?->name, $t->fromContainer?->name]));
+            $to   = implode(' › ', array_filter([$t->toStorage?->name,   $t->toSection?->name,   $t->toRack?->name,   $t->toBin?->name,   $t->toContainer?->name]));
+            $timeline->push(['date'=>$t->created_at,'type'=>'transfer','icon'=>'ri-swap-box-line','color'=>'warning',
+                'title'=>'Lot Transfer',
+                'body'=>"From: <strong>{$from}</strong> → To: <strong>{$to}</strong><br>Qty: {$t->quantity} | Open: {$t->o_quantity} | Close: {$t->c_quantity} | Balance: {$t->b_quantity} | By: {$t->user?->name}."]);
+        }
+
+        // Warehouse transfers
+        foreach ($warehouseTransfers as $wt) {
+            $timeline->push(['date'=>$wt->created_at,'type'=>'warehouse','icon'=>'ri-building-line','color'=>'primary',
+                'title'=>'Warehouse Transfer',
+                'body'=>"<strong>{$wt->fromWarehouse?->name}</strong> ({$wt->fromStorage?->name}) → <strong>{$wt->toWarehouse?->name}</strong> ({$wt->toStorage?->name})."]);
+        }
+
+        // Requests
+        foreach ($requests as $r) {
+            $sc = match($r->status) {'approved'=>'success','rejected'=>'danger','dispatched'=>'info','returned'=>'secondary',default=>'warning'};
+            $timeline->push(['date'=>$r->created_at,'type'=>'request','icon'=>'ri-file-list-3-line','color'=>'secondary',
+                'title'=>'Seed Request — '.ucfirst($r->status),
+                'body'=>"Request <strong>{$r->request_number}</strong> by {$r->requester_name}. Qty: {$r->quantity}. <span class='badge bg-{$sc}'>{$r->status}</span>"]);
+        }
+
+        // Dispatches
+        foreach ($dispatches as $d) {
+            $timeline->push(['date'=>$d->created_at,'type'=>'dispatch','icon'=>'ri-truck-line','color'=>'danger',
+                'title'=>'Dispatched — MRN: '.$d->mrn_number,
+                'body'=>"Dispatch <strong>{$d->dispatch_number}</strong>. Qty: {$d->quantity}. Courier: {$d->courier_name}."]);
+        }
+
+        $timeline = $timeline->sortBy('date')->values();
+
+        return view('report.lot-history', compact('lot','seedQuantities','transfers','warehouseTransfers','requests','dispatches','qualities','timeline'));
+    }
+
     public function requestReport(Request $request)
     {
         $query = SeedRequest::with(['user', 'crop', 'unit']);

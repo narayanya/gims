@@ -37,50 +37,77 @@ class AccessionController extends Controller
         $query = Accession::with(['crop', 'warehouse', 'storageLocation', 'storageTime', 'capacityUnit'])
             ->orderBy('created_at', 'desc');
 
-        // Users and researchers only see accessions marked as visible to requesters
+        // Apply condition BEFORE paginate
         if (auth()->user()->hasRole(['user', 'researcher'])) {
             $query->where('requester_show', 'yes');
         }
 
         $accessions = $query->paginate(15);
+
         $crops = Crop::where([
                 ['is_active', 1],
                 ['update_status', 1]
             ])->select('id', 'crop_name')->get();
+
         $warehouses = Warehouse::orderBy('name')->get();
         $storageTime = StorageTime::orderBy('name')->get();
         $storageCondition = StorageCondition::orderBy('name')->get();
         
-        
-       /* if ($request->accession_id) {
-            $accession = Accession::find($request->accession_id);
-
-            if ($accession) {
-
-                // ❗ Check stock before dispatch
-                if ($request->quantity > $accession->quantity_show) {
-                    return back()->with('error', 'Not enough available stock!');
-                }
-
-                // ✅ Deduct ONLY quantity_show
-                $accession->quantity_show = $accession->quantity_show - $request->quantity;
-
-                // Prevent negative
-                if ($accession->quantity_show < 0) {
-                    $accession->quantity_show = 0;
-                }
-
-                $accession->save();
-            }
-        }*/
-        
         return view('accession.accession-list', compact('accessions','crops','warehouses', 'storageTime', 'storageCondition'));
     }
+    public function showJson($id)
+    {
+        $accession = Accession::with([
+            'crop',
+            'country',
+            'state',
+            'district',
+            'city',
+            'storageTime',
+            'capacityUnit',
+            'images',
+        ])->findOrFail($id);
+
+        $totalQty = \App\Models\SeedQuantity::where('accession_id', $id)->sum('quantity_show');
+
+        return response()->json([
+            'id'                => $accession->id,
+            'accession_number'  => $accession->accession_number,
+            'accession_name'    => $accession->accession_name,
+            'crop_name'         => $accession->crop?->crop_name,
+            'scientific_name'   => $accession->crop?->scientific_name,
+            'family_name'       => $accession->crop?->family_name,
+            'genus'             => $accession->crop?->genus,
+            'collection_number' => $accession->collection_number,
+            'collection_date'   => $accession->collection_date?->format('d M Y'),
+            'collector_name'    => $accession->collector_name,
+            'donor_name'        => $accession->donor_name,
+            'collection_site'   => $accession->collection_site,
+            'country'           => $accession->country?->country_name,
+            'state'             => $accession->state?->state_name,
+            'district'          => $accession->district?->district_name,
+            'city'              => $accession->city?->city_village_name,
+            'quantity'          => $totalQty,
+            'unit'              => $accession->capacityUnit?->name,
+            'storage_time'      => $accession->storageTime?->name,
+            'biological_status' => $accession->biological_status,
+            'sample_type'       => $accession->sample_type,
+            'status'            => $accession->status == 1 ? 'Active' : 'Inactive',
+            'expiry_date'       => $accession->expiry_date?->format('d M Y'),
+            'recheck_date'      => $accession->recheck_date?->format('d M Y'),
+            'barcode'           => $accession->barcode,
+            'notes'             => $accession->notes,
+            'photo_url'         => $accession->images->first()
+                                    ? asset('storage/accessions/images/' . $accession->images->first()->image_name)
+                                    : null,
+            'can_view_full'     => auth()->user()->hasPermission('accession.view') || auth()->user()->hasRole('super-admin'),
+        ]);
+    }
+
     public function show($id, Request $request)
     {
         $accession = Accession::with([
             'crop',
-            'variety',
             'warehouse',
             'country',  
             'state',    
@@ -99,9 +126,37 @@ class AccessionController extends Controller
 
         
         if ($request->ajax()) {
-            return response()->json($accession);
-            dd($accession);
-        }
+    return response()->json([
+        'id' => $accession->id,
+        'accession_number' => $accession->accession_number,
+        'accession_name' => $accession->accession_name,
+        'collection_number' => $accession->collection_number,
+        'collection_date' => $accession->collection_date,
+        'donor_name' => $accession->donor_name,
+        'collector_name' => $accession->collector_name,
+        'quantity' => $accession->quantity,
+        'status' => $accession->status,
+
+        'photo_url' => $accession->photo 
+            ? asset('storage/' . $accession->photo)
+            : null,
+
+        'crop' => [
+            'crop_name' => $accession->crop?->crop_name,
+            'scientific_name' => $accession->crop?->scientific_name,
+            'family_name' => $accession->crop?->family_name,
+            'genus' => $accession->crop?->genus,
+        ],
+
+        'country' => [
+            'name' => $accession->country?->country_name
+        ],
+
+        'warehouse' => [
+            'name' => $accession->warehouse?->name
+        ]
+    ]);
+}
 
         return view('accession.show', compact('accession' ,'countries', 'states', 'districts', 'cities'));
     }

@@ -83,7 +83,7 @@
                         <table class="table table-hover" id="accessionTable">
                             <thead class="table-light">
                                 <tr>
-                                    <th><input type="checkbox" class="form-check-input" id="selectAll"></th>
+                                    <!--<th><input type="checkbox" class="form-check-input" id="selectAll"></th>-->
                                     <th>Accession ID</th>
                                     <th>Accession Name</th>
                                     <th>Accession photo</th>
@@ -100,8 +100,8 @@
                             <tbody>
                                 @forelse($accessions as $accession)
                                     <tr>
-                                        <td><input type="checkbox" class="form-check-input row-checkbox"
-                                                value="{{ $accession->id }}"></td>
+                                        {{--<td><input type="checkbox" class="form-check-input row-checkbox"
+                                                value="{{ $accession->id }}"></td>--}}
 
                                         <td><a href="#"
                                                 class="text-decoration-none fw-bold">{{ $accession->accession_number }}</a>
@@ -207,22 +207,8 @@
                                 @endforelse
                         </tbody>
                     </table>
+                    {{ $accessions->links() }}
                 </div>
-
-                <!-- Pagination -->
-                <nav aria-label="Accession pagination" class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item disabled">
-                            <a class="page-link" href="#" tabindex="-1">Previous</a>
-                        </li>
-                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                        <li class="page-item"><a class="page-link" href="#">3</a></li>
-                        <li class="page-item">
-                            <a class="page-link" href="#">Next</a>
-                        </li>
-                    </ul>
-                </nav>
             </div>
         </div>
     </div>
@@ -295,46 +281,69 @@
             button.addEventListener('click', function() {
 
                 let id = this.dataset.id;
-                
-
                 if (!id) return;
 
-                fetch('/accessions/' + id, {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                // Reset fields
+                document.querySelectorAll('#viewModal [id^="v_"]').forEach(el => el.innerText = '—');
+                document.getElementById('v_photo').src = '';
+                document.getElementById('v_photo').style.display = 'none';
+
+                fetch('/accessions/' + id + '/json')
+                .then(res => {
+                    if (!res.ok) throw new Error('Failed to load');
+                    return res.json();
                 })
-                .then(res => res.json())
                 .then(data => {
 
-                    document.getElementById('fullDetailsBtn').href = '/accessions/' + data.id;
-
-                    function setText(id, value) {
-                        let el = document.getElementById(id);
-                        if (el) el.innerText = value ?? 'N/A';
+                    // Full details button — only show if user has permission
+                    const btn = document.getElementById('fullDetailsBtn');
+                    if (data.can_view_full) {
+                        btn.href = '/accessions/' + data.id;
+                        btn.style.display = '';
+                    } else {
+                        btn.style.display = 'none';
                     }
 
-                    setText('v_number', data.accession_name ?? data.accession_number);
-                    setText('v_crop', data.crop?.crop_name);
-                    setText('v_scientific_name', data.crop?.scientific_name);
-                    setText('v_family', data.crop?.family_name);
-                    setText('v_genus', data.crop?.genus);
-                    setText('v_collection_number', data.collection_number);
-                    setText('v_collection_date', formatDate(data.collection_date));
-                    setText('v_donor_name', data.donor_name);
-                    setText('v_collector_name', data.collector_name);
-                    setText('v_origin_country', data.country?.name);
-                    setText('v_quantity', data.quantity);
-                    setText('v_warehouse', data.warehouse?.name);
-                    setText('v_status', data.status);
-                    setText('v_date', formatDate(data.collection_date));
+                    function set(id, value) {
+                        let el = document.getElementById(id);
+                        if (el) el.innerText = value || '—';
+                    }
+
+                    set('v_number',            data.accession_number);
+                    set('v_name',              data.accession_name);
+                    set('v_crop',              data.crop_name);
+                    set('v_scientific_name',   data.scientific_name);
+                    set('v_family',            data.family_name);
+                    set('v_genus',             data.genus);
+                    set('v_collection_number', data.collection_number);
+                    set('v_collection_date',   data.collection_date);
+                    set('v_collector_name',    data.collector_name);
+                    set('v_donor_name',        data.donor_name);
+                    set('v_collection_site',   data.collection_site);
+                    set('v_origin_country',    data.country);
+                    set('v_state',             data.state);
+                    set('v_district',          data.district);
+                    set('v_city',              data.city);
+                    set('v_quantity',          data.quantity ? data.quantity + ' ' + (data.unit || '') : '—');
+                    set('v_storage_time',      data.storage_time);
+                    set('v_biological_status', data.biological_status);
+                    set('v_sample_type',       data.sample_type);
+                    set('v_status',            data.status);
+                    set('v_expiry_date',       data.expiry_date);
+                    set('v_recheck_date',      data.recheck_date);
+                    set('v_barcode',           data.barcode);
+                    set('v_notes',             data.notes);
 
                     let img = document.getElementById('v_photo');
-                    
-                    if (img) img.src = data.photo_url || '/placeholder.png';
-
+                    if (data.photo_url) {
+                        img.src = data.photo_url;
+                        img.style.display = '';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('v_number').innerText = 'Failed to load data.';
                 });
-
             });
-
         });
 
     </script>
@@ -343,7 +352,6 @@
         .table th {
             font-weight: 600;
             font-size: 0.875rem;
-            text-transform: uppercase;
             letter-spacing: 0.05em;
         }
 
@@ -401,85 +409,65 @@
     </div>
 
     <div class="modal fade" id="viewModal">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
-
-                <div class="modal-header">
-                    <h5 class="modal-title">Accession Details</h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="ri-seedling-line me-2"></i>Accession Details</h5>
+                    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-
                 <div class="modal-body">
-                    
-                    <a id="fullDetailsBtn" class="btn btn-sm btn-primary float-end">
-                        Click to Full Details
+                    <a id="fullDetailsBtn" class="btn btn-sm btn-outline-primary float-end mb-2">
+                        <i class="ri-external-link-line me-1"></i>Full Details
                     </a>
-                    <table class="table table-bordered">
-                        <tr>
-                            <th>Accession Number</th>
-                            <td id="v_number"></td>
-                        </tr>
-                        <tr>
-                            <th>Accession Name</th>
-                            <td id="v_number"></td>
-                        </tr>
-                        
-                        <tr>
-                            <th>Crop</th>
-                            <td id="v_crop"></td>
-                        </tr>
-                        <tr>
-                            <th>Scientific Name</th>
-                            <td id="v_scientific_name"></td>
-                        </tr>
-                        <tr>
-                            <th>Family</th>
-                            <td id="v_family"></td>
-                        </tr>
-                        <tr>
-                            <th>Genus</th>
-                            <td id="v_genus"></td>
-                        </tr>
-                        
-                        <tr>
-                            <th>Photo</th>
-                            <td><img id="v_photo" src="/placeholder.png" alt="Accession Photo" class="img-fluid"></td>  
-                        </tr>
-                        <tr>
-                            <th>Collection Date</th>
-                            <td id="v_collection_date"></td>
-                        </tr>
-                        <tr>
-                            <th>Collector Name</th>
-                            <td id="v_collector_name"></td>
-                        </tr>
-                        <tr>
-                            <th>Donor Name</th>
-                            <td id="v_donor_name"></td>
-                        </tr>
-                        <tr>
-                            <th>Origin Country</th>
-                            <td id="v_origin_country"></td>
-                        </tr>
-                        <tr>
-                            <th>Collection Number</th>
-                            <td id="v_collection_number"></td>
-                        </tr>
 
-                        <tr>
-                            <th>Status</th>
-                            <td id="v_status"></td>
-                        </tr>
-
-                        <tr>
-                            <th>Collection Date</th>
-                            <td id="v_date"></td>
-                        </tr>
-
+                    {{-- Basic Info --}}
+                    <h6 class="text-muted border-bottom pb-1 mb-2">Basic Information</h6>
+                    <table class="table table-sm table-bordered mb-3">
+                        <tr><th style="width:35%">Accession Number</th><td id="v_number"></td></tr>
+                        <tr><th>Accession Name</th><td id="v_name"></td></tr>
+                        <tr><th>Crop</th><td id="v_crop"></td></tr>
+                        <tr><th>Scientific Name</th><td id="v_scientific_name"></td></tr>
+                        <tr><th>Family</th><td id="v_family"></td></tr>
+                        <tr><th>Genus</th><td id="v_genus"></td></tr>
+                        <tr><th>Biological Status</th><td id="v_biological_status"></td></tr>
+                        <tr><th>Sample Type</th><td id="v_sample_type"></td></tr>
+                        <tr><th>Status</th><td id="v_status"></td></tr>
+                        <tr><th>Barcode</th><td id="v_barcode"></td></tr>
                     </table>
 
-                </div>
+                    {{-- Quantity & Storage --}}
+                    <h6 class="text-muted border-bottom pb-1 mb-2">Quantity & Storage</h6>
+                    <table class="table table-sm table-bordered mb-3">
+                        <tr><th style="width:35%">Available Quantity</th><td id="v_quantity"></td></tr>
+                        <tr><th>Storage Time</th><td id="v_storage_time"></td></tr>
+                        <tr><th>Expiry Date</th><td id="v_expiry_date"></td></tr>
+                        <tr><th>Next Recheck Date</th><td id="v_recheck_date"></td></tr>
+                    </table>
 
+                    {{-- Collection Info --}}
+                    <h6 class="text-muted border-bottom pb-1 mb-2">Collection Information</h6>
+                    <table class="table table-sm table-bordered mb-3">
+                        <tr><th style="width:35%">Collection Number</th><td id="v_collection_number"></td></tr>
+                        <tr><th>Collection Date</th><td id="v_collection_date"></td></tr>
+                        <tr><th>Collector Name</th><td id="v_collector_name"></td></tr>
+                        <tr><th>Donor Name</th><td id="v_donor_name"></td></tr>
+                        <tr><th>Collection Site</th><td id="v_collection_site"></td></tr>
+                        <tr><th>Country</th><td id="v_origin_country"></td></tr>
+                        <tr><th>State</th><td id="v_state"></td></tr>
+                        <tr><th>District</th><td id="v_district"></td></tr>
+                        <tr><th>City/Village</th><td id="v_city"></td></tr>
+                    </table>
+
+                    {{-- Notes & Photo --}}
+                    <h6 class="text-muted border-bottom pb-1 mb-2">Notes & Photo</h6>
+                    <table class="table table-sm table-bordered mb-2">
+                        <tr><th style="width:35%">Notes</th><td id="v_notes"></td></tr>
+                    </table>
+                    <img id="v_photo" src="" alt="Accession Photo" class="img-thumbnail mt-2" style="max-height:150px;display:none;">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>

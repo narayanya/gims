@@ -70,4 +70,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(User::class, 'emp_reporting');
     }
+
+    public function reportingTo()
+    {
+        return $this->belongsTo(User::class, 'reporting_to'); // column name
+    }
 }

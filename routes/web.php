@@ -36,6 +36,9 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 
 Route::middleware('auth')->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('report.reports')->middleware('permission:report.view');
+    Route::get('/reports/summary', [ReportController::class, 'summary'])->name('report.summary')->middleware('permission:report.view');
+    Route::get('/reports/accession/{id}/history', [ReportController::class, 'accessionHistory'])->name('report.accession.history');
+    Route::get('/reports/lot/{id}/history', [ReportController::class, 'lotHistory'])->name('report.lot.history');
     Route::get('/reports/request', [ReportController::class, 'requestReport'])->name('report.request')->middleware('permission:report.view');
     Route::get('/reports/request/download', [ReportController::class, 'downloadRequestReport'])->name('report.request.download')->middleware('permission:report.export');
     Route::get('/reports/expiry-report', [ReportController::class, 'expiryReport'])->name('expiry.report')->middleware('permission:report.expiry');
@@ -70,6 +73,7 @@ Route::middleware('auth')->group(function () {
         return response()->download(public_path('templates/accessions_passport_sample.csv'));
     })->name('accessions.passport-template');
     Route::get('/accessions/{id}',           [AccessionController::class, 'show'])->name('accessions.show')->middleware('permission:accession.view');
+    Route::get('/accessions/{id}/json',      [AccessionController::class, 'showJson'])->name('accessions.show.json');
     Route::get('/accessions/{id}/edit',      [AccessionController::class, 'edit'])->name('accessions.edit')->middleware('permission:accession.edit');
     Route::put('/accessions/{id}',           [AccessionController::class, 'update'])->name('accessions.update')->middleware('permission:accession.edit');
 

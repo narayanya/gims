@@ -170,6 +170,11 @@
                                 <i class="ri-file-chart-line"></i> <span>Reports</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {{ request()->routeIs('report.summary') ? 'active' : '' }}" href="{{ route('report.summary') }}">
+                                <i class="ri-file-chart-line"></i> <span>Reports Summary</span>
+                            </a>
+                        </li>
                         @endif
 
                         {{-- Settings --}}
