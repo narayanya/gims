@@ -55,7 +55,7 @@ class LoginController extends Controller
     public function handleTokenLogin(Request $request)
     {
         $token = $request->query('token');
-
+		
         if (empty($token)) {
             return redirect()->route('login')->with('error', 'No token provided.');
         }
@@ -67,23 +67,17 @@ class LoginController extends Controller
         }
 
         // ── Decode & verify the JWT ──────────────────────────────────────────
-        try {
+        
             $decoded = JWT::decode($token, new Key($secretKey, 'HS256'));
-        } catch (ExpiredException $e) {
-            return redirect()->route('login')->with('error', 'Token has expired. Please request a new link.');
-        } catch (SignatureInvalidException $e) {
-            return redirect()->route('login')->with('error', 'Invalid token signature.');
-        } catch (Throwable $e) {
-            return redirect()->route('login')->with('error', 'Invalid or malformed token.');
-        }
-
+		
+      
+		
         // ── Validate the `sub` claim (employee_id) ───────────────────────────
         if (empty($decoded->sub)) {
             return redirect()->route('login')->with('error', 'Token is missing the required subject (sub) claim.');
         }
 
         $employeeId = (string) $decoded->sub;
-
         // Optional: if employeeid is also passed, it must match sub
         $requestedEmployeeId = $request->query('employeeid');
         if ($requestedEmployeeId !== null && (string) $requestedEmployeeId !== $employeeId) {
