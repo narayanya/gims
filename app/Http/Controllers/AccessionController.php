@@ -87,7 +87,6 @@ class AccessionController extends Controller
             'state'             => $accession->state?->state_name,
             'district'          => $accession->district?->district_name,
             'city'              => $accession->city?->city_village_name,
-            'quantity'          => $totalQty,
             'unit'              => $accession->capacityUnit?->name,
             'storage_time'      => $accession->storageTime?->name,
             'biological_status' => $accession->biological_status,
@@ -134,7 +133,6 @@ class AccessionController extends Controller
         'collection_date' => $accession->collection_date,
         'donor_name' => $accession->donor_name,
         'collector_name' => $accession->collector_name,
-        'quantity' => $accession->quantity,
         'status' => $accession->status,
 
         'photo_url' => $accession->photo 

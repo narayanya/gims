@@ -38,6 +38,9 @@
                                     <th>Total Accessions</th>
                                     <th>Total Lots</th>
                                     <th>Total Qty (Gram)</th>
+                                    <th>Total Visibility Qty (Gram)</th>
+                                    <th>Total Requested Qty (Gram)</th>
+                                    <th>Total Dispatched Qty (Gram)</th>
                                     <th>Details</th>
                                 </tr>
                             </thead>
@@ -48,6 +51,9 @@
                                     <td>{{ $row->total_accessions }}</td>
                                     <td>{{ $row->total_lots }}</td>
                                     <td>{{ $row->total_quantity ?? 0 }}</td>
+                                    <td>{{ $row->total_quantity_show ?? 0 }}</td>
+                                    <td>{{ $row->total_requested ?? 0 }}</td>
+                                    <td>{{ $row->total_dispatched ?? 0 }}</td>
                                     <td>
                                         <button class="btn btn-sm btn-outline-primary toggleDetails"
                                                 data-target="details-{{ $index }}">
@@ -58,7 +64,7 @@
                                 <!-- 🔽 Hidden Expand Row -->
 <tr id="details-{{ $index }}" class="d-none">
     <td colspan="7">
-        <div class="p-3 bg-light border rounded">
+        <div class="p-1 bg-light border rounded">
 
             <table class="table table-sm table-bordered mb-0">
                 <thead>
@@ -66,6 +72,7 @@
                         <th>Accession No</th>
                         <th>Lot No</th>
                         <th>Quantity</th>
+                        <th>Visibility Qty</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -87,6 +94,7 @@
                             @endif
                         </td>
                         <td>{{ $d->quantity }}</td>
+                        <td>{{ $d->quantity_show }}</td>
                     </tr>
                     @endforeach
                 </tbody>

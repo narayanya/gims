@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | JWT Secret Key
+    |--------------------------------------------------------------------------
+    |
+    | Used for verifying JWT tokens in the token-based login flow.
+    | Set JWT_SECRET in your .env file.
+    |
+    */
+
+    'jwt_secret' => env('JWT_SECRET', ''),
+
 ];

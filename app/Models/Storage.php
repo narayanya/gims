@@ -131,10 +131,10 @@ class Storage extends Model
 
 
 
-    public function getUsedQuantityAttribute()
+    /*public function getUsedQuantityAttribute()
     {
         return $this->lots()->sum('quantity');
-    }
+    }*/
 
     public function getAvailableCapacityAttribute()
     {
@@ -143,10 +143,10 @@ class Storage extends Model
 
    
     // Used quantity (from lots)
-    public function getCurrentUsageAttribute()
+    /*public function getCurrentUsageAttribute()
     {
         return $this->lots()->sum('quantity') ?? 0;
-    }
+    }*/
 
     // Usage percentage
     public function getUsagePercentageAttribute()

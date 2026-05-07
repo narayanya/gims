@@ -30,6 +30,9 @@ Route::get('/', function () {
     return view('auth.login');
 });
 
+// ── JWT Token-based login (separate route, no CSRF, no guest middleware) ──
+Route::get('/gims_login', [App\Http\Controllers\Auth\LoginController::class, 'handleTokenLogin']);
+
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

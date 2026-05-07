@@ -131,12 +131,12 @@ class LotController extends Controller
                         $base          = "{$reference}-{$request->rejuvenation_program}-{$request->prefix}-{$sampleId}-";
                         break;
                     case 'Accession Arrival':
-                        $middleSegment = "Acca/{$rowNum}";
-                        $base          = "Acca-{$sampleId}-";
+                        $middleSegment = "AccA/{$rowNum}";
+                        $base          = "AccA-{$sampleId}-";
                         break;
                     case 'Return From Field':
-                        $middleSegment = "Rtn/{$rowNum}";
-                        $base          = "Rtn-{$sampleId}-";
+                        $middleSegment = "RTN/{$rowNum}";
+                        $base          = "RTN-{$sampleId}-";
                         break;
                     default:
                         $middleSegment = "{$rowNum}";
@@ -163,10 +163,10 @@ class LotController extends Controller
                         $lotNumber = "{$reference}-{$request->rejuvenation_program}/{$rowNum}-{$request->prefix}-{$sampleId}-{$seq}";
                         break;
                     case 'Accession Arrival':
-                        $lotNumber = "{$reference}-Acca/{$rowNum}-{$sampleId}-{$seq}";
+                        $lotNumber = "{$reference}-AccA/{$rowNum}-{$sampleId}-{$seq}";
                         break;
                     case 'Return From Field':
-                        $lotNumber = "{$reference}-Rtn/{$rowNum}-{$sampleId}-{$seq}";
+                        $lotNumber = "{$reference}-RTN/{$rowNum}-{$sampleId}-{$seq}";
                         break;
                     default:
                         $lotNumber = "{$reference}-{$rowNum}-{$sampleId}-{$seq}";
@@ -185,7 +185,6 @@ class LotController extends Controller
                     'rack_id'              => $request->rack_id,
                     'bin_id'               => $request->bin_id,
                     'container_id'         => $request->container_id,
-                    'quantity'             => $qty,
                     'unit_id'              => $request->unit_id[$i] ?? null,
                     'expiry_date'          => $request->expiry_date,
                     'description'          => $request->description,

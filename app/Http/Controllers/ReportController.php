@@ -35,7 +35,7 @@ class ReportController extends Controller
             $days->push([
                 'date' => $date->format('d M'),
 
-                'arrival' => (float) DB::table('lots')
+                'arrival' => (float) DB::table('seed_quantities')
                     ->whereDate('created_at', $date)
                     ->sum('quantity'),
 
@@ -60,6 +60,45 @@ class ReportController extends Controller
         $summary = DB::table('accessions')
             ->join('core_crop', 'accessions.crop_id', '=', 'core_crop.id')
             ->leftJoin('lots', 'lots.accession_id', '=', 'accessions.id')
+            ->leftJoinSub(
+            DB::table('seed_quantities')
+                ->select(
+                    'lot_id',
+                    DB::raw('SUM(quantity) as total_quantity'),
+                    DB::raw('SUM(quantity_show) as total_quantity_show')
+                )
+                ->groupBy('lot_id'),
+            'sq',
+            function ($join) {
+                $join->on('sq.lot_id', '=', 'lots.id');
+            }
+        )
+
+        ->leftJoinSub(
+            DB::table('requests')
+                ->select(
+                    'accession_id',
+                    DB::raw('SUM(quantity) as total_requested')
+                )
+                ->groupBy('accession_id'),
+            'rq',
+            function ($join) {
+                $join->on('rq.accession_id', '=', 'accessions.id');
+            }
+        )
+
+        ->leftJoinSub(
+            DB::table('dispatches')
+                ->select(
+                    'accession_id',
+                    DB::raw('SUM(quantity) as total_dispatched')
+                )
+                ->groupBy('accession_id'),
+            'dp',
+            function ($join) {
+                $join->on('dp.accession_id', '=', 'accessions.id');
+            }
+        )
 
             ->select(
                 'core_crop.id as crop_id', // ✅ IMPORTANT (needed for details)
@@ -67,13 +106,14 @@ class ReportController extends Controller
 
                 DB::raw('COUNT(DISTINCT accessions.id) as total_accessions'),
                 DB::raw('COUNT(DISTINCT lots.id) as total_lots'),
+                DB::raw('COALESCE(SUM(sq.total_quantity),0) as lot_quantity'),
 
-                DB::raw('SUM(accessions.quantity) as accession_quantity'),
-                DB::raw('SUM(lots.quantity) as lot_quantity'),
+                DB::raw('COALESCE(SUM(sq.total_quantity),0) as total_quantity'),
 
-                DB::raw('COALESCE(SUM(lots.quantity),0)
-                    as total_quantity
-                ')
+                DB::raw('COALESCE(SUM(sq.total_quantity_show),0) as total_quantity_show'),
+
+                DB::raw('COALESCE(SUM(DISTINCT rq.total_requested),0) as total_requested'),
+                DB::raw('COALESCE(SUM(DISTINCT dp.total_dispatched),0) as total_dispatched')
             )
 
             ->groupBy('core_crop.id', 'core_crop.crop_name')
@@ -85,13 +125,15 @@ class ReportController extends Controller
 
             $row->details = DB::table('accessions')
                 ->leftJoin('lots', 'lots.accession_id', '=', 'accessions.id')
+                ->leftJoin('seed_quantities', 'seed_quantities.lot_id', '=', 'lots.id')
                 ->where('accessions.crop_id', $row->crop_id)
                 ->select(
                     'accessions.id as accession_id',
                     'accessions.accession_number',
                     'lots.id as lot_id',
                     'lots.lot_number',
-                    DB::raw('COALESCE(lots.quantity, accessions.quantity) as quantity')
+                    DB::raw('COALESCE(seed_quantities.quantity,0) as quantity'),
+                    DB::raw('COALESCE(seed_quantities.quantity_show,0) as quantity_show')
                 )
                 ->orderBy('accessions.accession_number')
                 ->get();

@@ -42,9 +42,8 @@ class Accession extends Model
         'reproductive_type',
         
         // Quantity Information
-        'quantity',
         'capacity_unit_id',
-        'quantity_show',
+
         
         // Storage Information
         'warehouse_id',
@@ -71,7 +70,6 @@ class Accession extends Model
     ];
 
     protected $casts = [
-        'quantity' => 'decimal:2',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
         'collection_date' => 'date',

@@ -64,30 +64,42 @@ class DispatchController extends Controller
 
         $request->update(['status' => 'dispatched']);
 
-        // Deduct dispatched quantity from seed_quantities for this lot
+        // Deduct dispatched quantity from seed_quantities
+
+        $sqQuery = \App\Models\SeedQuantity::query();
+
+        // If lot based dispatch
         if ($req->lot_id) {
-            $sq = \App\Models\SeedQuantity::where('lot_id', $req->lot_id)
-                ->orWhere(function($q) use ($request, $req) {
-                    $q->where('accession_id', $request->accession_id)
-                      ->whereNull('lot_id');
-                })
-                ->orderByDesc('id')
-                ->first();
 
-            if ($sq) {
-                $sq->quantity_show = max(0, (float)$sq->quantity_show - (float)$dispatch->quantity);
-                $sq->save();
-            }
+            $sqQuery->where('lot_id', $req->lot_id);
+
+        } else {
+
+            // accession level quantity
+            $sqQuery->where('accession_id', $request->accession_id)
+                    ->whereNull('lot_id');
         }
 
-        // Also deduct from accession.quantity_show
-        if ($request->accession_id) {
-            $accession = \App\Models\Accession::find($request->accession_id);
-            if ($accession) {
-                $accession->quantity_show = max(0, (float)$accession->quantity_show - (float)$dispatch->quantity);
-                $accession->save();
-            }
+        $sq = $sqQuery->latest()->first();
+
+        if ($sq) {
+
+            $dispatchQty = (float) $dispatch->quantity;
+
+            // Current values
+            $currentQty      = (float) $sq->quantity;
+            $currentShowQty  = (float) $sq->quantity_show;
+
+            // Deduct from actual quantity
+            $sq->quantity = max(0, $currentQty - $dispatchQty);
+
+            // Deduct from visible quantity
+            $sq->quantity_show = max(0, $currentShowQty - $dispatchQty);
+
+            $sq->save();
         }
+
+        
 
         return redirect()->route('dispatch.print', $dispatch->id);
     }

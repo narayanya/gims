@@ -662,10 +662,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 preview = `${ref}-${rejuv}/1-${pfx}-${sampleId}-01`;
                 break;
             case 'Accession Arrival':
-                preview = `${ref}-Acca/1-${sampleId}-01`;
+                preview = `${ref}-AccA/1-${sampleId}-01`;
                 break;
             case 'Return From Field':
-                preview = `${ref}-Rtn/1-${sampleId}-01`;
+                preview = `${ref}-RTN/1-${sampleId}-01`;
                 break;
             default:
                 preview = '—';
