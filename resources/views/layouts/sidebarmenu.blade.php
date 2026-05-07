@@ -169,12 +169,15 @@
                             <a class="nav-link menu-link {{ request()->routeIs('report.*','expiry.*') ? 'active' : '' }}" href="{{ route('report.reports') }}">
                                 <i class="ri-file-chart-line"></i> <span>Reports</span>
                             </a>
+                            <div class="collapse menu-visible menu-dropdown {{ request()->routeIs('report.*','expiry.*') ? 'show' : '' }}" id="sidebarReport">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('report.request') ? 'active' : '' }}" href="{{ route('report.request') }}">Request Report</a></li>
+                                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('report.summary') ? 'active' : '' }}" href="{{ route('report.summary') }}">Summary Report</a></li>
+                                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('expiry.report') ? 'active' : '' }}" href="{{ route('expiry.report') }}">Expiry Report</a></li>
+                                </ul>
+                            </div>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link menu-link {{ request()->routeIs('report.summary') ? 'active' : '' }}" href="{{ route('report.summary') }}">
-                                <i class="ri-file-chart-line"></i> <span>Reports Summary</span>
-                            </a>
-                        </li>
+                       
                         @endif
 
                         {{-- Settings --}}

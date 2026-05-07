@@ -110,7 +110,7 @@
                 </div>
             </div>
 
-            <div class="card mt-3 ">
+            <div class="card mt-3 d-none">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Accession/Lot Reports</h5>
                     <form class="d-flex gap-2 align-items-center" method="GET" id="txnFilterForm">
