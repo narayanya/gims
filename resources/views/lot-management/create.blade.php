@@ -181,6 +181,7 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                                                 <th>Show User %</th>
                                                 <th>Min Stock Balance</th>
                                                 <th>Available for User</th>
+                                                <th class="lot-preview-col" style="display:none;">Lot No. Preview</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -244,6 +245,14 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
             value="{{ $row->quantity_show ?? '' }}" readonly>
     </td>
 
+    {{-- Per-row lot number preview — shown only when arrival type is selected --}}
+    <td class="lot-preview-col" style="display:none;">
+        <div class="alert alert-info py-1 px-2 mb-0 small text-nowrap">
+            <i class="ri-barcode-line me-1"></i>
+            <span class="row-lot-preview">—</span>
+        </div>
+    </td>
+
     <td>
         <button type="button" class="btn btn-success btn-sm addRowQ">+</button>
         <button type="button" class="btn btn-danger btn-sm removeRowQ">-</button>
@@ -268,69 +277,37 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                          {{-- ── Section 4: Lot Details ── --}}
                         <div class="col-12 mt-3"><h6 class="text-muted border-bottom pb-1">SLOC Details</h6></div>
 
+                        {{-- Warehouse --}}
                         <div class="col-md-3 mt-2">
-                            <label class="form-label">Section (Category/Zone)<span class="text-danger">*</span></label>
-                            <select name="section_id" id="sectionSelect" class="form-select" required>
-                                <option value="">Select Section</option>
-                                @foreach ($sections as $section)
-                                    <option value="{{ $section->id }}" {{ $selectedSection == $section->id ? 'selected' : '' }}>{{ $section->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-3 mt-2">
-                            <label class="form-label">Shelf/Rack <span class="text-danger">*</span></label>
-                            <select name="rack_id" id="rackSelect" class="form-select" required>
-                                <option value="">Select Rack</option>
-                                @foreach ($racks as $rack)
-                                    <option value="{{ $rack->id }}" data-section="{{ $rack->section_id }}" {{ $selectedRack == $rack->id ? 'selected' : '' }}>
-                                        {{ $rack->name }}
+                            <label class="form-label">Warehouse <span class="text-danger">*</span></label>
+                            <select id="warehouseSelect" class="form-select">
+                                <option value="">Select Warehouse</option>
+                                @foreach($warehouses as $wh)
+                                    <option value="{{ $wh->id }}"
+                                        {{ (isset($lot) && $lot->storage && $lot->storage->warehouse_id == $wh->id) ? 'selected' : '' }}>
+                                        {{ $wh->name }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
 
-                        <div class="col-md-3 mt-2">
-                            <label class="form-label">Bin (Compartment)<span class="text-danger">*</span></label>
-                            <select name="bin_id" id="binSelect" class="form-select" required>
-                                    <option value="">Select Bin</option>
-                                    @foreach ($bins as $bin)
-                                        <option value="{{ $bin->id }}" 
-                                                data-section="{{ $bin->section_id }}" 
-                                                data-rack="{{ $bin->rack_id }}" {{ $selectedBin == $bin->id ? 'selected' : '' }}>
-                                        {{ $bin->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-3 mt-2">
-                            <label class="form-label">Container (Actual seed unit - box/tray)<span class="text-danger">*</span></label>
-                            <select name="container_id" id="containerSelect" class="form-select" required>
-                                <option value="">Select Container</option>
-                                @foreach ($containers as $container)
-                                    <option value="{{ $container->id }}" 
-                                            data-section="{{ $container->section_id }}" 
-                                            data-rack="{{ $container->rack_id }}" 
-                                            data-bin="{{ $container->bin_id }}" {{ $selectedContainer == $container->id ? 'selected' : '' }}>
-                                        {{ $container->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        
+                        {{-- Storage (filtered by warehouse) --}}
                         <div class="col-md-4 mt-2">
                             <label class="form-label">Storage <span class="text-danger">*</span></label>
                             <select name="storage_id" id="storageSelect" class="form-select" required>
                                 <option value="">Select Storage</option>
                                 @foreach($storages as $s)
-                                    <option value="{{ $s->id }}" {{ $selectedStorage == $s->id ? 'selected' : '' }}>{{ $s->storage_id }} — {{ $s->name }}</option>
+                                    <option value="{{ $s->id }}"
+                                        data-warehouse="{{ $s->warehouse_id }}"
+                                        {{ $selectedStorage == $s->id ? 'selected' : '' }}>
+                                        {{ $s->storage_id }} — {{ $s->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
-                        
 
-                        <div class="col-md-8 mt-2">
-                            {{-- Storage Details Card --}}
+                        {{-- Storage Details Card --}}
+                        <div class="col-md-5 mt-2">
                             <div id="storageDetails" class="card border bg-light mb-0 d-none">
                                 <div class="card-body py-2 px-3">
                                     <div class="row g-1 small">
@@ -349,6 +326,65 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {{-- Section (filtered by storage) --}}
+                        <div class="col-md-3 mt-2">
+                            <label class="form-label">Section (Category/Zone)<span class="text-danger">*</span></label>
+                            <select name="section_id" id="sectionSelect" class="form-select" required>
+                                <option value="">Select Section</option>
+                                @foreach ($sections as $section)
+                                    <option value="{{ $section->id }}"
+                                        data-storage="{{ $section->storage_id }}"
+                                        {{ $selectedSection == $section->id ? 'selected' : '' }}>
+                                        {{ $section->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Rack (filtered by section) --}}
+                        <div class="col-md-3 mt-2">
+                            <label class="form-label">Shelf/Rack <span class="text-danger">*</span></label>
+                            <select name="rack_id" id="rackSelect" class="form-select" required>
+                                <option value="">Select Rack</option>
+                                @foreach ($racks as $rack)
+                                    <option value="{{ $rack->id }}"
+                                        data-section="{{ $rack->section_id }}"
+                                        {{ $selectedRack == $rack->id ? 'selected' : '' }}>
+                                        {{ $rack->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Bin (filtered by rack) --}}
+                        <div class="col-md-3 mt-2">
+                            <label class="form-label">Bin (Compartment)<span class="text-danger">*</span></label>
+                            <select name="bin_id" id="binSelect" class="form-select" required>
+                                <option value="">Select Bin</option>
+                                @foreach ($bins as $bin)
+                                    <option value="{{ $bin->id }}"
+                                        data-rack="{{ $bin->rack_id }}"
+                                        {{ $selectedBin == $bin->id ? 'selected' : '' }}>
+                                        {{ $bin->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Container --}}
+                        <div class="col-md-3 mt-2">
+                            <label class="form-label">Container (Actual seed unit - box/tray)<span class="text-danger">*</span></label>
+                            <select name="container_id" id="containerSelect" class="form-select" required>
+                                <option value="">Select Container</option>
+                                @foreach ($containers as $container)
+                                    <option value="{{ $container->id }}"
+                                        {{ $selectedContainer == $container->id ? 'selected' : '' }}>
+                                        {{ $container->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
 
                         @php
@@ -649,38 +685,62 @@ document.addEventListener('DOMContentLoaded', function () {
     const lotPreviewBox      = document.getElementById('lotPreviewBox');
     const lotNumberPreview   = document.getElementById('lotNumberPreview');
 
-    function buildLotPreview() {
-        const type    = arrivalType ? arrivalType.value : '';
-        const ref     = document.querySelector('input[name="reference_number[]"]')?.value || '{REF}';
-        const sampleId = document.querySelector('input[name="sample_id"]')?.value || '{SID}';
-        const rejuv   = rejuvInput?.value || '{RP}';
-        const pfx     = prefixInput?.value || '{PFX}';
+    // Build lot number for a specific row (1-based rowNum)
+    function buildRowLotNumber(ref, rowNum) {
+        const type     = arrivalType ? arrivalType.value : '';
+        const sampleId = document.getElementById('sample_id_input')?.value || '{SID}';
+        const rejuv    = rejuvInput?.value  || '{RP}';
+        const pfx      = prefixInput?.value || '{PFX}';
+        const seq      = String(rowNum).padStart(2, '0');
 
-        let preview = '';
         switch (type) {
             case 'Rejuvenation':
-                preview = `${ref}-${rejuv}/1-${pfx}-${sampleId}-01`;
-                break;
+                return `${ref||'{REF}'}-${rejuv}/${rowNum}-${pfx}-${sampleId}-${seq}`;
             case 'Accession Arrival':
-                preview = `${ref}-AccA/1-${sampleId}-01`;
-                break;
+                return `${ref||'{REF}'}-AccA/${rowNum}-${sampleId}-${seq}`;
             case 'Return From Field':
-                preview = `${ref}-RTN/1-${sampleId}-01`;
-                break;
+                return `${ref||'{REF}'}-RTN/${rowNum}-${sampleId}-${seq}`;
             default:
-                preview = '—';
+                return '—';
         }
-        if (lotNumberPreview) lotNumberPreview.textContent = preview;
+    }
+
+    // Update all row previews + the header preview box
+    function buildLotPreview() {
+        const type    = arrivalType ? arrivalType.value : '';
+        const hasType = type !== '';
+
+        // Show/hide the preview column header + all cells
+        document.querySelectorAll('.lot-preview-col').forEach(el => {
+            el.style.display = hasType ? '' : 'none';
+        });
+
+        // Show/hide top preview box (uses first row's ref)
+        if (lotPreviewBox) lotPreviewBox.style.display = hasType ? '' : 'none';
+
+        // Update each row's preview
+        const rows = document.querySelectorAll('#tableBodyQuantity tr');
+        rows.forEach((row, i) => {
+            const ref     = row.querySelector('.refNumber')?.value || '';
+            const preview = row.querySelector('.row-lot-preview');
+            if (preview) {
+                preview.textContent = hasType ? buildRowLotNumber(ref, i + 1) : '—';
+            }
+        });
+
+        // Also update the top header preview (row 1)
+        if (lotNumberPreview) {
+            const firstRef = document.querySelector('#tableBodyQuantity .refNumber')?.value || '';
+            lotNumberPreview.textContent = hasType ? buildRowLotNumber(firstRef, 1) : '—';
+        }
     }
 
     function toggleArrivalFields() {
         const type    = arrivalType ? arrivalType.value : '';
         const isRejuv = type === 'Rejuvenation';
-        const hasType = type !== '';
 
         if (rejuvenationFields) rejuvenationFields.style.display = isRejuv ? '' : 'none';
         if (prefixField)        prefixField.style.display        = isRejuv ? '' : 'none';
-        if (lotPreviewBox)      lotPreviewBox.style.display      = hasType ? '' : 'none';
 
         if (rejuvInput)  rejuvInput.required  = isRejuv;
         if (prefixInput) prefixInput.required = isRejuv;
@@ -693,10 +753,11 @@ document.addEventListener('DOMContentLoaded', function () {
         toggleArrivalFields(); // run on page load for edit mode
     }
 
-    // Update preview when reference_number, rejuvenation_program, prefix, sample_id change
+    // Update previews when any relevant field changes
     document.addEventListener('input', function (e) {
         const name = e.target.name;
-        if (['reference_number[]', 'rejuvenation_program', 'prefix', 'sample_id'].includes(name)) {
+        if (['reference_number[]', 'rejuvenation_program', 'prefix'].includes(name) ||
+            e.target.id === 'sample_id_input') {
             buildLotPreview();
         }
     });
@@ -755,6 +816,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 document.getElementById('sample_id_input').value = d.sample_id || '';
 
+                buildLotPreview();
                 updateBalance();
             })
             .catch(() => box.classList.add('d-none'));
@@ -810,50 +872,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
 
-document.getElementById('storageSelect').addEventListener('change', function () {
-
-    const id  = this.value;
-    const box = document.getElementById('storageDetails');
-
-    _storageData = null;
-
-    // If no storage selected → hide
-    if (!id) {
-        box.classList.add('d-none');
-        updateBalance();
-        return;
-    }
-
-    // Fetch storage details only
-    fetch(`/lot-management/storage/${id}`)
-        .then(r => r.json())
-        .then(d => {
-
-            _storageData = d;
-
-            document.getElementById('sd_warehouse').textContent  = d.warehouse         || '—';
-            document.getElementById('sd_type').textContent       = d.storage_type      || '—';
-            document.getElementById('sd_condition').textContent  = d.storage_condition || '—';
-            document.getElementById('sd_time').textContent       = d.storage_time      || '—';
-            document.getElementById('sd_capacity').textContent   = d.capacity  ? `${d.capacity} ${d.unit || ''}`  : '—';
-            document.getElementById('sd_available').textContent  = d.available ? `${d.available} ${d.unit || ''}` : '—';
-            document.getElementById('sd_temp').textContent       = d.temperature ? `${d.temperature} °C` : '—';
-            document.getElementById('sd_humidity').textContent   = d.humidity   ? `${d.humidity} %`      : '—';
-
-            // Show card
-            box.classList.remove('d-none');
-
-            // Update balance
-            filterUnitsByCapacity(d.capacity_in_grams, d.unit_code);
-            updateBalance();
-        })
-        .catch(() => {
-            box.classList.add('d-none');
-        });
-});
 
 
-    
     const units = @json($units);
 
     // Filter unit dropdowns based on storage capacity unit
@@ -905,78 +925,128 @@ document.getElementById('storageSelect').addEventListener('change', function () 
             .then(d => filterUnitsByCapacity(d.capacity_in_grams, d.unit_code));
     })();
     @endif
-    
 
-    
+    // ── Cascade data ─────────────────────────────────────────────────────
+    const allStoragesData  = @json($storages->map(fn($s) => ['id' => $s->id, 'warehouse_id' => $s->warehouse_id]));
+    const allSectionsData  = @json($sections->map(fn($s) => ['id' => $s->id, 'storage_id'   => $s->storage_id]));
+    const allRacksData     = @json($racks->map(fn($r)    => ['id' => $r->id, 'section_id'   => $r->section_id]));
+    const allBinsData      = @json($bins->map(fn($b)     => ['id' => $b->id, 'rack_id'      => $b->rack_id]));
 
-    // Section change
-    $('#sectionSelect').on('change', function () {
-        let sectionId = $(this).val();
+    // ── Helper: show/hide options ─────────────────────────────────────────
+    function filterOptions(selectId, dataAttr, parentVal, resetVal = true) {
+        const sel = document.getElementById(selectId);
+        if (!sel) return;
+        const prev = sel.value;
+        Array.from(sel.options).forEach(opt => {
+            if (!opt.value) return; // keep placeholder
+            opt.hidden = parentVal ? (opt.dataset[dataAttr] != parentVal) : false;
+        });
+        // Reset if current selection is now hidden
+        if (resetVal && sel.options[sel.selectedIndex]?.hidden) {
+            sel.value = '';
+            sel.dispatchEvent(new Event('change'));
+        }
+    }
 
-        $('#rackSelect option').show();
-        $('#binSelect option').show();
-        //$('#containerSelect option').show();
-
-        if (sectionId) {
-            $('#rackSelect option').each(function () {
-                if ($(this).data('section') != sectionId && $(this).val() !== "") {
-                    $(this).hide();
-                }
-            });
-
-            $('#binSelect option').each(function () {
-                if ($(this).data('section') != sectionId && $(this).val() !== "") {
-                    $(this).hide();
-                }
-            });
-
-            
+    // ── Warehouse → filter Storage ────────────────────────────────────────
+    document.getElementById('warehouseSelect').addEventListener('change', function () {
+        const wid = this.value;
+        filterOptions('storageSelect', 'warehouse', wid);
+        // If storage was cleared, cascade down
+        if (!document.getElementById('storageSelect').value) {
+            filterOptions('sectionSelect', 'storage', '', false);
+            filterOptions('rackSelect',    'section', '', false);
+            filterOptions('binSelect',     'rack',    '', false);
+            document.getElementById('storageDetails').classList.add('d-none');
+            _storageData = null;
         }
     });
 
+    // ── Storage → load details + filter Section ───────────────────────────
+    document.getElementById('storageSelect').addEventListener('change', function () {
+        const id  = this.value;
+        const box = document.getElementById('storageDetails');
+        _storageData = null;
 
-    // Rack change
-    $('#rackSelect').on('change', function () {
-        let rackId = $(this).val();
-
-        $('#binSelect option').show();
-        //$('#containerSelect option').show();
-
-        if (rackId) {
-            $('#binSelect option').each(function () {
-                if ($(this).data('rack') != rackId && $(this).val() !== "") {
-                    $(this).hide();
+        // Sync warehouse select to match chosen storage
+        if (id) {
+            const stObj = allStoragesData.find(s => s.id == id);
+            if (stObj) {
+                const whSel = document.getElementById('warehouseSelect');
+                if (whSel && whSel.value != stObj.warehouse_id) {
+                    whSel.value = stObj.warehouse_id;
+                    // Re-filter storage options without resetting the current value
+                    filterOptions('storageSelect', 'warehouse', stObj.warehouse_id, false);
                 }
-            });
-
-            
+            }
         }
+
+        // Filter sections by this storage
+        filterOptions('sectionSelect', 'storage', id);
+
+        if (!id) {
+            box.classList.add('d-none');
+            updateBalance();
+            return;
+        }
+
+        fetch(`/lot-management/storage/${id}`)
+            .then(r => r.json())
+            .then(d => {
+                _storageData = d;
+                document.getElementById('sd_warehouse').textContent  = d.warehouse         || '—';
+                document.getElementById('sd_type').textContent       = d.storage_type      || '—';
+                document.getElementById('sd_condition').textContent  = d.storage_condition || '—';
+                document.getElementById('sd_time').textContent       = d.storage_time      || '—';
+                document.getElementById('sd_capacity').textContent   = d.capacity  ? `${d.capacity} ${d.unit || ''}`  : '—';
+                document.getElementById('sd_available').textContent  = d.available ? `${d.available} ${d.unit || ''}` : '—';
+                document.getElementById('sd_temp').textContent       = d.temperature ? `${d.temperature} °C` : '—';
+                document.getElementById('sd_humidity').textContent   = d.humidity   ? `${d.humidity} %`      : '—';
+                box.classList.remove('d-none');
+                filterUnitsByCapacity(d.capacity_in_grams, d.unit_code);
+                updateBalance();
+            })
+            .catch(() => box.classList.add('d-none'));
     });
 
-
-    // Bin change → filter container + auto select parents
-    $('#binSelect').on('change', function () {
-        let selected = $(this).find('option:selected');
-
-        let sectionId = selected.attr('data-section');
-        let rackId = selected.attr('data-rack');
-
-        // Debug (check in console)
-        console.log('Section:', sectionId);
-        console.log('Rack:', rackId);
-
-        // Auto select parent
-        if (sectionId) {
-            $('#sectionSelect').val(sectionId).trigger('change');
-        }
-
-        if (rackId) {
-            $('#rackSelect').val(rackId).trigger('change');
-        }
-
-        // Filter containers
-       
+    // ── Section → filter Rack ─────────────────────────────────────────────
+    document.getElementById('sectionSelect').addEventListener('change', function () {
+        filterOptions('rackSelect', 'section', this.value);
     });
+
+    // ── Rack → filter Bin ─────────────────────────────────────────────────
+    document.getElementById('rackSelect').addEventListener('change', function () {
+        filterOptions('binSelect', 'rack', this.value);
+    });
+
+    // ── On page load: restore cascade state (edit mode) ───────────────────
+    (function initCascade() {
+        const whSel  = document.getElementById('warehouseSelect');
+        const stSel  = document.getElementById('storageSelect');
+        const secSel = document.getElementById('sectionSelect');
+        const rkSel  = document.getElementById('rackSelect');
+
+        // Restore warehouse from pre-selected storage
+        if (stSel.value && !whSel.value) {
+            const stObj = allStoragesData.find(s => s.id == stSel.value);
+            if (stObj) whSel.value = stObj.warehouse_id;
+        }
+
+        // Apply warehouse filter on storage options (no reset)
+        if (whSel.value) filterOptions('storageSelect', 'warehouse', whSel.value, false);
+
+        // Apply storage filter on section options (no reset)
+        if (stSel.value) filterOptions('sectionSelect', 'storage', stSel.value, false);
+
+        // Apply section filter on rack options (no reset)
+        if (secSel.value) filterOptions('rackSelect', 'section', secSel.value, false);
+
+        // Apply rack filter on bin options (no reset)
+        if (rkSel.value) filterOptions('binSelect', 'rack', rkSel.value, false);
+
+        // Load storage details if pre-selected
+        if (stSel.value) stSel.dispatchEvent(new Event('change'));
+    })();
 
 
     // =========================
@@ -1179,6 +1249,10 @@ document.getElementById('storageSelect').addEventListener('change', function () 
             newRow.querySelectorAll('input').forEach(input => input.value = '');
             newRow.querySelectorAll('select').forEach(select => select.value = '');
 
+            // Clear the lot preview text in the new row
+            const previewSpan = newRow.querySelector('.row-lot-preview');
+            if (previewSpan) previewSpan.textContent = '—';
+
             tableBodyQuantity.appendChild(newRow);
 
             // Re-apply unit filter to the new row's unit select
@@ -1188,12 +1262,17 @@ document.getElementById('storageSelect').addEventListener('change', function () 
                     .then(r => r.json())
                     .then(d => filterUnitsByCapacity(d.capacity_in_grams, d.unit_code));
             }
+
+            // Rebuild all row previews with updated row numbers
+            buildLotPreview();
         }
 
         // REMOVE ROW
         if (e.target.classList.contains('removeRowQ')) {
             if (tableBodyQuantity.rows.length > 1) {
                 e.target.closest('tr').remove();
+                // Rebuild previews so row numbers stay correct
+                buildLotPreview();
             } else {
                 alert('At least one row required');
             }

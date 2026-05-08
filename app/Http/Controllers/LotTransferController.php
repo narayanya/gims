@@ -236,15 +236,37 @@ public function transfer(Request $request)
         ]);
     }
 
-    // AJAX: get storage hierarchy (sections/racks/bins/containers)
+    // AJAX: get storage hierarchy filtered by storage_id
     public function getStorageHierarchy($storageId)
     {
-        return response()->json([
-            'sections'   => \App\Models\Section::where('status',1)->orderBy('name')->get(['id','name']),
-            'racks'      => \App\Models\Rack::where('status',1)->orderBy('name')->get(['id','name','section_id']),
-            'bins'       => \App\Models\Bin::where('status',1)->orderBy('name')->get(['id','name','rack_id']),
-            'containers' => \App\Models\Container::where('status',1)->orderBy('name')->get(['id','name']),
-        ]);
+        // Sections that belong to this storage
+        $sections = \App\Models\Section::where('status', 1)
+            ->where('storage_id', $storageId)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $sectionIds = $sections->pluck('id');
+
+        // Racks that belong to those sections
+        $racks = \App\Models\Rack::where('status', 1)
+            ->whereIn('section_id', $sectionIds)
+            ->orderBy('name')
+            ->get(['id', 'name', 'section_id']);
+
+        $rackIds = $racks->pluck('id');
+
+        // Bins that belong to those racks
+        $bins = \App\Models\Bin::where('status', 1)
+            ->whereIn('rack_id', $rackIds)
+            ->orderBy('name')
+            ->get(['id', 'name', 'rack_id']);
+
+        // Containers are not storage-specific
+        $containers = \App\Models\Container::where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name', 'container_type']);
+
+        return response()->json(compact('sections', 'racks', 'bins', 'containers'));
     }
     public function getAccessions($cropId)
     {

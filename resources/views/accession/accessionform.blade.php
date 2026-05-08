@@ -172,6 +172,16 @@
                                         @enderror
                                     </div>
                                     <div class="col-md-6">
+                                        <label class="form-label">Year Of Arrival <span class="text-danger">*</span></label>
+                                        <select name="year_of_arrival" class="form-select" required>
+                                            <option value="">Select Year</option>
+
+    @for($year = 1985; $year <= date('Y'); $year++)
+        <option value="{{ $year }}">{{ $year }}</option>
+    @endfor
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
                                         <label class="form-label">Sample ID <span class="text-danger">*</span></label>
                                         <input type="text" name="sample_id" class="form-control"
                                             value="{{ old('sample_id', $accession->sample_id ?? '') }}"

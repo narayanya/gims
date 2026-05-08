@@ -262,6 +262,7 @@ class AccessionController extends Controller
                 'ext_source' => 'required_if:acc_source,external|nullable|string|max:255',
                 'source_document' => 'required_if:acc_source,external|nullable|mimes:pdf,doc,docx,csv|max:5120',
                 'sample_id' => 'required|string|max:100',
+                'year_of_arrival' => 'nullable',
                 'regen_year' => 'nullable|integer|min:1|max:100',
                 'requester_show' => 'required|in:yes,no',
                 'storage_time' => 'nullable|exists:storage_times,id',
@@ -348,9 +349,10 @@ class AccessionController extends Controller
 
             // 👇 Generate accession_number using ID
             $crop = \App\Models\Crop::find($accession->crop_id);
+            $year_of_arrival = $request->year_of_arrival ?? date('Y');
 
-            $accessionNumber = $crop->crop_code . '-' . date('Y') . '-ACC-' .$accession->sample_id . '-' .
-                str_pad($accession->id, 5, '0', STR_PAD_LEFT);
+            $accessionNumber = $crop->crop_code . '-' . ($request->year_of_arrival ?? date('Y')) . '-ACC-' . $accession->sample_id . '-' .
+    str_pad($accession->id, 5, '0', STR_PAD_LEFT);
 
             // 👇 Update record
             $accession->update([

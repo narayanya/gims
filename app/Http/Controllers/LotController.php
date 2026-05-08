@@ -10,6 +10,7 @@ use App\Models\SeedQuality;
 use App\Models\SeedQuantity;
 use App\Models\Unit;
 use App\Models\User;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -22,13 +23,14 @@ class LotController extends Controller
     {
         return [
             'accessions' => Accession::orderBy('accession_number')->get(['id','accession_number','accession_name','expiry_date']),
-            'storages'   => Storage::where('status', 1)->orderBy('name')->get(['id','storage_id','name']),
+            'storages'   => Storage::where('status', 1)->orderBy('name')->get(['id','storage_id','name','warehouse_id']),
             //'crops'      => \App\Models\Crop::where('status',1)->where('update_status', 1)->orderBy('crop_name')->get(['id','crop_name']),
             'units'      => Unit::where('status',1)->orderBy('name')->get(['id','name','code']),
-            'sections'   => \App\Models\Section::where('status',1)->orderBy('name')->get(),
-            'racks'      => \App\Models\Rack::where('status',1)->orderBy('name')->get(),
-            'bins'       => \App\Models\Bin::where('status',1)->orderBy('name')->get(),
-            'containers' => \App\Models\Container::where('status',1)->orderBy('name')->get(),
+            'sections'   => \App\Models\Section::where('status',1)->orderBy('name')->get(['id','name','storage_id']),
+            'racks'      => \App\Models\Rack::where('status',1)->orderBy('name')->get(['id','name','section_id']),
+            'bins'       => \App\Models\Bin::where('status',1)->orderBy('name')->get(['id','name','rack_id']),
+            'containers' => \App\Models\Container::where('status',1)->orderBy('name')->get(['id','name']),
+            'warehouses' => \App\Models\Warehouse::where('status',1)->orderBy('name')->get(['id','name']),
             'users'      => User::orderBy('name')->get(['id','name']),
             'seedQuantities' => SeedQuantity::orderBy('id')->get(['id','number_of_seeds', 'number_of_bags','per_seed_weight','quantity','capacity_unit_id','quantity_show', 'reference_number','min_quantity','in_seed','out_seed','return_seed']),
 

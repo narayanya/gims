@@ -11,6 +11,7 @@ class Accession extends Model
     protected $fillable = [
         // Basic Information
         'sample_id',
+        'year_of_arrival',
         'regen_year',
         'accession_number',
         'accession_name',

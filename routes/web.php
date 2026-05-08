@@ -89,6 +89,10 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::delete('/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:user.delete');
     Route::post('/users/sync', [UserController::class, 'syncEmployees'])->name('users.sync');
 
+    Route::get('/profile', [App\Http\Controllers\UserController::class, 'profile'])->name('profile');
+    Route::post('/profile', [App\Http\Controllers\UserController::class, 'profileUpdate'])->name('profile.update');
+    Route::post('/profile/password', [App\Http\Controllers\UserController::class, 'passwordUpdate'])->name('profile.password');
+
     // Storage Routes
     //Route::resource('storage', App\Http\Controllers\StorageController::class);
     //Route::resource('storage-management', App\Http\Controllers\StorageController::class);

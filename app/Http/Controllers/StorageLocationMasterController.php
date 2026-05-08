@@ -8,37 +8,48 @@ use App\Models\Bin;
 use App\Models\Container;
 use App\Models\Unit;
 use Illuminate\Http\Request;
+use App\Models\StorageLocation;
+use App\Models\Warehouse;
+
 
 class StorageLocationMasterController extends Controller
 {
     public function index()
     {
         return view('master.storage-location-master.index', [
-            'sections'   => Section::orderBy('name')->paginate(10, ['*'], 'sections_page'),
+            'sections'   => Section::with(['unit', 'storage.warehouse'])->orderBy('name')->paginate(10, ['*'], 'sections_page'),
             'racks'      => Rack::with('section')->orderBy('name')->paginate(10, ['*'], 'racks_page'),
             'bins'       => Bin::with('rack')->orderBy('name')->paginate(10, ['*'], 'bins_page'),
             'containers' => Container::orderBy('name')->paginate(10, ['*'], 'containers_page'),
             'allSections'=> Section::where('status',1)->orderBy('name')->get(),
             'allRacks'   => Rack::where('status',1)->orderBy('name')->get(),
             'units'      => Unit::where('status',1)->orderBy('name')->get(),
+            'warehouses' => Warehouse::where('status', 1)->orderBy('name')->get(),
+            'allStorages' => \App\Models\Storage::where('status', 'active')->orderBy('name')->get(),
         ]);
     }
 
     // ── Section ──────────────────────────────────────────────────────────
     public function sectionStore(Request $request)
     {
-        
-
-        $request->validate(['name'=>'required|string|max:255|unique:sections,name',
-        'code'=>'nullable|string|max:50|unique:sections,code', 'unit_id'=>'required|exists:units,id']);
-        Section::create($request->only('name','code','unit_id','description','status'));
-        return back()->with('success','Section added.');
+        $request->validate([
+            'name'       => 'required|string|max:255|unique:sections,name',
+            'code'       => 'nullable|string|max:50|unique:sections,code',
+            'unit_id'    => 'required|exists:units,id',
+            'storage_id' => 'nullable|exists:storages,id',
+        ]);
+        Section::create($request->only('name', 'code', 'unit_id', 'storage_id', 'description', 'status'));
+        return back()->with('success', 'Section added.');
     }
     public function sectionUpdate(Request $request, Section $section)
     {
-        $request->validate(['name'=>'required|string|max:255|unique:sections,name,'.$section->id,'code'=>'nullable|string|max:50|unique:sections,code,'.$section->id]);
-        $section->update($request->only('name','code','description','status'));
-        return back()->with('success','Section updated.');
+        $request->validate([
+            'name'       => 'required|string|max:255|unique:sections,name,'.$section->id,
+            'code'       => 'nullable|string|max:50|unique:sections,code,'.$section->id,
+            'storage_id' => 'nullable|exists:storages,id',
+        ]);
+        $section->update($request->only('name', 'code', 'storage_id', 'description', 'status'));
+        return back()->with('success', 'Section updated.');
     }
     public function sectionDestroy(Section $section)
     {

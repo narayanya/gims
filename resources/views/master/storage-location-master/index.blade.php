@@ -40,18 +40,21 @@
             </div>
             <div class="card-body p-0">
                 <table class="table table-hover mb-0">
-                    <thead class="table-light"><tr><th>Name</th><th>Unit</th><th>Code</th><th>Description</th><th>Status</th><th width="100">Actions</th></tr></thead>
+                    <thead class="table-light"><tr><th>Name</th><th>Unit</th><th>Warehouse</th><th>Storage</th><th>Code</th><th>Description</th><th>Status</th><th width="100">Actions</th></tr></thead>
                     <tbody>
                         @forelse($sections as $row)
                         <tr>
                             <td>{{ $row->name }}</td>
                             <td>{{ $row->unit->name ?? '—' }}</td>
+                            <td>{{ $row->storage->warehouse->name ?? '—' }}</td>
+                            <td>{{ $row->storage->name ?? '—' }}</td>
                             <td><span class="badge bg-info">{{ $row->code ? $row->code : '—' }}</span></td>
                             <td>{{ $row->description ?? '—' }}</td>
                             <td><span class="badge {{ $row->status ? 'bg-success' : 'bg-danger' }}">{{ $row->status ? 'Active' : 'Inactive' }}</span></td>
                             <td>
                                 <button class="btn btn-sm btn-outline-warning editBtn"
                                     data-type="section" data-id="{{ $row->id }}" data-name="{{ $row->name }}" data-unit_id="{{ $row->unit_id }}"
+                                    data-storage_id="{{ $row->storage_id }}" data-warehouse_id="{{ $row->storage->warehouse_id ?? '' }}"
                                     data-code="{{ $row->code }}" data-description="{{ $row->description }}" data-status="{{ $row->status }}">
                                     <i class="ri-edit-line"></i>
                                 </button>
@@ -61,7 +64,7 @@
                                 </form>
                             </td>
                         </tr>
-                        @empty<tr><td colspan="5" class="text-center text-muted py-4">No sections found.</td></tr>
+                        @empty<tr><td colspan="8" class="text-center text-muted py-4">No sections found.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -229,9 +232,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const modal   = bootstrap.Modal.getOrCreateInstance(modalEl);
     const form    = document.getElementById('slmForm');
 
-    const sections  = @json($allSections);
-    const racks     = @json($allRacks);
-    const units = @json($units);
+    const sections    = @json($allSections);
+    const racks       = @json($allRacks);
+    const units       = @json($units);
+    const warehouses  = @json($warehouses);
+    const allStorages = @json($allStorages);
 
     function baseFields(d = {}) {
         return `
@@ -254,12 +259,38 @@ document.addEventListener('DOMContentLoaded', function () {
         units.forEach(u => {
             opts += `<option value="${u.id}" ${u.id==val?'selected':''}>${u.name}</option>`;
         });
-
         return `
         <div class="mb-3">
             <label class="form-label">Unit <span class="text-danger">*</span></label>
-            <select class="form-select" name="unit_id" required>
-                ${opts}
+            <select class="form-select" name="unit_id" required>${opts}</select>
+        </div>`;
+    }
+
+    function warehouseStorageFields(warehouseVal='', storageVal='') {
+        let whOpts = '<option value="">— Select Warehouse —</option>';
+        warehouses.forEach(w => {
+            whOpts += `<option value="${w.id}" ${w.id==warehouseVal?'selected':''}>${w.name}</option>`;
+        });
+
+        let filteredStorages = warehouseVal
+            ? allStorages.filter(s => s.warehouse_id == warehouseVal)
+            : [];
+        let stOpts = '<option value="">— Select Storage —</option>';
+        filteredStorages.forEach(s => {
+            stOpts += `<option value="${s.id}" ${s.id==storageVal?'selected':''}>${s.name}</option>`;
+        });
+
+        return `
+        <div class="mb-3">
+            <label class="form-label">Warehouse</label>
+            <select class="form-select" id="sectionWarehouseSelect" name="_warehouse_id">
+                ${whOpts}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Storage</label>
+            <select class="form-select" id="sectionStorageSelect" name="storage_id">
+                ${stOpts}
             </select>
         </div>`;
     }
@@ -278,21 +309,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function containerTypeField(d = {}) {
         const types = ['Packet','Pouch','Box','Jar','Envelope','Bag'];
-
         let opts = '<option value="">— Select —</option>';
-
         types.forEach(t => {
             opts += `<option value="${t}" ${t == d.container_type ? 'selected' : ''}>${t}</option>`;
         });
-
         return `
         <div class="mb-3">
             <label class="form-label">Container Type</label>
-            <select class="form-select" name="container_type">
-                ${opts}
-            </select>
+            <select class="form-select" name="container_type">${opts}</select>
         </div>
-
         <div class="mb-3">
             <label class="form-label">Capacity</label>
             <div class="row">
@@ -302,11 +327,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="col-md-4">
                     <select class="form-select" name="unit_id">
                         <option value="">Unit</option>
-                        ${units.map(u => `
-                            <option value="${u.id}" ${u.id == d.unitId ? 'selected' : ''}>
-                                ${u.name} (${u.code})
-                            </option>
-                        `).join('')}
+                        ${units.map(u => `<option value="${u.id}" ${u.id == d.unit_id ? 'selected' : ''}>${u.name} (${u.code})</option>`).join('')}
                     </select>
                 </div>
             </div>
@@ -320,12 +341,34 @@ document.addEventListener('DOMContentLoaded', function () {
         form.action = action;
 
         let body = baseFields(d);
-        if (type === 'section') body = unitSelect(d.unit_id) + body;
+        if (type === 'section') {
+            body = unitSelect(d.unit_id) + warehouseStorageFields(d.warehouse_id, d.storage_id) + body;
+        }
         if (type === 'rack')      body = sectionSelect(d.section_id) + body;
         if (type === 'bin')       body = rackSelect(d.rack_id) + body;
         if (type === 'container') body = containerTypeField(d) + body;
 
         document.getElementById('slmModalBody').innerHTML = body;
+
+        // Warehouse → Storage cascade for section modal
+        if (type === 'section') {
+            const whSel = document.getElementById('sectionWarehouseSelect');
+            const stSel = document.getElementById('sectionStorageSelect');
+            if (whSel && stSel) {
+                whSel.addEventListener('change', function () {
+                    const wid = this.value;
+                    const filtered = wid ? allStorages.filter(s => s.warehouse_id == wid) : [];
+                    stSel.innerHTML = '<option value="">— Select Storage —</option>';
+                    filtered.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = s.name;
+                        stSel.appendChild(opt);
+                    });
+                });
+            }
+        }
+
         // fix capacity field for container edit
         if (type === 'container' && d.capacity) {
             const cap = document.querySelector('[name="capacity"]');

@@ -161,43 +161,43 @@
                                 </div>
                             </div>
 
-                            <div class="row g-2">
-                                <div class="col-md-6">
-                                    <label class="form-label">Section</label>
-                                    <select name="section_id" id="to_section" class="form-select">
-                                        <option value="">Select Section</option>
-                                        @foreach($sections as $s)
-                                            <option value="{{ $s->id }}">{{ $s->name }}</option>
-                                        @endforeach
-                                    </select>
+                            {{-- Section / Rack / Bin / Container — loaded dynamically when storage is selected --}}
+                            <div id="to_locationFields" class="d-none">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Section</label>
+                                        <select name="section_id" id="to_section" class="form-select">
+                                            <option value="">Select Section</option>
+                                        </select>
+                                        <small id="to_section_empty" class="text-muted d-none">No sections for this storage</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Rack</label>
+                                        <select name="rack_id" id="to_rack" class="form-select" disabled>
+                                            <option value="">Select Rack</option>
+                                        </select>
+                                        <small id="to_rack_empty" class="text-muted d-none">No racks for selected section</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Bin</label>
+                                        <select name="bin_id" id="to_bin" class="form-select" disabled>
+                                            <option value="">Select Bin</option>
+                                        </select>
+                                        <small id="to_bin_empty" class="text-muted d-none">No bins for selected rack</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Container</label>
+                                        <select name="container_id" id="to_container" class="form-select">
+                                            <option value="">Select Container</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Rack</label>
-                                    <select name="rack_id" id="to_rack" class="form-select">
-                                        <option value="">Select Rack</option>
-                                        @foreach($racks as $r)
-                                            <option value="{{ $r->id }}" data-section="{{ $r->section_id }}">{{ $r->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Bin</label>
-                                    <select name="bin_id" id="to_bin" class="form-select">
-                                        <option value="">Select Bin</option>
-                                        @foreach($bins as $b)
-                                            <option value="{{ $b->id }}" data-rack="{{ $b->rack_id }}">{{ $b->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Container</label>
-                                    <select name="container_id" id="to_container" class="form-select">
-                                        <option value="">Select Container</option>
-                                        @foreach($containers as $c)
-                                            <option value="{{ $c->id }}">{{ $c->name }}{{ $c->container_type ? ' ('.$c->container_type.')' : '' }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                            </div>
+                            <div id="to_locationPlaceholder" class="text-center text-muted py-3 small">
+                                <i class="bx bx-info-circle me-1"></i> Select a storage to load section, rack, bin &amp; container options.
+                            </div>
+
+                            <div class="row g-2 mt-1">
                                 <div class="col-md-12">
                                     <label class="form-label">Other Remark</label>
                                     <textarea name="remarks" id="remarks" class="form-control"></textarea>
@@ -467,51 +467,125 @@ document.addEventListener('DOMContentLoaded', function () {
         box.classList.remove('d-none');
     });
 
-    // ── TO: Storage → show capacity ───────────────────────────────────────
+    // ── TO: Storage → load sections/racks/bins/containers ────────────────
     document.getElementById('to_storage').addEventListener('change', function () {
         const id  = this.value;
         const box = document.getElementById('to_storageInfo');
-        if (!id) { box.classList.add('d-none'); return; }
+        const locationFields      = document.getElementById('to_locationFields');
+        const locationPlaceholder = document.getElementById('to_locationPlaceholder');
 
+        // Reset all location dropdowns
+        resetSelect('to_section', 'Select Section');
+        resetSelect('to_rack',    'Select Rack',    true);
+        resetSelect('to_bin',     'Select Bin',     true);
+        resetSelect('to_container', 'Select Container');
+        hideHint('to_section_empty');
+        hideHint('to_rack_empty');
+        hideHint('to_bin_empty');
+
+        if (!id) {
+            box.classList.add('d-none');
+            locationFields.classList.add('d-none');
+            locationPlaceholder.classList.remove('d-none');
+            return;
+        }
+
+        // Load storage info
         fetch(`/get-storage-lots/${id}`)
             .then(r => r.json())
             .then(d => {
-
                 document.getElementById('to_warehouse').textContent  = d.storage.warehouse || '—';
                 document.getElementById('to_type').textContent       = d.storage.storage_type || '—';
                 document.getElementById('to_condition').textContent  = d.storage.storage_condition || '—';
                 document.getElementById('to_time').textContent       = d.storage.storage_time || '—';
-
-                document.getElementById('to_temp').textContent =
-                    d.storage.temperature ? `${d.storage.temperature} ` : '—';
-
-                document.getElementById('to_humidity').textContent =
-                    d.storage.humidity ? `${d.storage.humidity} ` : '—';
-
-                document.getElementById('to_capacity').textContent  = d.storage.capacity ? `${d.storage.capacity} ${d.unit||''}` : '—';
-                document.getElementById('to_available').textContent = d.available ? `${d.available} ${d.unit||''}` : '—';
+                document.getElementById('to_temp').textContent       = d.storage.temperature ? `${d.storage.temperature}` : '—';
+                document.getElementById('to_humidity').textContent   = d.storage.humidity ? `${d.storage.humidity}` : '—';
+                document.getElementById('to_capacity').textContent   = d.storage.capacity ? `${d.storage.capacity} ${d.unit||''}` : '—';
+                document.getElementById('to_available').textContent  = d.available ? `${d.available} ${d.unit||''}` : '—';
                 box.classList.remove('d-none');
+            });
+
+        // Load hierarchy filtered by storage
+        fetch(`/get-storage-hierarchy/${id}`)
+            .then(r => r.json())
+            .then(d => {
+                // Store for cascading
+                window._toRacks      = d.racks      || [];
+                window._toBins       = d.bins        || [];
+                window._toContainers = d.containers  || [];
+
+                // Populate sections
+                const secSel = document.getElementById('to_section');
+                if (d.sections.length === 0) {
+                    showHint('to_section_empty');
+                } else {
+                    hideHint('to_section_empty');
+                    d.sections.forEach(s => {
+                        const o = new Option(s.name, s.id);
+                        secSel.add(o);
+                    });
+                }
+
+                // Populate containers (not storage-specific hierarchy)
+                const conSel = document.getElementById('to_container');
+                d.containers.forEach(c => {
+                    const label = c.container_type ? `${c.name} (${c.container_type})` : c.name;
+                    conSel.add(new Option(label, c.id));
+                });
+
+                locationFields.classList.remove('d-none');
+                locationPlaceholder.classList.add('d-none');
             });
     });
 
     // ── TO: Section → filter Racks ────────────────────────────────────────
     document.getElementById('to_section').addEventListener('change', function () {
         const sid = this.value;
-        Array.from(document.getElementById('to_rack').options).forEach(o => {
-            o.hidden = sid && o.value && o.dataset.section != sid;
-        });
-        document.getElementById('to_rack').value = '';
-        Array.from(document.getElementById('to_bin').options).forEach(o => o.hidden = false);
+        resetSelect('to_rack', 'Select Rack', true);
+        resetSelect('to_bin',  'Select Bin',  true);
+        hideHint('to_rack_empty');
+        hideHint('to_bin_empty');
+
+        if (!sid) return;
+
+        const filtered = (window._toRacks || []).filter(r => r.section_id == sid);
+        const rackSel  = document.getElementById('to_rack');
+
+        if (filtered.length === 0) {
+            showHint('to_rack_empty');
+        } else {
+            filtered.forEach(r => rackSel.add(new Option(r.name, r.id)));
+            rackSel.disabled = false;
+        }
     });
 
     // ── TO: Rack → filter Bins ────────────────────────────────────────────
     document.getElementById('to_rack').addEventListener('change', function () {
         const rid = this.value;
-        Array.from(document.getElementById('to_bin').options).forEach(o => {
-            o.hidden = rid && o.value && o.dataset.rack != rid;
-        });
-        document.getElementById('to_bin').value = '';
+        resetSelect('to_bin', 'Select Bin', true);
+        hideHint('to_bin_empty');
+
+        if (!rid) return;
+
+        const filtered = (window._toBins || []).filter(b => b.rack_id == rid);
+        const binSel   = document.getElementById('to_bin');
+
+        if (filtered.length === 0) {
+            showHint('to_bin_empty');
+        } else {
+            filtered.forEach(b => binSel.add(new Option(b.name, b.id)));
+            binSel.disabled = false;
+        }
     });
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+    function resetSelect(id, placeholder, disable = false) {
+        const sel = document.getElementById(id);
+        sel.innerHTML = `<option value="">${placeholder}</option>`;
+        sel.disabled  = disable;
+    }
+    function showHint(id) { document.getElementById(id)?.classList.remove('d-none'); }
+    function hideHint(id) { document.getElementById(id)?.classList.add('d-none'); }
 
     document.getElementById('lot_search').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') {

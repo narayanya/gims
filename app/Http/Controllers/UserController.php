@@ -35,6 +35,45 @@ class UserController extends Controller
         return view('users.show', compact('user','roles'));
     }
 
+    public function profile()
+    {
+        $user = auth()->user()->load(['roles.permissions', 'reportingUser']);
+        return view('users.profile', compact('user'));
+    }
+
+    public function profileUpdate(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|max:255|unique:users,email,' . $user->id,
+            'mobile_number' => 'nullable|string|max:20',
+        ]);
+
+        $user->update($request->only('name', 'email', 'mobile_number'));
+
+        return back()->with('success', 'Profile updated successfully.');
+    }
+
+    public function passwordUpdate(Request $request)
+    {
+        $request->validate([
+            'current_password'      => 'required',
+            'password'              => 'required|min:8|confirmed',
+        ]);
+
+        $user = auth()->user();
+
+        if (!\Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'Current password is incorrect.']);
+        }
+
+        $user->update(['password' => bcrypt($request->password)]);
+
+        return back()->with('success', 'Password changed successfully.');
+    }
+
     public function store(Request $request)
     {
         $request->validate([

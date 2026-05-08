@@ -36,44 +36,47 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Lot::observe(new ActivityObserver('lot'));
 
         View::composer('*', function ($view) {
-        $pendingRequestCount = 0;
+            $pendingRequestCount = 0;
+            $pendingRequests     = collect();
+            $notifications       = collect();
+            $notificationCount   = 0;
+
             if (Auth::check()) {
+                $user  = Auth::user();
+                $roles = $user->roles->pluck('slug')->toArray();
 
-    $user = Auth::user();
-    $role = optional($user->role)->slug;
+                // Pending seed requests — visible to admin/super-admin
+                if (array_intersect($roles, ['admin', 'super-admin'])) {
+                    $pendingRequestCount = SeedRequest::where('status', 'pending')->count();
+                    $pendingRequests     = SeedRequest::with(['user', 'crop'])
+                        ->where('status', 'pending')
+                        ->latest()
+                        ->take(10)
+                        ->get();
+                }
 
-    if (in_array($role,['admin','super-admin'])) {
-        $pendingRequestCount = SeedRequest::where('status','pending')->count();
-    }
-
-    $notifications = Notification::where('user_id',$user->id)
-        ->latest()
-        ->take(5)
-        ->get();
-
-    $notificationCount = Notification::where('user_id',$user->id)
-        ->where('is_read',false)
-        ->count();
-
-    } else {
-
-        $notifications = collect();
-        $notificationCount = 0;
-        $pendingRequestCount = 0;
-    }
-
-    $expiringSoon = Accession::with(['crop'])
-                    ->whereNotNull('expiry_date')
-                    ->whereBetween('expiry_date', [
-                        Carbon::today(),
-                        Carbon::today()->addDays(120)
-                    ])
-                    ->orderBy('expiry_date', 'asc')
-                    ->take(5)
+                // Notifications for this user
+                $notifications = Notification::where('user_id', $user->id)
+                    ->latest()
+                    ->take(10)
                     ->get();
 
-        $view->with(compact('notifications','notificationCount','pendingRequestCount', 'expiringSoon'));
+                $notificationCount = Notification::where('user_id', $user->id)
+                    ->where('is_read', false)
+                    ->count();
+            }
 
-    });
+            $expiringSoon = Accession::with(['crop'])
+                ->whereNotNull('expiry_date')
+                ->whereBetween('expiry_date', [
+                    Carbon::today(),
+                    Carbon::today()->addDays(120),
+                ])
+                ->orderBy('expiry_date', 'asc')
+                ->take(5)
+                ->get();
+
+            $view->with(compact('notifications', 'notificationCount', 'pendingRequestCount', 'pendingRequests', 'expiringSoon'));
+        });
 }
 }
