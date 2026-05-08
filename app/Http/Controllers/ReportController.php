@@ -8,7 +8,7 @@ use App\Models\Accession;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Carbon\Carbon;
 use App\Models\LotTransfer;
-
+use App\Models\RequestTransaction;
 use Illuminate\Http\Request;
 use  Illuminate\Support\Facades\DB;
 
@@ -22,6 +22,7 @@ class ReportController extends Controller
         $totalAvailable  = SeedQuantity::sum('quantity') ?? 0;
         $totalDispatched = Dispatch::sum('quantity') ?? 0;
         $totalLotQty     = \App\Models\SeedQuantity::sum('quantity') ?? 0; // total across all lots
+        
 
         $days = collect();
         $latestDate = DB::table('dispatches')->max('dispatched_at');
@@ -57,6 +58,28 @@ class ReportController extends Controller
         $crops = DB::table('core_crop')->where('update_status', '=', 1)->orderBy('crop_name')->get();
         $accessions = Accession::with('crop')->get();
         $lots = DB::table('lots')->get();
+        $quantityRequestRecord = DB::table('request_transactions')
+
+        ->leftJoin('accessions', 'request_transactions.accession_id', '=', 'accessions.id')
+
+        ->leftJoin('lots', 'request_transactions.lot_id', '=', 'lots.id')
+
+        ->leftJoin('core_crop', 'accessions.crop_id', '=', 'core_crop.id')
+        ->leftJoin('units', 'request_transactions.unit_id', '=', 'units.id')
+        ->leftJoin('users', 'request_transactions.created_by', '=', 'users.id')
+
+        ->select(
+            'request_transactions.*',
+            'accessions.accession_number',
+            'lots.lot_number',
+            'core_crop.crop_name',
+            'units.name',
+            'users.name as user_name'
+        )
+
+        ->latest('request_transactions.id')
+
+        ->get();
         $summary = DB::table('accessions')
             ->join('core_crop', 'accessions.crop_id', '=', 'core_crop.id')
             ->leftJoin('lots', 'lots.accession_id', '=', 'accessions.id')
@@ -139,7 +162,7 @@ class ReportController extends Controller
                 ->get();
         }
 
-        return view('report.summary', compact('summary', 'crops', 'accessions', 'lots'));
+        return view('report.summary', compact('summary', 'crops', 'accessions', 'lots', 'quantityRequestRecord'));
     }
 
     public function accessionHistory($id)

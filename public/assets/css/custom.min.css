@@ -224,4 +224,7 @@ svg {
 }  
 .menu-visible{
   visibility: visible !important;
-}   
+} 
+.empty-notification-elem  img.img-fluid{
+  width: 40px;
+}

@@ -7,6 +7,7 @@ use App\Models\SeedRequest;
 use App\Models\Itn;
 use App\Models\Lot;
 use Illuminate\Http\Request;
+use App\Models\RequestTransaction;
 
 use function Laravel\Prompts\alert;
 
@@ -90,6 +91,11 @@ class DispatchController extends Controller
             $currentQty      = (float) $sq->quantity;
             $currentShowQty  = (float) $sq->quantity_show;
 
+             // OLD LOT STOCK VALUES
+            $oldQty = (float) $sq->quantity;
+
+            $oldShowQty = (float) $sq->quantity_show;
+
             // Deduct from actual quantity
             $sq->quantity = max(0, $currentQty - $dispatchQty);
 
@@ -97,9 +103,30 @@ class DispatchController extends Controller
             $sq->quantity_show = max(0, $currentShowQty - $dispatchQty);
 
             $sq->save();
-        }
 
-        
+            // STORE HISTORY
+            RequestTransaction::create([
+
+                'request_id' => $request->id,
+                'dispatch_id' => $dispatch->id,
+                'accession_id' => $request->accession_id,
+                'lot_id' => $req->lot_id,
+                'created_by' => auth()->id(),
+                'updated_by' => auth()->id(),
+                'transaction_type' => 'dispatch',
+                'quantity' => $dispatchQty,
+                // OLD STOCK
+                'old_quantity' => $oldQty,
+                'old_quantity_show' => $oldShowQty,
+
+                // NEW STOCK
+                'new_quantity' => $sq->quantity,
+                'new_quantity_show' => $sq->quantity_show,
+                'unit_id' => $request->unit_id,
+                'reference_no' => $dispatch->dispatch_number,
+                'remarks' => $req->remarks,
+            ]);
+        }
 
         return redirect()->route('dispatch.print', $dispatch->id);
     }

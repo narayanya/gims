@@ -8,6 +8,7 @@ class RequestTransaction extends Model
 {
     protected $fillable = [
         'request_id',
+        'dispatch_id',
         'transaction_type',
         'lot_id',
         'crop_id',

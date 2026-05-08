@@ -62,53 +62,108 @@
                                     </td>
                                 </tr>
                                 <!-- 🔽 Hidden Expand Row -->
-<tr id="details-{{ $index }}" class="d-none">
-    <td colspan="7">
-        <div class="p-1 bg-light border rounded">
+                                <tr id="details-{{ $index }}" class="d-none">
+                                    <td colspan="7">
+                                        <div class="p-1 bg-light border rounded">
 
-            <table class="table table-sm table-bordered mb-0">
-                <thead>
-                    <tr>
-                        <th>Accession No</th>
-                        <th>Lot No</th>
-                        <th>Quantity</th>
-                        <th>Visibility Qty</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($row->details ?? [] as $d)
-                    <tr>
-                        <td>
-                            <a href="{{ route('report.accession.history', $d->accession_id ?? $d->id) }}"
-                               class="text-decoration-none fw-semibold">
-                                {{ $d->accession_number }}
-                            </a>
-                        </td>
-                        <td>
-                            @if($d->lot_id ?? null)
-                                <a href="{{ route('report.lot.history', $d->lot_id) }}" class="text-decoration-none fw-semibold">
-                                    {{ $d->lot_number ?? '-' }}
-                                </a>
-                            @else
-                                {{ $d->lot_number ?? '-' }}
-                            @endif
-                        </td>
-                        <td>{{ $d->quantity }}</td>
-                        <td>{{ $d->quantity_show }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                                            <table class="table table-sm table-bordered mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Accession No</th>
+                                                        <th>Lot No</th>
+                                                        <th>Quantity</th>
+                                                        <th>Visibility Qty</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($row->details ?? [] as $d)
+                                                    <tr>
+                                                        <td>
+                                                            <a href="{{ route('report.accession.history', $d->accession_id ?? $d->id) }}"
+                                                            class="text-decoration-none fw-semibold">
+                                                                {{ $d->accession_number }}
+                                                            </a>
+                                                        </td>
+                                                        <td>
+                                                            @if($d->lot_id ?? null)
+                                                                <a href="{{ route('report.lot.history', $d->lot_id) }}" class="text-decoration-none fw-semibold">
+                                                                    {{ $d->lot_number ?? '-' }}
+                                                                </a>
+                                                            @else
+                                                                {{ $d->lot_number ?? '-' }}
+                                                            @endif
+                                                        </td>
+                                                        <td>{{ $d->quantity }}</td>
+                                                        <td>{{ $d->quantity_show }}</td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
 
-        </div>
-    </td>
-</tr>
+                                        </div>
+                                    </td>
+                                </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
+
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Crop Name</th>
+                        <th>Accessions Number</th>
+                        <th>Lot Number</th>
+                        
+                        <th>Old Quantity</th>
+                        <th>Old Visibility Qty</th>
+                        <th>Dispatch Quantity</th>
+                        <th>New Quantity</th>
+                        <th>New Visibility Qty</th>
+                        <th>Unit</th>
+                        <th>Reference No</th>
+                        
+                        <th>Transaction Type</th>
+                        <th>Transaction Date</th>
+                        <th>User</th>
+                        <th>Updated At</th>
+                        <th>Remarks</th>
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    @if ($quantityRequestRecord->isEmpty())
+                    <tr>
+                        <td colspan="15" class="text-center">No content available</td>
+                    </tr>
+                    @else
+                    @foreach($quantityRequestRecord as $qtyrecord)
+                    <tr>
+                        <td>{{ $qtyrecord->crop_name }}</td>
+                        <td>{{ $qtyrecord->accession_number }}</td>
+                        <td>{{ $qtyrecord->lot_number }}</td>
+                        
+                        <td>{{ $qtyrecord->old_quantity }}</td>
+                        <td>{{ $qtyrecord->old_quantity_show }}</td>
+                        <td>{{ $qtyrecord->quantity }}</td>
+                        <td>{{ $qtyrecord->new_quantity }}</td>
+                        <td>{{ $qtyrecord->new_quantity_show }}</td>
+                        <td>{{ $qtyrecord->unit_id }}</td>
+                        <td>{{ $qtyrecord->reference_no }}</td>
+                        
+                        <td>{{ $qtyrecord->transaction_type }}</td>
+                        <td>{{ $qtyrecord->created_at }}</td>
+                        <td>{{ $qtyrecord->created_by }}</td>
+                        <td>{{ $qtyrecord->updated_at }}</td>
+                        <td>{{ $qtyrecord->remarks }}</td>
+                    </tr>
+                    @endforeach
+                    @endif
+
+                </tbody>
+            </table>
 
             <div class="card mt-3 d-none">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
