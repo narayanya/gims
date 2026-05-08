@@ -13,29 +13,59 @@
                         master data</p>
                 </div>
                 <div class="d-flex gap-2">
-                    <div class="">
-                        <select id="categoryFilter" class="form-select form-select-sm">
-                            <option value="">All Categories</option>
-                            @foreach ($categories as $category)
-                                <option value="{{ $category->id }}">
-                                    {{ $category->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <!--<button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#cropModalimport">
-                        <i class="ri-upload-line me-1"></i>Import Crops
-                    </button>-->
                     <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newCropRequestModal">
                         <i class="ri-add-line me-1"></i>New Crop
                     </button>
-                    <a href="{{ route('cropRequests.index') }}" class="btn btn-sm btn-secondary ">Crop Request List</a>
+                    <a href="{{ route('cropRequests.index') }}" class="btn btn-sm btn-secondary">Crop Request List</a>
                     <button class="btn btn-sm btn-primary d-none" data-bs-toggle="modal" data-bs-target="#cropModal"
                        id="addCropBtn">
                         <i class="ri-add-line me-1"></i>New Crop
                     </button>
                 </div>
             </div>
+
+            {{-- Search & Filter Bar --}}
+            <form method="GET" action="{{ route('crops.index') }}" class="mb-3">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label mb-1 small text-muted">Search</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i class="ri-search-line"></i></span>
+                            <input type="text" name="search" class="form-control"
+                                placeholder="Crop name, code or scientific name…"
+                                value="{{ request('search') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label mb-1 small text-muted">Category</label>
+                        <select name="category" class="form-select form-select-sm">
+                            <option value="">All Categories</option>
+                            @foreach ($categories as $category)
+                                <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-auto">
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="ri-filter-line me-1"></i>Filter
+                        </button>
+                        @if(request('search') || request('category'))
+                            <a href="{{ route('crops.index') }}" class="btn btn-sm btn-outline-secondary ms-1">
+                                <i class="ri-close-line me-1"></i>Clear
+                            </a>
+                        @endif
+                    </div>
+                    @if(request('search') || request('category'))
+                    <div class="col-md-auto d-flex align-items-end">
+                        <span class="text-muted small">
+                            {{ $crops->total() }} result{{ $crops->total() != 1 ? 's' : '' }} found
+                        </span>
+                    </div>
+                    @endif
+                </div>
+            </form>
 
 
             @if (session('success'))
@@ -340,29 +370,7 @@
         });
 
         $(document).ready(function() {
-
-            $('#categoryFilter').on('change', function() {
-
-                let category = $(this).val();
-
-                $('tbody tr').each(function() {
-
-                    let rowCategory = $(this).data('category');
-
-                    if (category === "" || rowCategory == category) {
-
-                        $(this).show();
-
-                    } else {
-
-                        $(this).hide();
-
-                    }
-
-                });
-
-            });
-
+            // Category filtering is now handled server-side via the filter form
         });
     </script>
 

@@ -19,16 +19,32 @@ class CropController extends Controller
      * Display a listing of the resource.
      */
 
-    public function index()
+    public function index(Request $request)
     {
+        $query = Crop::with([
+            'category',
+            'cropCategory',
+            'cropType',
+            'season',
+            'soilType'
+        ]);
 
-        $crops = Crop::with([
-    'category',
-    'cropCategory',
-    'cropType',
-    'season',
-    'soilType'
-])->latest()->paginate(10);
+        // Search by name, code, or scientific name
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('crop_name', 'like', "%{$search}%")
+                  ->orWhere('crop_code', 'like', "%{$search}%")
+                  ->orWhere('scientific_name', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by category
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
+
+        $crops = $query->latest()->paginate(10)->withQueryString();
 
         $cropcategories = CropCategory::all();
         $types = CropType::all();

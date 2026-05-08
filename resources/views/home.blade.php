@@ -29,7 +29,7 @@
                             <a href="{{ route('report.reports') }}"
                                 class="btn btn-sm btn-outline-primary font-bold">Report</a>
                             <a href="{{ route('lot-management.create') }}" class="btn btn-sm btn-primary box-radius"><i
-                                    class="ri-add-line me-1"></i> New Lot/Batch</a>
+                                    class="ri-add-line me-1"></i> New Arrival(Lot)</a>
                         @endif
                         <a href="{{ route('accessionform') }}" class="btn btn-sm btn-primary"><i
                                 class="ri-add-line me-1"></i> New Accession</a>
