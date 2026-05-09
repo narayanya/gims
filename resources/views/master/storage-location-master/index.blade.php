@@ -242,14 +242,17 @@ document.addEventListener('DOMContentLoaded', function () {
         return `
         <div class="mb-3"><label class="form-label">Name <span class="text-danger">*</span></label>
             <input type="text" class="form-control" name="name" value="${d.name||''}" required></div>
-        <div class="mb-3"><label class="form-label">Code</label>
+            <div class="row">
+        <div class="col-md-6 mb-3"><label class="form-label">Code</label>
             <input type="text" class="form-control" name="code" value="${d.code||''}"></div>
-        <div class="mb-3"><label class="form-label">Status</label>
+        <div class="col-md-6 mb-3"><label class="form-label">Status</label>
             <select class="form-select" name="status">
                 <option value="">Select Status</option>
                 <option value="1" ${(d.status==1||d.status===undefined)?'selected':''}>Active</option>
                 <option value="0" ${d.status==0?'selected':''}>Inactive</option>
-            </select></div>
+            </select>
+        </div>
+        </div>
         <div class="mb-3"><label class="form-label">Description</label>
             <textarea class="form-control" name="description" rows="2">${d.description||''}</textarea></div>`;
     }
@@ -281,17 +284,19 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         return `
-        <div class="mb-3">
+        <div class="row">
+        <div class="col-md-6 mb-3">
             <label class="form-label">Warehouse</label>
             <select class="form-select" id="sectionWarehouseSelect" name="_warehouse_id">
                 ${whOpts}
             </select>
         </div>
-        <div class="mb-3">
+        <div class="col-md-6 mb-3">
             <label class="form-label">Storage</label>
             <select class="form-select" id="sectionStorageSelect" name="storage_id">
                 ${stOpts}
             </select>
+        </div>
         </div>`;
     }
 

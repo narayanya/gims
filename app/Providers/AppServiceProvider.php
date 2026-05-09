@@ -8,6 +8,7 @@ use App\Models\Crop;
 use App\Models\Variety;
 use App\Observers\ActivityObserver;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -40,10 +41,34 @@ class AppServiceProvider extends ServiceProvider
             $pendingRequests     = collect();
             $notifications       = collect();
             $notificationCount   = 0;
+            $authEmployeeId      = null;
+            $authProfilePhoto    = asset('assets/images/users/avatar-1.jpg'); // default fallback
 
             if (Auth::check()) {
                 $user  = Auth::user();
                 $roles = $user->roles->pluck('slug')->toArray();
+
+                // Employee ID for profile photo
+                $authEmployeeId = $user->employee_id ?? null;
+
+                // Build profile photo URL — works for both S3 and local storage
+                if ($authEmployeeId) {
+                    $imagePath = 'Employee_Image/' . $authEmployeeId . '.jpg';
+                    $disk      = env('FILESYSTEM_DISK', 'local');
+
+                    try {
+                        if ($disk === 's3') {
+                            // Generate a short-lived temporary URL from S3
+                            $authProfilePhoto = \Illuminate\Support\Facades\Storage::disk('s3')
+                                ->temporaryUrl($imagePath, now()->addMinutes(30));
+                        } elseif (\Illuminate\Support\Facades\Storage::disk('public')->exists($imagePath)) {
+                            $authProfilePhoto = \Illuminate\Support\Facades\Storage::disk('public')->url($imagePath);
+                        }
+                        // else: keep the default avatar
+                    } catch (\Throwable $e) {
+                        // S3 not reachable or file missing — keep default avatar
+                    }
+                }
 
                 // Pending seed requests — visible to admin/super-admin
                 if (array_intersect($roles, ['admin', 'super-admin'])) {
@@ -76,7 +101,7 @@ class AppServiceProvider extends ServiceProvider
                 ->take(5)
                 ->get();
 
-            $view->with(compact('notifications', 'notificationCount', 'pendingRequestCount', 'pendingRequests', 'expiringSoon'));
+            $view->with(compact('notifications', 'notificationCount', 'pendingRequestCount', 'pendingRequests', 'expiringSoon', 'authEmployeeId', 'authProfilePhoto'));
         });
 }
 }

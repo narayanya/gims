@@ -145,15 +145,6 @@
                         </li>
                         @endif
 
-                        {{-- Dispatch --}}
-                        @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasPermission('menu.dispatch'))
-                        <li class="nav-item">
-                            <a class="nav-link menu-link {{ request()->routeIs('dispatch-management.*') ? 'active' : '' }}" href="{{ route('dispatch-management.index') }}">
-                                <i class="ri-honour-line"></i> <span>Dispatch Management</span>
-                            </a>
-                        </li>
-                        @endif
-
                         {{-- Requests --}}
                         @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasPermission('menu.request'))
                         <li class="nav-item">
@@ -162,6 +153,15 @@
                             </a>
                         </li>
                         @endif
+
+                        {{-- Dispatch --}}
+                        @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasPermission('menu.dispatch'))
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {{ request()->routeIs('dispatch-management.*') ? 'active' : '' }}" href="{{ route('dispatch-management.index') }}">
+                                <i class="ri-honour-line"></i> <span>Dispatch Management</span>
+                            </a>
+                        </li>
+                        @endif                        
 
                         {{-- Reports --}}
                         @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasPermission('menu.reports'))

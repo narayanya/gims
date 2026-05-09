@@ -783,8 +783,8 @@
 
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Regenaration Cut of Year</label>
-                                        <input type="number" name="" class="form-control"
-                                            placeholder="Enter year" value="">
+                                        <input type="number" name="regeneration_cut_year" class="form-control"
+                                            placeholder="Enter year" value="{{ old('regeneration_cut_year') }}">
                                     </div>
 
                                     <div class="col-md-6 mb-3">

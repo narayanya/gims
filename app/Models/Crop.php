@@ -32,6 +32,7 @@ class Crop extends Model
         'soil_type_id',
         'isolation_distance',
         'expected_yield',
+        'regeneration_cut_year',
         'is_active',
         'update_status',
     ];
