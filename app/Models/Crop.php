@@ -35,6 +35,12 @@ class Crop extends Model
         'regeneration_cut_year',
         'is_active',
         'update_status',
+        'pouch_standard_id',
+        'seed_quantity',
+        'seed_weight',
+        'unit_id',
+        'season_start_month_id',
+        'season_end_month_id'
     ];
 
     /**
@@ -69,5 +75,14 @@ public function season()
     {
         return $this->belongsTo(SoilType::class);
     }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
+    public function pouchStandard()
+{
+    return $this->belongsTo(Pouch::class, 'pouch_standard_id');
+}
 
 }

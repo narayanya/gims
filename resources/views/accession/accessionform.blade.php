@@ -227,6 +227,7 @@
                                             <option value="">Select Crop</option>
                                             @foreach ($crops as $crop)
                                                 <option value="{{ $crop->id }}"
+                                                    data-regen="{{ $crop->regeneration_cut_year }}"
                                                     {{ old('crop_id', $accession->crop_id ?? '') == $crop->id ? 'selected' : '' }}>
                                                     {{ $crop->crop_name }}</option>
                                             @endforeach
@@ -1099,13 +1100,6 @@
     };
 
     console.log("Season from PHP:", window._cropSeason);
-
-    // On edit with regen_year stored: recalculate immediately if season is valid
-    @if(isset($accession) && $accession && $accession->regen_year)
-    if (window._cropSeason.start_month > 0 && regenYearInput && regenYearInput.value) {
-        calculateAllDates();
-    }
-    @endif
     
 
     function formatDate(d) {
@@ -1123,6 +1117,37 @@
             return month >= start || month <= end;
         }
     }
+
+    // ✅ EVENTS
+    const cropSelect = document.getElementById('crop_id');
+
+    // Auto-fill Regeneration Cut of Year when crop is selected
+    cropSelect.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const regenYear = selectedOption.getAttribute('data-regen');
+        regenYearInput.value = regenYear ?? '';
+        // Note: calculateAllDates() is called by the jQuery AJAX handler
+        // after the season is loaded, so we don't call it here.
+    });
+
+    regenYearInput.addEventListener('input', function () {
+        if (!cropSelect || !cropSelect.value) {
+            alert('Please select a Crop first.');
+            this.value = '';
+            return;
+        }
+        calculateAllDates();
+    });
+
+    // Auto-fill on edit page load
+    window.addEventListener('load', function () {
+        if (cropSelect && cropSelect.value) {
+            const selectedOption = cropSelect.options[cropSelect.selectedIndex];
+            regenYearInput.value = selectedOption.getAttribute('data-regen') ?? '';
+            // Season is already seeded from PHP (_cropSeason), calculate immediately
+            calculateAllDates();
+        }
+    });
 
     // CALCULATION LOGIC:
     //   Expiry     = today + regen_years  (same day/month, N years ahead)
@@ -1167,20 +1192,7 @@
         regenInput.value = formatDate(regen);
     }
 
-    // ✅ EVENTS
-    regenYearInput.addEventListener('input', function () {
-        const cropSelect = document.getElementById('crop_id');
-
-        // If crop not selected yet, warn once
-        if (!cropSelect || !cropSelect.value) {
-            alert('Please select a Crop first.');
-            this.value = '';
-            return;
-        }
-
-        // Season may or may not be set — calculateAllDates handles both cases
-        calculateAllDates();
-    });
+    
 
 
 
@@ -1345,6 +1357,7 @@
                         $('#cropCategory').text(data.crop_category ? data.crop_category.name : '-');
                         $('#type').text(data.crop_type ? data.crop_type.name : '-');
                         $('#season').text(data.season ? data.season.name : '-');
+                        $('#regen_year').val(data.regeneration_cut_year ?? '');
 
                         // ✅ Update season for date calculation
                         if (data.season && data.season.start_month && data.season.end_month) {
@@ -1356,12 +1369,11 @@
                         }
                         console.log("Season updated:", window._cropSeason);
 
-                        // Recalculate if regen_year already filled
+                        // Recalculate dates now that season + regen_year are both set
                         const regenYearEl = document.getElementById('regen_year');
                         if (regenYearEl && regenYearEl.value) {
                             calculateAllDates();
-                        }
-                    },
+                        }                    },
                     error: function() {
                         $('#scientificName').text('-');
                         $('#family').text('-');

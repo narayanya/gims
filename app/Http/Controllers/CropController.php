@@ -51,6 +51,8 @@ class CropController extends Controller
         $seasons = Season::all();
         $categories = Category::all();
         $soiltypes = SoilType::all();
+        $units = \App\Models\Unit::all();
+        $pouches = \App\Models\Pouch::all();
 
         return view('master.crop.index', compact(
             'crops',
@@ -58,7 +60,9 @@ class CropController extends Controller
             'types',
             'seasons',
             'categories',
-            'soiltypes'
+            'soiltypes',
+            'units',
+            'pouches'
         ));
     }
 
@@ -103,12 +107,40 @@ class CropController extends Controller
             'crop_type_id' => 'required',
             'season_id' => 'required',
             'soil_type_id' => 'required',
-            'is_active' => 'required'
+            'is_active' => 'required',
+             'season_start_month_id' => 'required|integer|min:1|max:12',
+    'season_end_month_id'   => 'required|integer|min:1|max:12',
+], [
+    'season_end_month_id.required' => 'End month is required.',
         ]);
 
-        $data = $request->all();
+       
 
+$startMonth = (int) $request->season_start_month_id;
+$endMonth   = (int) $request->season_end_month_id;
+
+// Calculate difference
+$monthDiff = $endMonth - $startMonth;
+
+// Handle year crossover (Nov → Feb etc.)
+if ($monthDiff < 0) {
+    $monthDiff += 12;
+}
+
+// Minimum 3 months validation
+if ($monthDiff < 3) {
+    return back()
+        ->withErrors([
+            'season_end_month_id' => 'End month must be at least 3 months after start month.'
+        ])
+        ->withInput();
+}
+        $data = $request->all();
+        $data['unit_id'] = is_array($request->unit_id)
+            ? $request->unit_id[0]
+            : $request->unit_id;
         // ✅ set update_status
+
         $data['update_status'] = $request->update_status ?? 0;
 
         // ✅ ONLY update date when editing

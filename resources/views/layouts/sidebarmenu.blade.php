@@ -58,11 +58,11 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link menu-link {{ request()->is('categories*','crop-categories*','crop-types*','variety-types*','seasons*','seed-classes*','units*','soil-types*','arrival-types*','location*','employees*') ? 'active' : '' }}"
+                            <a class="nav-link menu-link {{ request()->is('categories*','crop-categories*','crop-types*','variety-types*','seasons*','seed-classes*','units*','soil-types*','arrival-types*','pouches*','location*','employees*') ? 'active' : '' }}"
                                href="#sidebarMasterSetting" data-bs-toggle="collapse" role="button">
                                 <i class="ri-dashboard-2-line"></i> <span>Master Settings</span>
                             </a>
-                            <div class="collapse menu-visible menu-dropdown {{ request()->is('categories*','crop-categories*','crop-types*','variety-types*','seasons*','seed-classes*','units*','soil-types*','arrival-types*','location*','employees*') ? 'show' : '' }}" id="sidebarMasterSetting">
+                            <div class="collapse menu-visible menu-dropdown {{ request()->is('categories*','crop-categories*','crop-types*','variety-types*','seasons*','seed-classes*','units*','soil-types*','arrival-types*','pouches*','location*','employees*') ? 'show' : '' }}" id="sidebarMasterSetting">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item"><a href="{{ route('categories.index') }}" class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}">Category Master</a></li>
                                     <li class="nav-item"><a href="{{ route('crop-categories.index') }}" class="nav-link {{ request()->routeIs('crop-categories.*') ? 'active' : '' }}">Crop Category</a></li>
@@ -73,6 +73,7 @@
                                     <li class="nav-item"><a href="{{ route('units.index') }}" class="nav-link {{ request()->routeIs('units.*') ? 'active' : '' }}">Weight/Capacity Unit</a></li>
                                     <li class="nav-item"><a href="{{ route('soil-types.index') }}" class="nav-link {{ request()->routeIs('soil-types.*') ? 'active' : '' }}">Soil Type</a></li>
                                     <li class="nav-item"><a href="{{ route('arrival-types.index') }}" class="nav-link {{ request()->routeIs('arrival-types.*') ? 'active' : '' }}">Arrival Type</a></li>
+                                    <li class="nav-item"><a href="{{ route('pouches.index') }}" class="nav-link {{ request()->routeIs('pouches.*') ? 'active' : '' }}">Pouch Master</a></li>
                                     <li class="nav-item"><a href="{{ route('location.countries') }}" class="nav-link {{ request()->routeIs('location.*') ? 'active' : '' }}">Location Master</a></li>
                                     <li class="nav-item"><a href="{{ route('master.employees.index') }}" class="nav-link {{ request()->routeIs('master.employees.*') ? 'active' : '' }}">Employee Master</a></li>
                                 </ul>

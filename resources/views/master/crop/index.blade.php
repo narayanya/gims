@@ -144,7 +144,18 @@
                                                     data-climate="{{ $crop->climate_requirement }}"
                                                     data-soil="{{ $crop->soilType->name ?? '' }}"
                                                     data-isolation="{{ $crop->isolation_distance }}"
-                                                    data-yield="{{ $crop->expected_yield }}">
+                                                    data-yield="{{ $crop->expected_yield }}"
+
+                                                    data-seed_quantity="{{ $crop->seed_quantity }}"
+                                                    data-seed_weight="{{ $crop->seed_weight }}"
+                                                    data-unit_id="{{ $crop->unit_id }}"
+                                                    data-regenaration="{{ $crop->regeneration_cut_year }}"
+                                                    data-start_month="{{ $crop->season_start_month_id ?? '' }}"
+                                                    data-end_month="{{ $crop->season_end_month_id ?? '' }}"
+                                                    data-pouch_standard_id="{{ $crop->pouch_standard_id ?? '' }}"
+                                                    data-update_status="{{ $crop->update_status }}"
+                                                    >
+
 
                                                     <i class="ri-eye-line"></i>
 
@@ -177,7 +188,16 @@
                                                     data-climate="{{ $crop->climate_requirement }}"
                                                     data-soil="{{ $crop->soilType->name ?? '' }}"
                                                     data-isolation="{{ $crop->isolation_distance }}"
-                                                    data-yield="{{ $crop->expected_yield }}">
+                                                    data-yield="{{ $crop->expected_yield }}"
+                                                    data-seed_quantity="{{ $crop->seed_quantity }}"
+                                                    data-seed_weight="{{ $crop->seed_weight }}"
+                                                    data-unit_id="{{ $crop->unit_id }}"
+                                                    data-regenaration="{{ $crop->regeneration_cut_year }}"
+                                                    data-start_month="{{ $crop->season_start_month_id ?? '' }}"
+                                                    data-end_month="{{ $crop->season_end_month_id ?? '' }}"
+                                                    data-pouch_standard_id="{{ $crop->pouch_standard_id ?? '' }}"
+                                                    data-update_status="{{ $crop->update_status }}"
+                                                    >
                                                     <i class="ri-edit-line"></i>
                                                 </button>
                                                 <form action="{{ route('crops.destroy', $crop) }}" method="POST"
@@ -267,6 +287,14 @@
                         .isolation || '';
                     document.getElementsByName('expected_yield')[0].value = this.dataset.yield ||
                     '';
+                    document.getElementsByName('seed_quantity')[0].value = this.dataset.seed_quantity || '';
+                    document.getElementsByName('seed_weight')[0].value = this.dataset.seed_weight || '';
+                    document.getElementsByName('unit_id')[0].value = this.dataset.unit_id || '';
+                    document.getElementsByName('regeneration_cut_year')[0].value = this.dataset.regenaration || '';
+                    document.getElementsByName('season_start_month_id')[0].value = this.dataset.start_month || '';
+                    document.getElementsByName('season_end_month_id')[0].value = this.dataset.end_month || '';
+                    document.getElementsByName('pouch_standard_id')[0].value = this.dataset.pouch_standard_id || '';
+                    document.getElementsByName('update_status')[0].value = this.dataset.update_status || '';
                     
                     document.getElementsByName('crop_name')[0].readOnly = true;
                     document.getElementsByName('crop_code')[0].readOnly = true;
@@ -357,11 +385,20 @@
                 set('c_harvest', this.dataset.harvest);
                 set('c_climate', this.dataset.climate);
                 set('c_soil', this.dataset.soil);
-
+                set('c_isolation', this.dataset.isolation);
+                set('c_regeneration_cut_year', this.dataset.regenaration);
+                set('c_season_start_month_id', this.dataset.start_month);
+                set('c_season_end_month_id', this.dataset.end_month);
+                set('c_seed_quantity', this.dataset.seed_quantity);
+                set('c_seed_weight', this.dataset.seed_weight);
+                set('c_unit_id', this.dataset.unit_id);
+                set('c_pouch_standard_id', this.dataset.pouch_standard_id);
+                
                 set('c_seedrate', this.dataset.seedrate);
                 set('c_germination', this.dataset.germination);
                 set('c_isolation', this.dataset.isolation);
                 set('c_yield', this.dataset.yield);
+                set('update_status', this.dataset.update_status == '1' ? 'Activated' : 'Deactivated');
 
                 new bootstrap.Modal(document.getElementById('viewCropModal')).show();
 
@@ -707,6 +744,58 @@
                                         </select>
                                     </div>
 
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">Start Month <span class="text-danger">*</span></label>
+                                        <select name="season_start_month_id"
+                                            class="form-select @error('season_start_month_id') is-invalid @enderror" required>
+
+                                            <option value="">Select Month</option>
+                                            <option value="1" {{ old('season_start_month_id') == '1' ? 'selected' : '' }}>January</option>
+                                            <option value="2" {{ old('season_start_month_id') == '2' ? 'selected' : '' }}>February</option>
+                                            <option value="3" {{ old('season_start_month_id') == '3' ? 'selected' : '' }}>March</option>
+                                            <option value="4" {{ old('season_start_month_id') == '4' ? 'selected' : '' }}>April</option>
+                                            <option value="5" {{ old('season_start_month_id') == '5' ? 'selected' : '' }}>May</option>
+                                            <option value="6" {{ old('season_start_month_id') == '6' ? 'selected' : '' }}>June</option>
+                                            <option value="7" {{ old('season_start_month_id') == '7' ? 'selected' : '' }}>July</option>
+                                            <option value="8" {{ old('season_start_month_id') == '8' ? 'selected' : '' }}>August</option>
+                                            <option value="9" {{ old('season_start_month_id') == '9' ? 'selected' : '' }}>September</option>
+                                            <option value="10" {{ old('season_start_month_id') == '10' ? 'selected' : '' }}>October</option>
+                                            <option value="11" {{ old('season_start_month_id') == '11' ? 'selected' : '' }}>November</option>
+                                            <option value="12" {{ old('season_start_month_id') == '12' ? 'selected' : '' }}>December</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">End Month <span class="text-danger">*</span></label>
+                                        <select name="season_end_month_id"
+                                            class="form-select @error('season_end_month_id') is-invalid @enderror" required>
+
+                                            <option value="">Select Month</option>
+                                            <option value="1" {{ old('season_end_month_id') == '1' ? 'selected' : '' }}>January</option>
+                                            <option value="2" {{ old('season_end_month_id') == '2' ? 'selected' : '' }}>February</option>
+                                            <option value="3" {{ old('season_end_month_id') == '3' ? 'selected' : '' }}>March</option>
+                                            <option value="4" {{ old('season_end_month_id') == '4' ? 'selected' : '' }}>April</option>
+                                            <option value="5" {{ old('season_end_month_id') == '5' ? 'selected' : '' }}>May</option>
+                                            <option value="6" {{ old('season_end_month_id') == '6' ? 'selected' : '' }}>June</option>
+                                            <option value="7" {{ old('season_end_month_id') == '7' ? 'selected' : '' }}>July</option>
+                                            <option value="8" {{ old('season_end_month_id') == '8' ? 'selected' : '' }}>August</option>
+                                            <option value="9" {{ old('season_end_month_id') == '9' ? 'selected' : '' }}>September</option>
+                                            <option value="10" {{ old('season_end_month_id') == '10' ? 'selected' : '' }}>October</option>
+                                            <option value="11" {{ old('season_end_month_id') == '11' ? 'selected' : '' }}>November</option>
+                                            <option value="12" {{ old('season_end_month_id') == '12' ? 'selected' : '' }}>December</option>
+
+                                        </select>
+                                    </div>
+                                    @error('season_start_month_id')
+                                        <div class="invalid-feedback">
+                                            {{ $message }}
+                                        </div>
+                                    @enderror
+                                    @error('season_end_month_id')
+                                        <div class="invalid-feedback">
+                                            {{ $message }}
+                                        </div>
+                                    @enderror
+
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Duration (Days to Maturity)</label>
                                         <input type="number" name="duration_days" class="form-control"
@@ -779,6 +868,41 @@
                                         <label class="form-label">Expected Yield (qtl/acre)</label>
                                         <input type="number" step="0.01" name="expected_yield" class="form-control"
                                             placeholder="e.g. 18" value="{{ old('expected_yield') }}">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Pouch Standard</label>
+                                        <select name="pouch_standard_id" class="form-select">
+                                            <option value="">Select Pouch Standard</option>
+                                            @foreach ($pouches as $pouch)
+                                                <option value="{{ $pouch->id }}"
+                                                    {{ old('pouch_standard_id') == $pouch->id ? 'selected' : '' }}>
+                                                    {{ $pouch->name }} ({{ $pouch->length }}x{{ $pouch->width }} cm)
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Number of Seed /Quantity</label>
+                                        <input type="number" step="0.01" name="seed_quantity" class="form-control" placeholder="min-1 to max-1000 seeds"
+                                            value="{{ old('seed_quantity') }}" >
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label w-100">Average Seed Weight (g)</label>
+                                        <input type="number" step="0.01" name="seed_weight" class="form-control float-start" placeholder="e.g. 0.05"
+                                            value="{{ old('seed_weight') }}" style="width: 245px;">
+                                        <select name="unit_id" class="form-select" style="width: 120px;">
+                                            <option value="">Unit</option>
+                                            @foreach ($units as $unit)
+                                                <option value="{{ $unit->id }}"
+                                                    {{ ($row->unit_id ?? '') == $unit->id ? 'selected' : '' }}>
+                                                    {{ $unit->name }} ({{ $unit->code }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        
                                     </div>
 
                                     <div class="col-md-6 mb-3">
@@ -962,6 +1086,18 @@
                                         <td><span id="c_season"></span></td>
                                     </tr>
                                     <tr>
+                                        <th>Start Month:</th>
+                                        <td><span id="c_season_start_month_id"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>End Month:</th>
+                                        <td><span id="c_season_end_month_id"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Pouch Standard:</th>
+                                        <td><span id="c_pouch_standard_id"></span></td>
+                                    </tr>
+                                    <tr>
                                         <th>Duration:</th>
                                         <td><span id="c_duration"></span></td>
                                     </tr>
@@ -1000,6 +1136,10 @@
                                     <tr>
                                         <th>Expected Yield:</th>
                                         <td><span id="c_yield"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Regulation:</th>
+                                        <td><span id="c_regeneration_cut_year"></span></td>
                                     </tr>
                                 </tbody>
                             </table>

@@ -234,6 +234,9 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
 
     // Arrival Type Master
     Route::resource('arrival-types', App\Http\Controllers\ArrivalTypeController::class)->except(['show', 'create', 'edit']);
+
+    // Pouch Master
+    Route::resource('pouches', App\Http\Controllers\PouchController::class)->except(['show', 'create', 'edit']);
     
     // Accession Rule Master
     Route::resource('accession-rules', App\Http\Controllers\AccessionRuleController::class)->except(['show', 'create', 'edit']);
