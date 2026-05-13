@@ -699,7 +699,7 @@
                                         <label class="form-label">Regeneration Cut of Year <span class="text-danger">*</span></label> 
                                         <input type="number" id="regen_year" name="regen_year" class="form-control"
                                             value="{{ old('regen_year', $accession->regen_year ?? '') }}"
-                                            placeholder="Enter number only" min="1" max="100">
+                                            placeholder="Enter number only" min="0.1" max="100" step="0.1">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label required">Status</label>
@@ -726,7 +726,7 @@
                                         <label class="form-label">Next Regeneration Date <span
                                                 class="text-danger">*</span></label>
                                         <input type="date" id="recheck_date" name="recheck_date" class="form-control"
-                                            value="{{ old('recheck_date') }}" min="{{ date('Y-m-d') }}">
+                                            value="{{ old('recheck_date', $accession->recheck_date ?? '') }}" min="{{ date('Y-m-d') }}">
                                     </div>
                                 </div>
                             </div>
@@ -1095,8 +1095,10 @@
 
     // Season seeded from PHP on edit (crop already selected), updated via AJAX on crop change
     window._cropSeason = {
+        season_start_month_id: {{ $accession->crop->season_start_month_id ?? 0 }},
+        season_end_month_id: {{ $accession->crop->season_end_month_id ?? 0 }},
         start_month: {{ $seasonStart }},
-        end_month:   {{ $seasonEnd }}
+        end_month: {{ $seasonEnd }}
     };
 
     console.log("Season from PHP:", window._cropSeason);
@@ -1131,19 +1133,52 @@
     });
 
     regenYearInput.addEventListener('input', function () {
-        if (!cropSelect || !cropSelect.value) {
+
+        if (cropSelect.value === '') {
+
             alert('Please select a Crop first.');
+
             this.value = '';
+
+            expiryInput.value = '';
+            regenInput.value  = '';
+
+            cropSelect.focus();
+
             return;
         }
+
         calculateAllDates();
+    });
+
+    cropSelect.addEventListener('change', function () {
+        const selectedOption =
+        this.options[this.selectedIndex];
+
+        // ✅ auto fill regen year
+        const regenYear =
+            selectedOption.getAttribute('data-regen');
+
+        regenYearInput.value = regenYear ?? '';
+
+        // ✅ calculate after value set
+        setTimeout(() => {
+
+            calculateAllDates();
+
+        }, 100);
     });
 
     // Auto-fill on edit page load
     window.addEventListener('load', function () {
         if (cropSelect && cropSelect.value) {
-            const selectedOption = cropSelect.options[cropSelect.selectedIndex];
-            regenYearInput.value = selectedOption.getAttribute('data-regen') ?? '';
+            // Only auto-fill if empty
+            if (!regenYearInput.value) {
+                const selectedOption = cropSelect.options[cropSelect.selectedIndex];
+
+                regenYearInput.value =
+                    selectedOption.getAttribute('data-regen') ?? '';
+            }
             // Season is already seeded from PHP (_cropSeason), calculate immediately
             calculateAllDates();
         }
@@ -1156,38 +1191,82 @@
     // Example: today=29-Apr-2026, years=2, Kharif(Jun-Oct)
     //   Expiry = 29-Apr-2028  (Apr is outside Jun-Oct)
     //   Regen  = 29-Jun-2027  (2028-1=2027, start month=Jun, day=29)
-    function calculateAllDates() {
-        const years = parseInt(regenYearInput.value);
-        if (!years || years <= 0) return;
+    window.calculateAllDates = function () {
 
-        const today  = new Date();
-        const todayY = today.getFullYear();
-        const todayM = today.getMonth();   // 0-based
-        const todayD = today.getDate();
+        const years = parseFloat(regenYearInput.value);
 
-        // Expiry = today + N years (local date, no UTC shift)
-        const expiry = new Date(todayY + years, todayM, todayD);
-        expiryInput.value = formatDate(expiry);
+        if (isNaN(years) || years <= 0) {
 
-        // No season → regen = expiry
-        if (!window._cropSeason.start_month || !window._cropSeason.end_month) {
-            regenInput.value = formatDate(expiry);
+            // ✅ reset dates when input empty
+            expiryInput.value = '';
+            regenInput.value  = '';
+
             return;
         }
 
-        const expMonth = expiry.getMonth() + 1; // 1-based
+        const today = new Date();
+
+        // ✅ convert decimal year to months
+        const totalMonths = years * 12;
+
+        // ✅ expiry date
+        const expiry = new Date(today);
+
+        expiry.setMonth(
+            expiry.getMonth() + parseInt(totalMonths)
+        );
+
+        expiryInput.value = formatDate(expiry);
+
+        // ✅ PRIORITY:
+        // crop season month first
+        let startMonth =
+            window._cropSeason.season_start_month_id
+            || window._cropSeason.start_month;
+
+        let endMonth =
+            window._cropSeason.season_end_month_id
+            || window._cropSeason.end_month;
+
+        // ✅ no season
+        if (!startMonth || !endMonth) {
+
+            regenInput.value = formatDate(expiry);
+
+            return;
+        }
+
+        const expMonth = expiry.getMonth() + 1;
 
         let regen;
-        if (isMonthInSeason(expMonth, window._cropSeason.start_month, window._cropSeason.end_month)) {
-            // Expiry is already inside the season
+
+        // ✅ season match
+        if (
+            isMonthInSeason(
+                expMonth,
+                window._cropSeason.start_month,
+                window._cropSeason.end_month
+            )
+        ) {
+
             regen = new Date(expiry);
+
         } else {
-            // Go back to previous season start
-            const regenYear  = expiry.getFullYear() - 1;
-            const regenMonth = window._cropSeason.start_month - 1; // 0-based
-            const lastDay    = new Date(regenYear, regenMonth + 1, 0).getDate();
-            regen = new Date(regenYear, regenMonth, Math.min(todayD, lastDay));
+
+            // ✅ first day of season month
+            const regenYear =
+                expiry.getFullYear();
+
+            const regenMonth =
+                window._cropSeason.start_month - 1;
+
+            regen = new Date(
+                regenYear,
+                regenMonth,
+                1
+            );
         }
+        
 
         regenInput.value = formatDate(regen);
     }

@@ -58,8 +58,8 @@ public function transfer(Request $request)
     {
         $request->validate([
             'from_lot_id'   => 'required|exists:lots,id',
+            'from_storage_id' => 'required|exists:storages,id',
             'to_storage_id' => 'required|exists:storages,id',
-            'section_id'    => 'nullable|exists:sections,id',
             'rack_id'       => 'nullable|exists:racks,id',
             'bin_id'        => 'nullable|exists:bins,id',
             'container_id'  => 'nullable|exists:containers,id',
@@ -67,7 +67,7 @@ public function transfer(Request $request)
         ]);
 
         $lot = Lot::with('seedQuantities')->findOrFail($request->from_lot_id);
-        $fromStorage = Storage::findOrFail($lot->storage_id);
+        $fromStorage = Storage::findOrFail($request->from_storage_id);
         $toStorage   = Storage::findOrFail($request->to_storage_id);
 
         // ❌ Prevent same storage
@@ -134,10 +134,7 @@ public function transfer(Request $request)
 
                 'from_storage_id'     => $fromStorage->id,
                 'to_storage_id'       => $toStorage->id,
-
-                'from_section_id'     => $lot->section_id,
-                'to_section_id'       => $request->section_id,
-
+                
                 'from_rack_id'        => $lot->rack_id,
                 'to_rack_id'          => $request->rack_id,
 
@@ -176,7 +173,6 @@ public function transfer(Request $request)
             // ✅ MOVE LOT (this updates storage logically)
             $lot->update([
                 'storage_id'   => $toStorage->id,
-                'section_id'   => $request->section_id,
                 'rack_id'      => $request->rack_id,
                 'bin_id'       => $request->bin_id,
                 'container_id' => $request->container_id,
@@ -239,19 +235,11 @@ public function transfer(Request $request)
     // AJAX: get storage hierarchy filtered by storage_id
     public function getStorageHierarchy($storageId)
     {
-        // Sections that belong to this storage
-        $sections = \App\Models\Section::where('status', 1)
+        // Racks that belong directly to this storage
+        $racks = \App\Models\Rack::where('status', 1)
             ->where('storage_id', $storageId)
             ->orderBy('name')
-            ->get(['id', 'name']);
-
-        $sectionIds = $sections->pluck('id');
-
-        // Racks that belong to those sections
-        $racks = \App\Models\Rack::where('status', 1)
-            ->whereIn('section_id', $sectionIds)
-            ->orderBy('name')
-            ->get(['id', 'name', 'section_id']);
+            ->get(['id', 'name', 'storage_id']);
 
         $rackIds = $racks->pluck('id');
 
@@ -266,7 +254,7 @@ public function transfer(Request $request)
             ->orderBy('name')
             ->get(['id', 'name', 'container_type']);
 
-        return response()->json(compact('sections', 'racks', 'bins', 'containers'));
+        return response()->json(compact('racks', 'bins', 'containers'));
     }
     public function getAccessions($cropId)
     {

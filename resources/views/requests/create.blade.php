@@ -96,7 +96,8 @@ $role = optional(auth()->user()->role)->slug;
                         <label for="request_date" class="form-label">Request Date <span class="text-danger">*</span></label>
                         <input type="date" name="request_date" id="request_date" 
                                 class="form-control @error('request_date') is-invalid @enderror" 
-                                value="{{ old('request_date', isset($seedRequest) && $seedRequest->request_date ? $seedRequest->request_date->format('Y-m-d') : date('Y-m-d')) }}" max="{{ date('Y-m-d') }}" required>
+                                value="{{ old('request_date', isset($seedRequest) && $seedRequest->request_date ? $seedRequest->request_date->format('Y-m-d') : date('Y-m-d')) }}" 
+                                max="{{ date('Y-m-d') }}" min="{{ date('Y-m-d', strtotime('-3 days')) }}" required>
                         @error('request_date')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror

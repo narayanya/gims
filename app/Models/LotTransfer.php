@@ -9,7 +9,6 @@ class LotTransfer extends Model
     protected $fillable = [
         'lot_id', 'crop_id', 'accession_id',
         'from_storage_id', 'to_storage_id',
-        'from_section_id', 'to_section_id',
         'from_rack_id',    'to_rack_id',
         'from_bin_id',     'to_bin_id',
         'from_container_id','to_container_id',

@@ -66,7 +66,7 @@
 
                             <div class="mb-3">
                                 <label class="form-label">Storage <span class="text-danger">*</span></label>
-                                <select id="from_storage" class="form-select">
+                                <select name="from_storage_id" id="from_storage" class="form-select">
                                     <option value="">Select Storage</option>
                                     @foreach($storages as $s)
                                         <option value="{{ $s->id }}">{{ $s->storage_id }} — {{ $s->name }}</option>
@@ -107,8 +107,7 @@
                                         <div class="col-6"><span class="text-muted">Quantity:</span> <span id="fl_qty">—</span></div>
                                         <div class="col-6"><span class="text-muted">Avail (User):</span> <span id="fl_qty_show" class="text-success fw-semibold">—</span></div>
                                         <div class="col-6"><span class="text-muted">Unit:</span> <span id="fl_unit">—</span></div>
-
-                                        <div class="col-6"><span class="text-muted">Section:</span> <span id="fl_section">—</span></div>
+                                       
                                         <div class="col-6"><span class="text-muted">Rack:</span> <span id="fl_rack">—</span></div>
                                         <div class="col-6"><span class="text-muted">Bin:</span> <span id="fl_bin">—</span></div>
                                         <div class="col-6"><span class="text-muted">Container:</span> <span id="fl_container">—</span></div>
@@ -161,22 +160,15 @@
                                 </div>
                             </div>
 
-                            {{-- Section / Rack / Bin / Container — loaded dynamically when storage is selected --}}
+                            {{-- Rack / Bin / Container — loaded dynamically when storage is selected --}}
                             <div id="to_locationFields" class="d-none">
                                 <div class="row g-2">
                                     <div class="col-md-6">
-                                        <label class="form-label">Section</label>
-                                        <select name="section_id" id="to_section" class="form-select">
-                                            <option value="">Select Section</option>
-                                        </select>
-                                        <small id="to_section_empty" class="text-muted d-none">No sections for this storage</small>
-                                    </div>
-                                    <div class="col-md-6">
                                         <label class="form-label">Rack</label>
-                                        <select name="rack_id" id="to_rack" class="form-select" disabled>
+                                        <select name="rack_id" id="to_rack" class="form-select">
                                             <option value="">Select Rack</option>
                                         </select>
-                                        <small id="to_rack_empty" class="text-muted d-none">No racks for selected section</small>
+                                        <small id="to_rack_empty" class="text-muted d-none">No racks for this storage</small>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Bin</label>
@@ -194,7 +186,7 @@
                                 </div>
                             </div>
                             <div id="to_locationPlaceholder" class="text-center text-muted py-3 small">
-                                <i class="bx bx-info-circle me-1"></i> Select a storage to load section, rack, bin &amp; container options.
+                                <i class="bx bx-info-circle me-1"></i> Select a storage to load rack, bin &amp; container options.
                             </div>
 
                             <div class="row g-2 mt-1">
@@ -253,7 +245,6 @@
                     <th colspan="4" class="text-center">Storage From</th>
                     
                     <th colspan="4" class="text-center">Storage To</th>
-                    <th rowspan="2">Section</th>
                     <th rowspan="2">Rack</th>
                     <th rowspan="2">Bin</th>
                     <th rowspan="2">Container</th>
@@ -301,9 +292,6 @@
                         <td>{{ $t->to_c_quantity }}</td>
                         <td>{{ $t->to_b_quantity }}</td>
                        
-                        
-
-                        <td>{{ $t->toSection->name ?? '-' }}</td>
                         <td>{{ $t->toRack->name ?? '-' }}</td>
                         <td>{{ $t->toBin->name ?? '-' }}</td>
                         <td>{{ $t->toContainer->name ?? '-' }}</td>
@@ -386,8 +374,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!id) {
             infoBox.classList.add('d-none');
             lotSel.innerHTML = '<option value="">Select Lot</option>';
-            document.getElementById('storageQtyDisplay').textContent = '—';
-            document.getElementById('storageQtyLabel').textContent = 'Select FROM storage';
+            const qtyDisplay = document.getElementById('storageQtyDisplay');
+            const qtyLabel   = document.getElementById('storageQtyLabel');
+            if (qtyDisplay) qtyDisplay.textContent = '—';
+            if (qtyLabel)   qtyLabel.textContent   = 'Select FROM storage';
             return;
         }
 
@@ -421,10 +411,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('total_lot_qty').textContent =
                     storageTotalQty > 0 ? `${storageTotalQty.toFixed(2)} ${storageUnit}` : '0';
 
-                // Update summary card (Total Lot Quantity)
-                document.getElementById('storageQtyDisplay').textContent =
-                    storageTotalQty > 0 ? `${storageTotalQty.toFixed(2)} ${storageUnit}` : '0';
-                document.getElementById('storageQtyLabel').textContent = d.storage.name || 'Selected storage';
+                // Update summary card if present
+                const qtyDisplay = document.getElementById('storageQtyDisplay');
+                const qtyLabel   = document.getElementById('storageQtyLabel');
+                if (qtyDisplay) qtyDisplay.textContent = storageTotalQty > 0 ? `${storageTotalQty.toFixed(2)} ${storageUnit}` : '0';
+                if (qtyLabel)   qtyLabel.textContent   = d.storage.name || 'Selected storage';
 
                 lotSel.innerHTML = '<option value="">Select Lot</option>';
                 d.lots.forEach(lot => {
@@ -460,14 +451,13 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('fl_qty').textContent        = sel.dataset.qty     || '—';
         document.getElementById('fl_qty_show').textContent   = sel.dataset.qty_show || '—';
         document.getElementById('fl_unit').textContent       = sel.dataset.unit    || '—';
-        document.getElementById('fl_section').textContent       = sel.dataset.section    || '—';
         document.getElementById('fl_rack').textContent       = sel.dataset.rack    || '—';
         document.getElementById('fl_bin').textContent       = sel.dataset.bin    || '—';
         document.getElementById('fl_container').textContent       = sel.dataset.container    || '—';
         box.classList.remove('d-none');
     });
 
-    // ── TO: Storage → load sections/racks/bins/containers ────────────────
+    // ── TO: Storage → load racks/bins/containers ─────────────────────────
     document.getElementById('to_storage').addEventListener('change', function () {
         const id  = this.value;
         const box = document.getElementById('to_storageInfo');
@@ -475,11 +465,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const locationPlaceholder = document.getElementById('to_locationPlaceholder');
 
         // Reset all location dropdowns
-        resetSelect('to_section', 'Select Section');
-        resetSelect('to_rack',    'Select Rack',    true);
-        resetSelect('to_bin',     'Select Bin',     true);
+        resetSelect('to_rack',      'Select Rack');
+        resetSelect('to_bin',       'Select Bin',  true);
         resetSelect('to_container', 'Select Container');
-        hideHint('to_section_empty');
         hideHint('to_rack_empty');
         hideHint('to_bin_empty');
 
@@ -505,28 +493,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 box.classList.remove('d-none');
             });
 
-        // Load hierarchy filtered by storage
+        // Load racks/bins/containers filtered by storage
         fetch(`/get-storage-hierarchy/${id}`)
             .then(r => r.json())
             .then(d => {
-                // Store for cascading
-                window._toRacks      = d.racks      || [];
-                window._toBins       = d.bins        || [];
-                window._toContainers = d.containers  || [];
+                window._toBins       = d.bins       || [];
+                window._toContainers = d.containers || [];
 
-                // Populate sections
-                const secSel = document.getElementById('to_section');
-                if (d.sections.length === 0) {
-                    showHint('to_section_empty');
+                // Populate racks directly from storage (no section filter)
+                const rackSel = document.getElementById('to_rack');
+                const racks   = d.racks || [];
+                if (racks.length === 0) {
+                    showHint('to_rack_empty');
                 } else {
-                    hideHint('to_section_empty');
-                    d.sections.forEach(s => {
-                        const o = new Option(s.name, s.id);
-                        secSel.add(o);
-                    });
+                    hideHint('to_rack_empty');
+                    racks.forEach(r => rackSel.add(new Option(r.name, r.id)));
+                    rackSel.disabled = false;
                 }
 
-                // Populate containers (not storage-specific hierarchy)
+                // Populate containers
                 const conSel = document.getElementById('to_container');
                 d.containers.forEach(c => {
                     const label = c.container_type ? `${c.name} (${c.container_type})` : c.name;
@@ -536,27 +521,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 locationFields.classList.remove('d-none');
                 locationPlaceholder.classList.add('d-none');
             });
-    });
-
-    // ── TO: Section → filter Racks ────────────────────────────────────────
-    document.getElementById('to_section').addEventListener('change', function () {
-        const sid = this.value;
-        resetSelect('to_rack', 'Select Rack', true);
-        resetSelect('to_bin',  'Select Bin',  true);
-        hideHint('to_rack_empty');
-        hideHint('to_bin_empty');
-
-        if (!sid) return;
-
-        const filtered = (window._toRacks || []).filter(r => r.section_id == sid);
-        const rackSel  = document.getElementById('to_rack');
-
-        if (filtered.length === 0) {
-            showHint('to_rack_empty');
-        } else {
-            filtered.forEach(r => rackSel.add(new Option(r.name, r.id)));
-            rackSel.disabled = false;
-        }
     });
 
     // ── TO: Rack → filter Bins ────────────────────────────────────────────
@@ -624,29 +588,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 });
         }
-    });
-
-    document.getElementById('from_lot').addEventListener('change', function () {
-
-        fetch(`/lot-details/${this.value}`)
-            .then(res => res.json())
-            .then(data => {
-
-                document.getElementById('from_lotInfo').classList.remove('d-none');
-
-                document.getElementById('fl_lot_number').innerText = data.lot_number;
-                document.getElementById('fl_crop').innerText = data.crop;
-                document.getElementById('fl_accession').innerText = data.accession;
-                document.getElementById('fl_qty').innerText = data.quantity;
-                document.getElementById('fl_unit').innerText = data.unit;
-
-                document.getElementById('fl_section').innerText = data.section;
-                document.getElementById('fl_rack').innerText = data.rack;
-                document.getElementById('fl_bin').innerText = data.bin;
-                document.getElementById('fl_container').innerText = data.container;
-
-            });
-
     });
 
 });

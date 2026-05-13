@@ -329,7 +329,7 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                         </div>
 
                         {{-- Section (filtered by storage) --}}
-                        <div class="col-md-3 mt-2">
+                        {{--<div class="col-md-3 mt-2">
                             <label class="form-label">Section (Category/Zone)<span class="text-danger">*</span></label>
                             <select name="section_id" id="sectionSelect" class="form-select" required>
                                 <option value="">Select Section</option>
@@ -341,7 +341,7 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                                     </option>
                                 @endforeach
                             </select>
-                        </div>
+                        </div>--}}
 
                         {{-- Rack (filtered by section) --}}
                         <div class="col-md-3 mt-2">
@@ -350,7 +350,7 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                                 <option value="">Select Rack</option>
                                 @foreach ($racks as $rack)
                                     <option value="{{ $rack->id }}"
-                                        data-section="{{ $rack->section_id }}"
+                                        data-storage="{{ $rack->storage_id }}"
                                         {{ $selectedRack == $rack->id ? 'selected' : '' }}>
                                         {{ $rack->name }}
                                     </option>
@@ -929,7 +929,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Cascade data ─────────────────────────────────────────────────────
     const allStoragesData  = @json($storages->map(fn($s) => ['id' => $s->id, 'warehouse_id' => $s->warehouse_id]));
     const allSectionsData  = @json($sections->map(fn($s) => ['id' => $s->id, 'storage_id'   => $s->storage_id]));
-    const allRacksData     = @json($racks->map(fn($r)    => ['id' => $r->id, 'section_id'   => $r->section_id]));
+    const allRacksData     = @json($racks->map(fn($r)    => ['id' => $r->id, 'storage_id'   => $r->storage_id]));
     const allBinsData      = @json($bins->map(fn($b)     => ['id' => $b->id, 'rack_id'      => $b->rack_id]));
 
     // ── Helper: show/hide options ─────────────────────────────────────────
@@ -954,9 +954,9 @@ document.addEventListener('DOMContentLoaded', function () {
         filterOptions('storageSelect', 'warehouse', wid);
         // If storage was cleared, cascade down
         if (!document.getElementById('storageSelect').value) {
-            filterOptions('sectionSelect', 'storage', '', false);
-            filterOptions('rackSelect',    'section', '', false);
+            filterOptions('rackSelect',    'storage', '', false);
             filterOptions('binSelect',     'rack',    '', false);
+            filterOptions('containerSelect', 'bin',     '', false);
             document.getElementById('storageDetails').classList.add('d-none');
             _storageData = null;
         }
@@ -981,8 +981,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Filter sections by this storage
-        filterOptions('sectionSelect', 'storage', id);
+        // Filter racks by this storage
+        filterOptions('rackSelect', 'storage', id);
 
         if (!id) {
             box.classList.add('d-none');
@@ -1009,11 +1009,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(() => box.classList.add('d-none'));
     });
 
-    // ── Section → filter Rack ─────────────────────────────────────────────
-    document.getElementById('sectionSelect').addEventListener('change', function () {
-        filterOptions('rackSelect', 'section', this.value);
-    });
-
     // ── Rack → filter Bin ─────────────────────────────────────────────────
     document.getElementById('rackSelect').addEventListener('change', function () {
         filterOptions('binSelect', 'rack', this.value);
@@ -1023,7 +1018,6 @@ document.addEventListener('DOMContentLoaded', function () {
     (function initCascade() {
         const whSel  = document.getElementById('warehouseSelect');
         const stSel  = document.getElementById('storageSelect');
-        const secSel = document.getElementById('sectionSelect');
         const rkSel  = document.getElementById('rackSelect');
 
         // Restore warehouse from pre-selected storage
@@ -1035,11 +1029,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Apply warehouse filter on storage options (no reset)
         if (whSel.value) filterOptions('storageSelect', 'warehouse', whSel.value, false);
 
-        // Apply storage filter on section options (no reset)
-        if (stSel.value) filterOptions('sectionSelect', 'storage', stSel.value, false);
-
         // Apply section filter on rack options (no reset)
-        if (secSel.value) filterOptions('rackSelect', 'section', secSel.value, false);
+        if (stSel.value) filterOptions('rackSelect', 'storage', stSel.value, false);
 
         // Apply rack filter on bin options (no reset)
         if (rkSel.value) filterOptions('binSelect', 'rack', rkSel.value, false);
@@ -1279,18 +1270,24 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // AUTO CALCULATION
-    tableBodyQuantity.addEventListener('input', function(e) {
-        let row = e.target.closest('tr');
-
-        let qty = parseFloat(row.querySelector('.quantity').value) || 0;
+    // AUTO CALCULATION — handles both quantity input and percent select change
+    function recalcRow(row) {
+        let qty     = parseFloat(row.querySelector('.quantity').value) || 0;
         let percent = parseFloat(row.querySelector('.percent').value) || 0;
-
         let userQty = (qty * percent) / 100;
-        let minQty = qty - userQty;
+        let minQty  = qty - userQty;
+        row.querySelector('.userQty').value = userQty ? userQty.toFixed(2) : '';
+        row.querySelector('.min').value     = minQty  ? minQty.toFixed(2)  : '';
+    }
 
-        row.querySelector('.userQty').value = userQty.toFixed(2);
-        row.querySelector('.min').value = minQty.toFixed(2);
+    tableBodyQuantity.addEventListener('input', function(e) {
+        recalcRow(e.target.closest('tr'));
+    });
+
+    tableBodyQuantity.addEventListener('change', function(e) {
+        if (e.target.classList.contains('percent')) {
+            recalcRow(e.target.closest('tr'));
+        }
     });
 
     $(document).on('input', '.refNumber', function () {

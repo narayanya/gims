@@ -27,7 +27,7 @@ class LotController extends Controller
             //'crops'      => \App\Models\Crop::where('status',1)->where('update_status', 1)->orderBy('crop_name')->get(['id','crop_name']),
             'units'      => Unit::where('status',1)->orderBy('name')->get(['id','name','code']),
             'sections'   => \App\Models\Section::where('status',1)->orderBy('name')->get(['id','name','storage_id']),
-            'racks'      => \App\Models\Rack::where('status',1)->orderBy('name')->get(['id','name','section_id']),
+            'racks'      => \App\Models\Rack::where('status',1)->orderBy('name')->get(['id','name','storage_id','warehouse_id']),
             'bins'       => \App\Models\Bin::where('status',1)->orderBy('name')->get(['id','name','rack_id']),
             'containers' => \App\Models\Container::where('status',1)->orderBy('name')->get(['id','name']),
             'warehouses' => \App\Models\Warehouse::where('status',1)->orderBy('name')->get(['id','name']),
@@ -98,10 +98,11 @@ class LotController extends Controller
             'status'             => 'required',
         ]);
 
-        $storage   = Storage::with('lots')->findOrFail($request->storage_id);
+        $storage   = Storage::findOrFail($request->storage_id);
         $accession = Accession::findOrFail($request->accession_id);
 
-        $used      = $storage->lots()->sum('quantity');
+        // Sum quantity from seed_quantities (lots table has no quantity column)
+        $used      = SeedQuantity::whereIn('lot_id', $storage->lots()->pluck('id'))->sum('quantity');
         $available = (float)$storage->capacity - $used;
 
         $qtys = array_values($request->quantity ?? []);
@@ -183,7 +184,6 @@ class LotController extends Controller
                     'sample_id'            => $sampleId,
                     'accession_id'         => $request->accession_id,
                     'storage_id'           => $request->storage_id,
-                    'section_id'           => $request->section_id,
                     'rack_id'              => $request->rack_id,
                     'bin_id'               => $request->bin_id,
                     'container_id'         => $request->container_id,
@@ -205,7 +205,9 @@ class LotController extends Controller
                 $this->saveSeedQualitiesForRow($request, $newLot->id, $accession->id, $i);
             }
 
-            $storage->increment('current_usage', $totalQty);
+            // Recalculate storage current_usage from seed_quantities
+            $totalUsed = SeedQuantity::whereIn('lot_id', $storage->lots()->pluck('id'))->sum('quantity');
+            $storage->update(['current_usage' => $totalUsed]);
         });
 
         return redirect()->route('lot-management')
@@ -238,13 +240,16 @@ class LotController extends Controller
             'status'       => 'required',
         ]);
 
-        $storage   = Storage::with('lots')->findOrFail($request->storage_id);
+        $storage   = Storage::findOrFail($request->storage_id);
         $accession = Accession::findOrFail($request->accession_id);
 
-        $oldQty = (float)($lot->quantity ?? 0);
+        $oldQty = SeedQuantity::where('lot_id', $lot->id)->sum('quantity');
         $newQty = array_sum($request->quantity);
 
-        $used = $storage->lots()->where('id','!=',$lot->id)->sum('quantity');
+        // Sum from seed_quantities excluding current lot
+        $used      = SeedQuantity::whereIn('lot_id',
+            $storage->lots()->where('id', '!=', $lot->id)->pluck('id')
+        )->sum('quantity');
         $available = (float)$storage->capacity - $used;
 
         if ($newQty > $available) {
@@ -281,11 +286,9 @@ class LotController extends Controller
             $this->saveSeedQuantities($request, $lot->id, $accession->id, $i);
         }
 
-        // ✅ Update storage usage
-        $diff = $newQty - $oldQty;
-        if ($diff != 0) {
-            $storage->increment('current_usage', $diff);
-        }
+        // Recalculate storage current_usage from seed_quantities
+        $totalUsed = SeedQuantity::whereIn('lot_id', $storage->lots()->pluck('id'))->sum('quantity');
+        $storage->update(['current_usage' => $totalUsed]);
 
         return redirect()->route('lot-management')
             ->with('success', 'Lot updated successfully.');
@@ -363,7 +366,7 @@ class LotController extends Controller
     public function getStorageDetails($id)
     {
         $storage = Storage::with(['storageType','storageCondition','storageTime','warehouse','unit','lots'])->findOrFail($id);
-        $used      = $storage->lots()->sum('quantity');
+        $used      = SeedQuantity::whereIn('lot_id', $storage->lots->pluck('id'))->sum('quantity');
         $available = (float)$storage->capacity - $used;
 
         // Unit conversion map to grams for filtering

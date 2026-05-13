@@ -140,7 +140,7 @@
                                     <li class="nav-item"><a href="{{ route('storage-types.index') }}" class="nav-link {{ request()->routeIs('storage-types.*') ? 'active' : '' }}">Storage Type</a></li>
                                     <li class="nav-item"><a href="{{ route('storage-times.index') }}" class="nav-link {{ request()->routeIs('storage-times.*') ? 'active' : '' }}">Storage Time</a></li>
                                     <li class="nav-item"><a href="{{ route('storage-conditions.index') }}" class="nav-link {{ request()->routeIs('storage-conditions.*') ? 'active' : '' }}">Storage Condition</a></li>
-                                    <li class="nav-item"><a href="{{ route('storage-location-master.index') }}" class="nav-link {{ request()->routeIs('storage-location-master.*') ? 'active' : '' }}">Section / Rack / Bin / Container</a></li>
+                                    <li class="nav-item"><a href="{{ route('storage-location-master.index') }}" class="nav-link {{ request()->routeIs('storage-location-master.*') ? 'active' : '' }}">Rack / Bin / Container</a></li>
                                 </ul>
                             </div>
                         </li>

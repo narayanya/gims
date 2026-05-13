@@ -7,7 +7,7 @@
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
             <div>
                 <h3 class="text-xl font-bold">Storage Location Master</h3>
-                <p class="text-muted mb-0" style="font-size:13px">Manage Section, Rack, Bin and Container masters</p>
+                <p class="text-muted mb-0" style="font-size:13px">Manage Rack, Bin and Container masters</p>
             </div>
         </div>
 
@@ -23,16 +23,16 @@
 
         {{-- Tabs --}}
         <ul class="nav nav-tabs mb-3" id="slmTabs">
-            <li class="nav-item"><a class="nav-link {{ request('tab','section')=='section' ? 'active' : '' }}" href="?tab=section">Section</a></li>
-            <li class="nav-item"><a class="nav-link {{ request('tab')=='rack' ? 'active' : '' }}" href="?tab=rack">Rack</a></li>
+            <!--<li class="nav-item"><a class="nav-link {{ request('tab','section')=='section' ? 'active' : '' }}" href="?tab=section">Section</a></li>-->
+            <li class="nav-item"><a class="nav-link {{ request('tab', 'rack')=='rack' ? 'active' : '' }}" href="?tab=rack">Rack</a></li>
             <li class="nav-item"><a class="nav-link {{ request('tab')=='bin' ? 'active' : '' }}" href="?tab=bin">Bin</a></li>
             <li class="nav-item"><a class="nav-link {{ request('tab')=='container' ? 'active' : '' }}" href="?tab=container">Container</a></li>
         </ul>
 
-        @php $tab = request('tab','section'); @endphp
+        @php $tab = request('tab','rack'); @endphp
 
         {{-- ── SECTION ── --}}
-        @if($tab === 'section')
+        {{-- @if($tab === 'section')
         <div class="card">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <strong>Sections</strong>
@@ -71,7 +71,7 @@
             </div>
             @if($sections->hasPages())<div class="card-footer">{{ $sections->appends(['tab'=>'section'])->links() }}</div>@endif
         </div>
-        @endif
+        @endif--}}
 
         {{-- ── RACK ── --}}
         @if($tab === 'rack')
@@ -82,7 +82,7 @@
             </div>
             <div class="card-body p-0">
                 <table class="table table-hover mb-0">
-                    <thead class="table-light"><tr><th>Name</th><th>Code</th><th>Section</th><th>Description</th><th>Status</th><th width="100">Actions</th></tr></thead>
+                    <thead class="table-light"><tr><th>Name</th><th>Code</th><th>Warehouse</th><th>Storage</th><th>Description</th><th>Status</th><th width="100">Actions</th></tr></thead>
                     <tbody>
                         @forelse($racks as $row)
                         <tr>
@@ -90,13 +90,16 @@
                             <td>
                             {!! $row->code ? '<span class="badge bg-info">'.$row->code.'</span>' : '—' !!}
                         </td>
-                            <td>{{ $row->section?->name ?? '—' }}</td>
+                            <td>{{ $row->storage->warehouse->name ?? '—' }}</td>
+                            <td>{{ $row->storage->name ?? '—' }}</td>
                             <td>{{ $row->description ?? '—' }}</td>
                             <td><span class="badge {{ $row->status ? 'bg-success' : 'bg-danger' }}">{{ $row->status ? 'Active' : 'Inactive' }}</span></td>
                             <td>
                                 <button class="btn btn-sm btn-outline-warning editBtn"
                                     data-type="rack" data-id="{{ $row->id }}" data-name="{{ $row->name }}"
-                                    data-code="{{ $row->code }}" data-section_id="{{ $row->section_id }}"
+                                    data-code="{{ $row->code }}"
+                                    data-warehouse_id="{{ $row->warehouse_id }}"
+                                    data-storage_id="{{ $row->storage_id }}"
                                     data-description="{{ $row->description }}" data-status="{{ $row->status }}">
                                     <i class="ri-edit-line"></i>
                                 </button>
@@ -164,11 +167,12 @@
             </div>
             <div class="card-body p-0">
                 <table class="table table-hover mb-0">
-                    <thead class="table-light"><tr><th>Name</th><th>Code</th><th>Type</th><th>Capacity</th><th>Unit</th><th>Status</th><th width="100">Actions</th></tr></thead>
+                    <thead class="table-light"><tr><th>Name</th><th>Dimensions</th><th>Code</th><th>Type</th><th>Capacity(No of pouches)</th><th>Unit</th><th>Status</th><th width="100">Actions</th></tr></thead>
                     <tbody>
                         @forelse($containers as $row)
                         <tr>
                             <td>{{ $row->name }}</td>
+                            <td>{!! $row->length ? $row->length.' x '.$row->width.' x '.$row->height.' '.$row->dimension_unit : '—' !!}</td>
                             <td>{!! $row->code ? '<span class="badge bg-info">'.$row->code.'</span>' : '—' !!}</td>
                             <td>{{ $row->container_type ?? '—' }}</td>
                             <td>{{ $row->capacity ?? '—' }}</td>
@@ -277,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let filteredStorages = warehouseVal
             ? allStorages.filter(s => s.warehouse_id == warehouseVal)
-            : [];
+            : allStorages;
         let stOpts = '<option value="">— Select Storage —</option>';
         filteredStorages.forEach(s => {
             stOpts += `<option value="${s.id}" ${s.id==storageVal?'selected':''}>${s.name}</option>`;
@@ -287,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="row">
         <div class="col-md-6 mb-3">
             <label class="form-label">Warehouse</label>
-            <select class="form-select" id="sectionWarehouseSelect" name="_warehouse_id">
+            <select class="form-select" id="sectionWarehouseSelect" name="warehouse_id">
                 ${whOpts}
             </select>
         </div>
@@ -323,8 +327,43 @@ document.addEventListener('DOMContentLoaded', function () {
             <label class="form-label">Container Type</label>
             <select class="form-select" name="container_type">${opts}</select>
         </div>
+        <div class="mb-2">
+                        <label class="form-label">Dimensions</label>
+                        <div class="row g-2 align-items-center">
+                            <div class="col">
+                                <div class="input-group">
+                                    <span class="input-group-text text-muted" style="font-size:11px;">L</span>
+                                    <input type="number" class="form-control" id="BLength" name="length"
+                                           placeholder="Length" min="0" step="0.01">
+                                </div>
+                            </div>
+                            <div class="col-auto text-muted fw-bold">×</div>
+                            <div class="col">
+                                <div class="input-group">
+                                    <span class="input-group-text text-muted" style="font-size:11px;">W</span>
+                                    <input type="number" class="form-control" id="BWidth" name="width"
+                                           placeholder="Width" min="0" step="0.01">
+                                </div>
+                            </div>
+                            <div class="col-auto text-muted fw-bold">×</div>
+                            <div class="col">
+                                <div class="input-group">
+                                    <span class="input-group-text text-muted" style="font-size:11px;">H</span>
+                                    <input type="number" class="form-control" id="BHeight" name="height"
+                                           placeholder="Height" min="0" step="0.01">
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <select class="form-select" id="pouchDimensionUnit" name="dimension_unit" style="min-width:75px;">
+                                    <option value="cm">cm</option>
+                                    <option value="mm">mm</option>
+                                    <option value="inch">inch</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
         <div class="mb-3">
-            <label class="form-label">Capacity</label>
+            <label class="form-label">Capacity(No. of Pouches)</label>
             <div class="row">
                 <div class="col-md-8">
                     <input type="number" class="form-control" name="capacity" step="0.01" value="${d.capacity || ''}">
@@ -349,14 +388,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (type === 'section') {
             body = unitSelect(d.unit_id) + warehouseStorageFields(d.warehouse_id, d.storage_id) + body;
         }
-        if (type === 'rack')      body = sectionSelect(d.section_id) + body;
+        if (type === 'rack')      body = warehouseStorageFields(d.warehouse_id, d.storage_id) + body;
         if (type === 'bin')       body = rackSelect(d.rack_id) + body;
         if (type === 'container') body = containerTypeField(d) + body;
 
         document.getElementById('slmModalBody').innerHTML = body;
 
-        // Warehouse → Storage cascade for section modal
-        if (type === 'section') {
+        // Warehouse → Storage cascade for rack modal
+        if (type === 'rack') {
             const whSel = document.getElementById('sectionWarehouseSelect');
             const stSel = document.getElementById('sectionStorageSelect');
             if (whSel && stSel) {

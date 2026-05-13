@@ -17,8 +17,8 @@ class StorageLocationMasterController extends Controller
     public function index()
     {
         return view('master.storage-location-master.index', [
-            'sections'   => Section::with(['unit', 'storage.warehouse'])->orderBy('name')->paginate(10, ['*'], 'sections_page'),
-            'racks'      => Rack::with('section')->orderBy('name')->paginate(10, ['*'], 'racks_page'),
+            //'sections'   => Section::with(['unit', 'storage.warehouse'])->orderBy('name')->paginate(10, ['*'], 'sections_page'),
+            'racks'      => Rack::with(['warehouse', 'storage.warehouse'])->orderBy('name')->paginate(10, ['*'], 'racks_page'),
             'bins'       => Bin::with('rack')->orderBy('name')->paginate(10, ['*'], 'bins_page'),
             'containers' => Container::orderBy('name')->paginate(10, ['*'], 'containers_page'),
             'allSections'=> Section::where('status',1)->orderBy('name')->get(),
@@ -60,14 +60,29 @@ class StorageLocationMasterController extends Controller
     // ── Rack ─────────────────────────────────────────────────────────────
     public function rackStore(Request $request)
     {
-        $request->validate(['name'=>'required|string|max:255|unique:racks,name','code'=>'nullable|string|max:50|unique:racks,code']);
-        Rack::create($request->only('name','code','section_id','description','status'));
+        $request->validate(['name'=>'required|string|max:255|unique:racks,name', 'code'=>'nullable|string|max:50|unique:racks,code']);
+
+        $data = $request->only('name','code','storage_id','description','status');
+
+        // Derive warehouse_id from storage if not explicitly provided
+        $data['warehouse_id'] = $request->warehouse_id
+            ?: ($request->storage_id ? \App\Models\Storage::find($request->storage_id)?->warehouse_id : null);
+
+        Rack::create($data);
         return back()->with('success','Rack added.');
     }
+
     public function rackUpdate(Request $request, Rack $rack)
     {
         $request->validate(['name'=>'required|string|max:255|unique:racks,name,'.$rack->id,'code'=>'nullable|string|max:50|unique:racks,code,'.$rack->id]);
-        $rack->update($request->only('name','code','section_id','description','status'));
+
+        $data = $request->only('name','code','storage_id','description','status');
+
+        // Derive warehouse_id from storage if not explicitly provided
+        $data['warehouse_id'] = $request->warehouse_id
+            ?: ($request->storage_id ? \App\Models\Storage::find($request->storage_id)?->warehouse_id : null);
+
+        $rack->update($data);
         return back()->with('success','Rack updated.');
     }
     public function rackDestroy(Rack $rack)
@@ -99,13 +114,13 @@ class StorageLocationMasterController extends Controller
     public function containerStore(Request $request)
     {
         $request->validate(['name'=>'required|string|max:255|unique:containers,name','code'=>'nullable|string|max:50|unique:containers,code', 'unit_id' => 'nullable|exists:units,id',]);
-        Container::create($request->only('name','code','container_type','capacity', 'unit_id','description','status'));
+        Container::create($request->only('name','code','container_type','capacity', 'length', 'width', 'height', 'dimension_unit', 'unit_id','description','status'));
         return back()->with('success','Container added.');
     }
     public function containerUpdate(Request $request, Container $container)
     {
         $request->validate(['name'=>'required|string|max:255|unique:containers,name,'.$container->id,'code'=>'nullable|string|max:50|unique:containers,code,'.$container->id]);
-        $container->update($request->only('name','code','container_type','capacity', 'unit_id', 'description','status'));
+        $container->update($request->only('name','code','container_type','capacity', 'length', 'width', 'height', 'dimension_unit', 'unit_id', 'description','status'));
         return back()->with('success','Container updated.');
     }
     public function containerDestroy(Container $container)

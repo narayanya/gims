@@ -127,6 +127,9 @@
                                         data-purity="{{ $lot->purity_percent }}"
                                         data-status="{{ $lot->status }}"
                                         data-description="{{ $lot->description }}"
+                                        data-rack="{{ $lot->rack?->name }}"
+                                        data-bin="{{ $lot->bin?->name }}"
+                                        data-container="{{ $lot->container?->name }}"
                                         title="View">
                                         <i class="ri-eye-line"></i>
                                     </button>
@@ -270,6 +273,9 @@
                             <div class="col-md-3"><span class="text-muted d-block">Humidity</span><strong id="vl_st_humidity"></strong></div>
                             <div class="col-md-3"><span class="text-muted d-block">Capacity</span><strong id="vl_st_capacity"></strong></div>
                             <div class="col-md-3"><span class="text-muted d-block">Available</span><strong id="vl_st_available"></strong></div>
+                            <div class="col-md-3"><span class="text-muted d-block">Rack</span><strong id="vl_st_rack"></strong></div>
+                            <div class="col-md-3"><span class="text-muted d-block">Bin</span><strong id="vl_st_bin"></strong></div>
+                            <div class="col-md-3"><span class="text-muted d-block">Container</span><strong id="vl_st_container"></strong></div>
                         </div>
                     </div>
                 </div>
@@ -312,6 +318,9 @@ document.addEventListener('DOMContentLoaded', function () {
         set('vl_expiry',      d.expiry);
         set('vl_status',      d.status);
         set('vl_description', d.description);
+        set('vl_st_rack',     d.rack);
+        set('vl_st_bin',      d.bin);
+        set('vl_st_container', d.container);
 
         // ✅ Accession
         if (d.accession_id) {
@@ -344,6 +353,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     set('vl_st_humidity', s.humidity ? s.humidity + ' %' : null);
                     set('vl_st_capacity', s.capacity ? s.capacity + ' ' + (s.unit || '') : null);
                     set('vl_st_available', s.available ? s.available + ' ' + (s.unit || '') : null);
+
                 });
         }
 
