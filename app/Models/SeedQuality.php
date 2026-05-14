@@ -12,6 +12,8 @@ class SeedQuality extends Model
         'germination_percentage',
         'moisture_content',
         'purity_percentage',
+        'chlorophyll_percentage',
+        'water_level_percentage',
         'viability_test_date',
         'seed_health_status',
         'researcher_id',
@@ -22,6 +24,8 @@ class SeedQuality extends Model
         'germination_percentage' => 'decimal:2',
         'moisture_content' => 'decimal:2',
         'purity_percentage' => 'decimal:2',
+        'chlorophyll_percentage' => 'decimal:2',
+        'water_level_percentage' => 'decimal:2',
     ];
 
     // Relation
@@ -34,4 +38,5 @@ class SeedQuality extends Model
     {
         return $this->belongsTo(User::class, 'researcher_id');
     }
+    
 }

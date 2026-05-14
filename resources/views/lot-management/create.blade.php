@@ -395,6 +395,8 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                                     'germination_percentage' => $val,
                                     'moisture_content' => old('moisture_content.' . $i),
                                     'purity_percentage' => old('purity_percentage.' . $i),
+                                    'chlorophyll_percentage' => old('chlorophyll_percentage.' . $i),
+                                    'water_level_percentage' => old('water_level_percentage.' . $i),
                                     'viability_test_date' => old('viability_test_date.' . $i),
                                     'seed_health_status' => old('seed_health_status.' . $i),
                                     'researcher_id' => old('researcher_id.' . $i),
@@ -432,6 +434,8 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                                             <th>Germination %</th>
                                             <th>Moisture %</th>
                                             <th>Purity %</th>
+                                            <th>Chlorophyll % </th>
+                                            <th>Water level %</th>
                                             <th>Viability Date</th>
                                             <th>Health Status</th>
                                             <th>Researcher</th>
@@ -466,6 +470,20 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                                                         class="form-control @error('purity_percentage.' . $index) is-invalid @enderror"
                                                         value="{{ $row->purity_percentage ?? '' }}"
                                                         placeholder="e.g. 98.00">
+                                                </td>
+
+                                                <td>
+                                                    <input type="number" step="0.01" name="chlorophyll_percentage[]"
+                                                        class="form-control @error('chlorophyll_percentage.' . $index) is-invalid @enderror"
+                                                        value="{{ $row->chlorophyll_percentage ?? '' }}"
+                                                        placeholder="e.g. 50.00">
+                                                </td>
+
+                                                <td>
+                                                    <input type="number" step="0.01" name="water_level_percentage[]"
+                                                        class="form-control @error('water_level_percentage.' . $index) is-invalid @enderror"
+                                                        value="{{ $row->water_level_percentage ?? '' }}"
+                                                        placeholder="e.g. 80.00">
                                                 </td>
 
                                                 <td>

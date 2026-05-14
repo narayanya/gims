@@ -1048,37 +1048,6 @@
             // =========================
             // DATE AUTO CALC
             // =========================
-            /*const expiryInput = document.getElementById('expiry_date');
-            const regenInput  = document.getElementById('recheck_date');
-            const regenYearInput = document.getElementById('regen_year');
-
-            function calculateDates() {
-                let years = parseInt(regenYearInput.value);
-
-                if (!years || years <= 0) return;
-
-                // Entry date = today
-                let entryDate = new Date();
-
-                // Expiry = entry + years
-                let expiry = new Date(entryDate);
-                expiry.setFullYear(expiry.getFullYear() + years);
-
-                // Next regeneration = same as expiry (or you can change logic)
-                let regen = new Date(expiry);
-
-                // Format YYYY-MM-DD
-                let format = d => d.toISOString().split('T')[0];
-
-                expiryInput.value = format(expiry);
-                regenInput.value  = format(regen);
-            }
-
-            // Trigger when user enters years
-            regenYearInput.addEventListener('input', calculateDates);
-
-            // Run once if value already exists
-            calculateDates();*/
 
     const expiryInput    = document.getElementById('expiry_date');
     const regenInput     = document.getElementById('recheck_date');
@@ -1090,6 +1059,10 @@
         if (isset($accession) && $accession && $accession->crop && $accession->crop->season) {
             $seasonStart = (int) $accession->crop->season->start_month;
             $seasonEnd   = (int) $accession->crop->season->end_month;
+        }
+        if (isset($accession) && $accession && $accession->crop) {
+            $seasonStart = (int) $accession->crop->season_start_month_id;
+            $seasonEnd   = (int) $accession->crop->season_end_month_id;
         }
     @endphp
 
@@ -1244,8 +1217,8 @@
         if (
             isMonthInSeason(
                 expMonth,
-                window._cropSeason.start_month,
-                window._cropSeason.end_month
+                startMonth,
+                endMonth
             )
         ) {
 
@@ -1255,10 +1228,10 @@
 
             // ✅ first day of season month
             const regenYear =
-                expiry.getFullYear();
+                expiry.getFullYear() - 1;
 
             const regenMonth =
-                window._cropSeason.start_month - 1;
+                startMonth - 1;
 
             regen = new Date(
                 regenYear,

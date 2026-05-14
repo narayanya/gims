@@ -10,6 +10,11 @@ use App\Models\SeedQuality;
 use App\Models\SeedQuantity;
 use App\Models\Unit;
 use App\Models\User;
+use App\Models\Crop;
+use App\Models\Rack;
+use App\Models\Bin;
+use App\Models\Container;
+
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,8 +29,8 @@ class LotController extends Controller
         return [
             'accessions' => Accession::orderBy('accession_number')->get(['id','accession_number','accession_name','expiry_date']),
             'storages'   => Storage::where('status', 1)->orderBy('name')->get(['id','storage_id','name','warehouse_id']),
-            //'crops'      => \App\Models\Crop::where('status',1)->where('update_status', 1)->orderBy('crop_name')->get(['id','crop_name']),
             'units'      => Unit::where('status',1)->orderBy('name')->get(['id','name','code']),
+            'crops'      => Crop::where('update_status', 1)->orderBy('crop_name')->get(['id','crop_name']),
             'sections'   => \App\Models\Section::where('status',1)->orderBy('name')->get(['id','name','storage_id']),
             'racks'      => \App\Models\Rack::where('status',1)->orderBy('name')->get(['id','name','storage_id','warehouse_id']),
             'bins'       => \App\Models\Bin::where('status',1)->orderBy('name')->get(['id','name','rack_id']),
@@ -309,11 +314,15 @@ class LotController extends Controller
     $germination = $request->germination_percentage[$i] ?? null;
     $moisture    = $request->moisture_content[$i] ?? null;
     $purity      = $request->purity_percentage[$i] ?? null;
+    $chlorophyll = $request->chlorophyll_percentage[$i] ?? null;
+    $waterLevel  = $request->water_level_percentage[$i] ?? null;
 
     if (
         ($germination === null || $germination === '') &&
         ($moisture === null || $moisture === '') &&
-        ($purity === null || $purity === '')
+        ($purity === null || $purity === '') &&
+        ($chlorophyll === null || $chlorophyll === '') &&
+        ($waterLevel === null || $waterLevel === '')
     ) {
         return;
     }
@@ -333,6 +342,8 @@ class LotController extends Controller
         'germination_percentage' => $germination,
         'moisture_content'       => $moisture,
         'purity_percentage'      => $purity,
+        'chlorophyll_percentage' => $chlorophyll,
+        'water_level_percentage' => $waterLevel,
         'viability_test_date'    => $request->viability_test_date[$i] ?? null,
         'research_date'          => $request->research_date[$i] ?? null,
         'seed_health_status'     => $request->seed_health_status[$i] ?? null,
@@ -549,6 +560,19 @@ class LotController extends Controller
                 ->latest()   // optional
                 ->get()      // ✅ MUST be get()
         );
+    }
+
+    public function qualityControl()
+    {
+        $crops = Crop::where('update_status', 1)->orderBy('crop_name')->get(['id','crop_name']);
+        $accessions = Accession::orderBy('accession_number')->get(['id','accession_number']);
+        $storages  = Storage::orderBy('name')->get(['id','name']);
+        $lots = Lot::with(['accession','storage', 'lotType', 'seedQuantities', 'seedQuantities.unit'])
+                   ->whereNotNull('lot_number')
+                   ->orderBy('created_at','desc')
+                   ->paginate(15);
+        
+        return view('lot-management.quality-control', compact('crops', 'accessions', 'lots' , 'storages'));
     }
 
 }

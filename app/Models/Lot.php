@@ -42,6 +42,10 @@ class Lot extends Model
     public function unit()          { return $this->belongsTo(Unit::class); }
     public function seedQualities() { return $this->hasMany(SeedQuality::class, 'lot_id'); }
     public function seedQuantities(){ return $this->hasMany(SeedQuantity::class, 'lot_id'); }
+    public function seedQuality()
+{
+    return $this->hasOne(SeedQuality::class, 'lot_id');
+}
 
     public static function generateLotNumber(): string
     {

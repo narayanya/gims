@@ -76,6 +76,8 @@
                                     <li class="nav-item"><a href="{{ route('pouches.index') }}" class="nav-link {{ request()->routeIs('pouches.*') ? 'active' : '' }}">Pouch Master</a></li>
                                     <li class="nav-item"><a href="{{ route('location.countries') }}" class="nav-link {{ request()->routeIs('location.*') ? 'active' : '' }}">Location Master</a></li>
                                     <li class="nav-item"><a href="{{ route('master.employees.index') }}" class="nav-link {{ request()->routeIs('master.employees.*') ? 'active' : '' }}">Employee Master</a></li>
+                                    <li class="nav-item"><a href="{{ route('quality-master.index') }}" class="nav-link {{ request()->routeIs('quality-master.*') ? 'active' : '' }}">Quality Master</a></li>
+                                    
                                 </ul>
                             </div>
                         </li>
@@ -121,9 +123,11 @@
                                     @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasPermission('storage.transfer'))
                                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('warehouse-transfer.*') ? 'active' : '' }}" href="{{ route('warehouse-transfer.index') }}">Warehouse Inter-Transfer</a></li>
                                     @endif
+                                    <li class="nav-item"><a class="nav-link" href="{{ route('quality-control.index') }}">Quality Control Update</a></li>
                                 </ul>
                             </div>
                         </li>
+                        
                         @endif
 
                         {{-- Storage --}}

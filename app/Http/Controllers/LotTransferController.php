@@ -206,6 +206,8 @@ public function transfer(Request $request)
             'type',
             'condition',
             'time',
+            'lots.seedQualities',
+            'lots.seedQualities.researcher'
         ])->findOrFail($storageId);
 
         // ✅ Correct usage calculation (IMPORTANT)

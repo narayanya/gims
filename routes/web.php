@@ -21,6 +21,7 @@ use App\Http\Controllers\StorageController;
 use App\Http\Controllers\LotController;
 use App\Http\Controllers\LotTransferController;
 use App\Http\Controllers\WarehouseTransferController;
+use App\Http\Controllers\QualityMasterController;
 
 use App\Http\Controllers\CropRequestController;
 use App\Http\Controllers\EmployeeController;
@@ -116,6 +117,7 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::get('/lot-management/{id}/quality', [LotController::class, 'getQualityDetails']);
     Route::get('/inter-transfer-location', [LotController::class, 'interTransfer'])
     ->name('inter.transfer');
+    Route::get('/quality-control', [LotController::class, 'qualityControl'])->name('quality-control.index');
     Route::get('/get-lot-by-number', [LotController::class, 'getLotByNumber']);
     Route::get('/lot-transfer-export', [LotTransferController::class, 'export'])
     ->name('lot-transfer.export');
@@ -155,6 +157,8 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
 
     // Warehouse Master
     Route::resource('warehouses', App\Http\Controllers\WarehouseController::class)->except(['show', 'create']);
+
+    Route::resource('quality-master', QualityMasterController::class);
 
     // Storage Location Sub-Masters (Section, Rack, Bin, Container)
     Route::get('/storage-location-master', [App\Http\Controllers\StorageLocationMasterController::class, 'index'])->name('storage-location-master.index');
