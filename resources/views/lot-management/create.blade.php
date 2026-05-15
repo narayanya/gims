@@ -128,6 +128,7 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                                         <div class="col-4"><span class="text-muted">Status:</span> <span id="ad_status">—</span></div>
                                         <div class="col-4"><span class="text-muted">Collected:</span> <span id="ad_collected">—</span></div>
                                         <div class="col-4"><span class="text-muted">Sample ID:</span> <span id="ad_sample_id">—</span></div>
+                                        <div class="col-4"><span class="text-muted">Regeneration Cut of year:</span> <span id="ad_regeneration">—</span></div>
                                         <div class="col-4"><span class="text-muted">Expiry Date:</span> <span id="ad_expiryDate">—</span></div>
                                         <div class="col-4"><span class="text-muted">Next Regeneration Date:</span> <span id="ad_recheckDate">—</span></div>
                                     </div>
@@ -190,32 +191,32 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
 <tr>
 
     <td>
-        <input type="text" name="reference_number[]" class="form-control refNumber" placeholder="Enter Reference Number"
+        <input type="text" name="reference_number[]" class="form-control form-control-sm refNumber" placeholder="Enter Reference Number"
             value="{{ $row->reference_number ?? '' }}" {{ isset($lot) ? 'readonly style=background-color:#e9ecef;' : '' }}>
     </td>
 
     <td>
-        <input type="number" name="number_of_seeds[]" class="form-control" placeholder="e.g. 100" min="0" max="4"
+        <input type="number" name="number_of_seeds[]" class="form-control form-control-sm" placeholder="e.g. 100" min="0" max="4"
             value="{{ $row->number_of_seeds ?? '' }}">
     </td>
 
     <td>
-        <input type="number" name="number_of_bags[]" class="form-control" placeholder="e.g. 100" min="0" max="3"
+        <input type="number" name="number_of_bags[]" class="form-control form-control-sm" placeholder="e.g. 100" min="0" max="3"
             value="{{ $row->number_of_bags ?? '' }}">
     </td>
 
     <td>
-        <input type="number" step="0.001" name="per_seed_weight[]" class="form-control" placeholder="e.g. 0.5"
+        <input type="number" step="0.001" name="per_seed_weight[]" class="form-control form-control-sm" placeholder="e.g. 0.5"
             value="{{ $row->per_seed_weight ?? '' }}">
     </td>
 
     <td>
-        <input type="number" step="0.01" name="quantity[]" class="form-control quantity" placeholder="e.g. 1000"
+        <input type="number" step="0.01" name="quantity[]" class="form-control form-control-sm quantity" placeholder="e.g. 1000"
             value="{{ $row->quantity ?? '' }}" required>
     </td>
 
     <td>
-        <select name="unit_id[]" class="form-select">
+        <select name="unit_id[]" class="form-select form-select-sm">
             <option value="">Unit</option>
             @foreach ($units as $unit)
                 <option value="{{ $unit->id }}"
@@ -227,7 +228,7 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
     </td>
 
     <td>
-        <select class="form-select percent">
+        <select class="form-select form-select-sm percent">
             <option value="">%</option>
             @foreach([10,20,30,40,50,60,70,80,90,100] as $p)
                 <option value="{{ $p }}">{{ $p }}</option>
@@ -236,12 +237,12 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
     </td>
 
     <td>
-        <input type="text" name="min_quantity[]" class="form-control min" placeholder="Auto calculated"
+        <input type="text" name="min_quantity[]" class="form-control form-control-sm min" placeholder="Auto calculated"
             value="{{ $row->min_quantity ?? '' }}" readonly>
     </td>
 
     <td>
-        <input type="text" name="quantity_show[]" class="form-control userQty" placeholder="Auto calculated"
+        <input type="text" name="quantity_show[]" class="form-control form-control-sm userQty" placeholder="Auto calculated"
             value="{{ $row->quantity_show ?? '' }}" readonly>
     </td>
 
@@ -449,7 +450,7 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                                             <tr>
                                                 <td>
                                                     <input type="number" step="0.01" name="germination_percentage[]"
-                                                        class="form-control @error('germination_percentage.' . $index) is-invalid @enderror"
+                                                        class="form-control form-control-sm @error('germination_percentage.' . $index) is-invalid @enderror"
                                                         value="{{ $row->germination_percentage ?? '' }}"
                                                         placeholder="e.g. 85.50">
 
@@ -460,40 +461,40 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
 
                                                 <td>
                                                     <input type="number" step="0.01" name="moisture_content[]"
-                                                        class="form-control @error('moisture_content.' . $index) is-invalid @enderror"
+                                                        class="form-control form-control-sm @error('moisture_content.' . $index) is-invalid @enderror"
                                                         value="{{ $row->moisture_content ?? '' }}"
                                                         placeholder="e.g. 12.00">
                                                 </td>
 
                                                 <td>
                                                     <input type="number" step="0.01" name="purity_percentage[]"
-                                                        class="form-control @error('purity_percentage.' . $index) is-invalid @enderror"
+                                                        class="form-control form-control-sm @error('purity_percentage.' . $index) is-invalid @enderror"
                                                         value="{{ $row->purity_percentage ?? '' }}"
                                                         placeholder="e.g. 98.00">
                                                 </td>
 
                                                 <td>
                                                     <input type="number" step="0.01" name="chlorophyll_percentage[]"
-                                                        class="form-control @error('chlorophyll_percentage.' . $index) is-invalid @enderror"
+                                                        class="form-control form-control-sm @error('chlorophyll_percentage.' . $index) is-invalid @enderror"
                                                         value="{{ $row->chlorophyll_percentage ?? '' }}"
                                                         placeholder="e.g. 50.00">
                                                 </td>
 
                                                 <td>
                                                     <input type="number" step="0.01" name="water_level_percentage[]"
-                                                        class="form-control @error('water_level_percentage.' . $index) is-invalid @enderror"
+                                                        class="form-control form-control-sm @error('water_level_percentage.' . $index) is-invalid @enderror"
                                                         value="{{ $row->water_level_percentage ?? '' }}"
                                                         placeholder="e.g. 80.00">
                                                 </td>
 
                                                 <td>
                                                     <input type="date" name="viability_test_date[]"
-                                                        class="form-control"
+                                                        class="form-control form-control-sm @error('viability_test_date.' . $index) is-invalid @enderror"
                                                         value="{{ $row->viability_test_date ?? '' }}" >
                                                 </td>
 
                                                 <td>
-                                                    <select name="seed_health_status[]" class="form-select">
+                                                    <select name="seed_health_status[]" class="form-select form-select-sm">
                                                         <option value="">Select</option>
                                                         @foreach (['Healthy', 'Infected', 'Damaged', 'Under Treatment'] as $status)
                                                             <option value="{{ $status }}"
@@ -505,7 +506,7 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                                                 </td>
                                                 <td>
                                                     <select name="researcher_id[]"
-                                                        class="form-select researcher-select @error('researcher_id.' . $index) is-invalid @enderror">
+                                                        class="form-select form-select-sm researcher-select @error('researcher_id.' . $index) is-invalid @enderror">
 
                                                         <option value="">Select</option>
 
@@ -536,7 +537,7 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                                                 </td>
                                                 <td>
                                                     <input type="date" name="research_date[]"
-                                                        class="form-control"
+                                                        class="form-control form-control-sm"
                                                         value="{{ $row->research_date ?? '' }}" max="{{ date('Y-m-d') }}">
                                                 </td>
                                                 <td>
@@ -826,6 +827,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('ad_status').textContent     = d.status           || '—';
                 document.getElementById('ad_collected').textContent  = d.collection_date  || '—';
                 document.getElementById('ad_sample_id').textContent    = d.sample_id          || '—';
+                document.getElementById('ad_regeneration').textContent = d.regen_year     || '—';
                 document.getElementById('ad_expiryDate').textContent     = d.expiry_date     || '-';
                 document.getElementById('expiry_input').textContent = d.expiry_date || '';
                 document.getElementById('expiry_recheck').textContent = d.recheck_date || '—';

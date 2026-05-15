@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -76,6 +77,38 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        // EXTERNAL USER
+    if ($request->is_external == 1) {
+
+        $request->validate([
+            'name'          => 'required|string|max:255',
+            'mobile_number' => 'required|string|max:12 |unique:users,mobile_number',
+            'email'         => 'required|email|unique:users,email',
+            'password'      => 'required|min:6',
+            'roles'         => 'required|array|min:1',
+        ]);
+
+        $roleId = $request->roles[0];
+
+        $user = User::create([
+            'name'          => $request->name,
+            'emp_code'      => 'EXT-' . strtoupper(Str::random(6)),
+            'employee_id'   => 'EXTEMP-' . strtoupper(Str::random(6)),
+            'mobile_number' => $request->mobile_number,
+            'email'         => $request->email,
+            'password'      => bcrypt($request->password),
+            'role_id'       => $roleId,
+            'status'        => 1,
+            'is_external'   => 1,
+        ]);
+
+        $user->roles()->sync([$roleId]);
+
+        return redirect()->route('users')
+            ->with('success', 'External user created successfully!');
+    }
+    
+         // INTERNAL USER
         $request->validate([
             'emp_code' => 'required|string|max:50|unique:users,emp_code',
             'email'    => 'required|string|email|max:255|unique:users,email',
@@ -112,6 +145,7 @@ class UserController extends Controller
             'password'      => bcrypt($request->password),
             'role_id'       => $roleId,
             'status'        => 1,
+            'is_external'   => 0,
         ]);
 
         $user->roles()->sync([$roleId]);

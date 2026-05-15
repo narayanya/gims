@@ -438,6 +438,7 @@ class LotController extends Controller
             'sample_type'            => $acc->sample_type,
             'collection_site'        => $acc->collection_site,
             'recheck_date'           => $acc->recheck_date?->format('d M Y'),
+            'regen_year'              => $acc->regen_year,
         ]);
     }
 
@@ -564,15 +565,134 @@ class LotController extends Controller
 
     public function qualityControl()
     {
-        $crops = Crop::where('update_status', 1)->orderBy('crop_name')->get(['id','crop_name']);
+        $crops      = Crop::where('update_status', 1)->orderBy('crop_name')->get(['id','crop_name']);
         $accessions = Accession::orderBy('accession_number')->get(['id','accession_number']);
-        $storages  = Storage::orderBy('name')->get(['id','name']);
-        $lots = Lot::with(['accession','storage', 'lotType', 'seedQuantities', 'seedQuantities.unit'])
-                   ->whereNotNull('lot_number')
-                   ->orderBy('created_at','desc')
-                   ->paginate(15);
-        
-        return view('lot-management.quality-control', compact('crops', 'accessions', 'lots' , 'storages'));
+        $storages   = Storage::orderBy('name')->get(['id','name','storage_id']);
+        $users      = User::orderBy('name')->get(['id','name']);
+
+        return view('lot-management.quality-control', compact('crops', 'accessions', 'storages', 'users'));
+    }
+
+    /**
+     * Return all seed quality rows for a given lot (AJAX).
+     */
+    public function getLotQualities($lotId)
+    {
+        $lot = Lot::with(['accession','storage','seedQuantities.unit','seedQualities.researcher'])->findOrFail($lotId);
+
+        $qualities = $lot->seedQualities->map(fn($q) => [
+            'id'                     => $q->id,
+            'germination_percentage' => $q->germination_percentage,
+            'moisture_content'       => $q->moisture_content,
+            'purity_percentage'      => $q->purity_percentage,
+            'chlorophyll_percentage' => $q->chlorophyll_percentage,
+            'water_level_percentage' => $q->water_level_percentage,
+            'viability_test_date'    => $q->viability_test_date,
+            'seed_health_status'     => $q->seed_health_status,
+            'researcher_id'          => $q->researcher_id,
+            'researcher_name'        => $q->researcher?->name,
+            'researcher_other'       => $q->researcher_other,
+            'research_date'          => $q->research_date,
+            'created_at'            => $q->created_at,
+            'updated_at'            => $q->updated_at,
+        ]);
+
+        $qty = $lot->seedQuantities->first();
+
+        return response()->json([
+            'lot' => [
+                'id'             => $lot->id,
+                'lot_number'     => $lot->lot_number,
+                'accession'      => $lot->accession?->accession_number,
+                'accession_name' => $lot->accession?->accession_name,
+                'crop'           => $lot->accession?->crop?->crop_name ?? $lot->crop?->crop_name,
+                'storage'        => $lot->storage?->name,
+                'quantity'       => $qty?->quantity,
+                'quantity_show'  => $qty?->quantity_show,
+                'unit'           => $qty?->unit?->name,
+                'rack'           => $lot->rack?->name,
+                'bin'            => $lot->bin?->name,
+                'container'      => $lot->container?->name,
+                'expiry_date'    => $lot->accession?->expiry_date?->format('d M Y'),
+            ],
+            'qualities' => $qualities,
+        ]);
+    }
+
+    /**
+     * Save / replace seed quality rows for a lot.
+     */
+    public function qualityControlSave(Request $request, $lotId)
+    {
+        $lot = Lot::findOrFail($lotId);
+
+        $request->validate([
+            'germination_percentage'   => 'nullable|array',
+            'germination_percentage.*' => 'nullable|numeric|min:0|max:100',
+            'moisture_content'         => 'nullable|array',
+            'moisture_content.*'       => 'nullable|numeric|min:0|max:100',
+            'purity_percentage'        => 'nullable|array',
+            'purity_percentage.*'      => 'nullable|numeric|min:0|max:100',
+            'chlorophyll_percentage'   => 'nullable|array',
+            'chlorophyll_percentage.*' => 'nullable|numeric|min:0|max:100',
+            'water_level_percentage'   => 'nullable|array',
+            'water_level_percentage.*' => 'nullable|numeric|min:0|max:100',
+            'viability_test_date'      => 'nullable|array',
+            'viability_test_date.*'    => 'nullable|date',
+            'research_date'            => 'nullable|array',
+            'research_date.*'          => 'nullable|date',
+        ]);
+
+        DB::transaction(function () use ($request, $lot) {
+            // Only INSERT new rows — existing records are read-only and not submitted
+            $germinations = $request->germination_percentage ?? [];
+
+            foreach ($germinations as $i => $germination) {
+                $moisture    = $request->moisture_content[$i] ?? null;
+                $purity      = $request->purity_percentage[$i] ?? null;
+                $chlorophyll = $request->chlorophyll_percentage[$i] ?? null;
+                $waterLevel  = $request->water_level_percentage[$i] ?? null;
+
+                // Skip completely empty rows
+                if (
+                    ($germination === null || $germination === '') &&
+                    ($moisture    === null || $moisture    === '') &&
+                    ($purity      === null || $purity      === '') &&
+                    ($chlorophyll === null || $chlorophyll === '') &&
+                    ($waterLevel  === null || $waterLevel  === '')
+                ) {
+                    continue;
+                }
+
+                $researcher = $request->researcher_id[$i] ?? null;
+                $resOther   = $request->researcher_other[$i] ?? null;
+
+                if ($researcher === 'Other') {
+                    $researcher = null;
+                } else {
+                    $resOther = null;
+                }
+
+                SeedQuality::create([
+                    'lot_id'                 => $lot->id,
+                    'accession_id'           => $lot->accession_id,
+                    'germination_percentage' => $germination ?: null,
+                    'moisture_content'       => $moisture ?: null,
+                    'purity_percentage'      => $purity ?: null,
+                    'chlorophyll_percentage' => $chlorophyll ?: null,
+                    'water_level_percentage' => $waterLevel ?: null,
+                    'viability_test_date'    => $request->viability_test_date[$i] ?? null,
+                    'research_date'          => $request->research_date[$i] ?? null,
+                    'seed_health_status'     => $request->seed_health_status[$i] ?? null,
+                    'researcher_id'          => $researcher,
+                    'researcher_other'       => $resOther,
+                    'created_at'            => now(),
+                    'updated_at'            => now(),
+                ]);
+            }
+        });
+
+        return response()->json(['success' => true, 'message' => 'Seed quality saved successfully.']);
     }
 
 }

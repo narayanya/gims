@@ -37,6 +37,10 @@
                                 <span class="avatar-title rounded-circle bg-primary fs-1 text-white fw-bold"
                                       style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:2rem;">
                                     {{ strtoupper(substr($user->name, 0, 1)) }}
+                                    <img src="{{ 'https://vnrseeds.co.in/file-view/Employee_Image/' . session('company_id') . '/' . session('emp_code') . '.jpg' }}"
+                                         alt="{{ $user->name }}"
+                                         class="rounded-circle"
+                                         style="width:80px;height:80px;object-fit:cover;position:absolute;top:0;left:0;">
                                 </span>
                             </div>
                         </div>
@@ -123,28 +127,28 @@
                                     <div class="row g-3">
                                         <div class="col-md-6">
                                             <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                                            <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
-                                                value="{{ old('name', $user->name) }}" required>
+                                            <input readonly type="text" name="name" class="form-control @error('name') is-invalid @enderror"
+                                                value="{{ old('name', $user->name) }}" required style="background:#f8f9fa;">
                                             @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                         </div>
 
                                         <div class="col-md-6">
                                             <label class="form-label">Email Address <span class="text-danger">*</span></label>
-                                            <input type="email" name="email" class="form-control @error('email') is-invalid @enderror"
-                                                value="{{ old('email', $user->email) }}" required>
+                                            <input readonly type="email" name="email" class="form-control @error('email') is-invalid @enderror"
+                                                value="{{ old('email', $user->email) }}" required style="background:#f8f9fa;">
                                             @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                         </div>
 
                                         <div class="col-md-6">
                                             <label class="form-label">Mobile Number</label>
-                                            <input type="text" name="mobile_number" class="form-control"
+                                            <input readonly type="text" name="mobile_number" class="form-control"
                                                 value="{{ old('mobile_number', $user->mobile_number) }}"
-                                                placeholder="e.g. +91 9876543210">
+                                                placeholder="e.g. +91 9876543210" style="background:#f8f9fa;">
                                         </div>
 
                                         <div class="col-md-6">
                                             <label class="form-label">Employee Code</label>
-                                            <input type="text" class="form-control" value="{{ $user->emp_code ?? '—' }}" readonly
+                                            <input readonly type="text" class="form-control" value="{{ $user->emp_code ?? '—' }}"
                                                 style="background:#f8f9fa;">
                                             <small class="text-muted">Cannot be changed</small>
                                         </div>
@@ -152,12 +156,12 @@
                                         @if($user->reportingUser)
                                         <div class="col-md-6">
                                             <label class="form-label">Reporting Manager</label>
-                                            <input type="text" class="form-control" value="{{ $user->reportingUser->name }}" readonly
+                                            <input readonly type="text" class="form-control" value="{{ $user->reportingUser->name }}"
                                                 style="background:#f8f9fa;">
                                         </div>
                                         @endif
 
-                                        <div class="col-12 text-end">
+                                        <div class="col-12 text-end d-none">
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="ri-save-line me-1"></i> Save Changes
                                             </button>

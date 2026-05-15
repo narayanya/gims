@@ -11,7 +11,7 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'role_id', 'mobile_number', 'emp_code', 'emp_reporting', 'employee_id', 'status'];
+    protected $fillable = ['name', 'email', 'password', 'role_id', 'mobile_number', 'emp_code', 'emp_reporting', 'employee_id', 'status', 'is_external'];
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -75,4 +75,13 @@ class User extends Authenticatable
     {
         return $this->belongsTo(User::class, 'reporting_to'); // column name
     }
+    public function employee()
+    {
+        return $this->hasOne(
+            \App\Models\Employee::class,
+            'employee_id',   // core_employee table column
+            'employee_id'    // users table column
+        );
+    }
+    
 }

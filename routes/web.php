@@ -118,28 +118,11 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::get('/inter-transfer-location', [LotController::class, 'interTransfer'])
     ->name('inter.transfer');
     Route::get('/quality-control', [LotController::class, 'qualityControl'])->name('quality-control.index');
+    Route::post('/quality-control/{lotId}/save', [LotController::class, 'qualityControlSave'])->name('quality-control.save');
+    Route::get('/quality-control/{lotId}/qualities', [LotController::class, 'getLotQualities'])->name('quality-control.qualities');
     Route::get('/get-lot-by-number', [LotController::class, 'getLotByNumber']);
     Route::get('/lot-transfer-export', [LotTransferController::class, 'export'])
     ->name('lot-transfer.export');
-    
-   Route::get('/file-view/{path}', function ($path) {
-        $cleanPath = str_replace('..', '', $path); // Prevent directory traversal
-
-        $s3Path = $cleanPath;
-        $s3 = Storage::disk('s3');
-
-        if (!$s3->exists($s3Path)) {
-            abort(404, 'File not found.');
-        }
-
-        $file = $s3->get($s3Path);
-        $mime = $s3->mimeType($s3Path);
-
-        return Response::make($file, 200, [
-            'Content-Type' => $mime,
-            'Content-Disposition' => 'inline; filename="' . basename($s3Path) . '"'
-        ]);
-    })->where('path', '.*');
 
     // Crop Master
     Route::resource('crops', App\Http\Controllers\CropController::class)->except(['show', 'create']);

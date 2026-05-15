@@ -25,15 +25,18 @@
                 <!-- Left Column: Add User Form -->
                 <div class="col-lg-4">
                     <div class="card">
-                        <div class="card-header bg-light">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <h5 class="card-title mb-0">
                                 <i class="ri-add-line me-2"></i>Add New User
                             </h5>
+                            <button type="button" id="addExternalBtn" class="btn btn-sm btn-outline-primary">
+                                <i class="ri-add-line me-1"></i> External User
+                            </button>
                         </div>
                         <div class="card-body">
                             <form action="{{ route('users.store') }}" method="POST">
                                 @csrf
-
+                                <input type="hidden" name="is_external" id="is_external" value="0">
                                 @if ($errors->any())
                                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                                         <strong>Error creating user:</strong>
@@ -205,14 +208,21 @@
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <div class="avatar-sm me-2">
-                                                    <span class="avatar-title rounded-circle bg-primary-subtle text-primary">
-                                                        {{ strtoupper(substr($user->name, 0, 1)) }}
-                                                    </span>
+                                                    @if($is_external = $user->is_external == 1)
+                                                        <span class="avatar-title rounded-circle bg-danger-subtle text-danger">
+                                                            {{ strtoupper(substr($user->name, 0, 1)) }}
+                                                        </span>
+                                                    @else
+                                                        <span class="avatar-title rounded-circle bg-primary-subtle text-primary">
+                                                            {{ strtoupper(substr($user->name, 0, 1)) }}
+                                                        </span>
+                                                    @endif
                                                 </div>
                                                 <span class="fw-semibold">{{ $user->name }}</span>
                                             </div>
                                         </td>
-                                        <td>{{ $user->email }}</td>
+                                        <td>{{ $user->email }} <br> 
+                                            <small class="text-success">Dept.: {{ $user->employee->emp_department ?? 'N/A' }}</small></td>
                                         <td>
                                             @if($user->role)
                                                 <span class="badge bg-primary">{{ $user->role->name }}</span>
@@ -485,6 +495,80 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ---------- CASE 4 ----------
     // If department changes AFTER selecting employee → reset everything handled in filterEmployees()
+    const externalBtn = document.getElementById('addExternalBtn');
+    const isExternal = document.getElementById('is_external');
+
+    const departmentDiv = document.getElementById('department').closest('.mb-3');
+    const employeeDiv   = document.getElementById('employee').closest('.mb-3');
+
+    const empCodeDiv = document.getElementById('emp_code').closest('.mb-3');
+
+    const reportingCard = document.getElementById('reportingManagerCard');
+
+    const nameField = document.getElementById('name');
+    const emailField = document.getElementById('email');
+    const mobileField = document.getElementById('mobile_number');
+    const empCodeField = document.getElementById('emp_code');
+    const departmentField = document.getElementById('department');
+const employeeField = document.getElementById('employee');
+
+    let externalMode = false;
+
+    externalBtn.addEventListener('click', function () {
+
+        externalMode = !externalMode;
+
+        if (externalMode) {
+
+            isExternal.value = 1;
+
+            departmentField.required = false;
+            employeeField.required = false;
+
+            externalBtn.innerHTML = 'Internal User';
+
+            departmentDiv.classList.add('d-none');
+            employeeDiv.classList.add('d-none');
+            empCodeDiv.classList.add('d-none');
+
+            reportingCard.classList.add('d-none');
+
+            nameField.closest('.mb-3').classList.remove('d-none');
+
+            nameField.readOnly = false;
+            emailField.readOnly = false;
+            mobileField.readOnly = false;
+
+            nameField.value = '';
+            emailField.value = '';
+            mobileField.value = '';
+            empCodeField.value = '';
+
+        } else {
+
+            isExternal.value = 0;
+
+            externalBtn.innerHTML = '<i class="ri-add-line me-1"></i> External User';
+
+            departmentDiv.classList.remove('d-none');
+            employeeDiv.classList.remove('d-none');
+            empCodeDiv.classList.remove('d-none');
+
+            nameField.closest('.mb-3').classList.add('d-none');
+
+            departmentField.required = true;
+            employeeField.required = true;
+
+            nameField.readOnly = true;
+            emailField.readOnly = true;
+            mobileField.readOnly = true;
+
+            nameField.value = '';
+            emailField.value = '';
+            mobileField.value = '';
+            empCodeField.value = '';
+        }
+    });
 
 });
 </script>

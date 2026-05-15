@@ -123,7 +123,7 @@
                                     @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasPermission('storage.transfer'))
                                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('warehouse-transfer.*') ? 'active' : '' }}" href="{{ route('warehouse-transfer.index') }}">Warehouse Inter-Transfer</a></li>
                                     @endif
-                                    <li class="nav-item"><a class="nav-link" href="{{ route('quality-control.index') }}">Quality Control Update</a></li>
+                                    <li class="nav-item"><a class="nav-link" href="{{ route('quality-control.index') }}">Quality Info Update</a></li>
                                 </ul>
                             </div>
                         </li>

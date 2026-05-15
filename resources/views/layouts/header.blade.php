@@ -354,15 +354,12 @@
 
                         <div class="dropdown ms-sm-3 header-item topbar-user">
                             <button type="button" class="btn material-shadow-none" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="d-flex align-items-center">
-                                    {{--<img class="rounded-circle header-profile-user" src="{{ asset('assets/images/users/avatar-1.jpg') }}" title="{{ Auth::user()->name }}" alt="{{ Auth::user()->name }}">--}}
+                                <span class="d-flex align-items-center">                                   
                                     <img class="rounded-circle header-profile-user"
-                                         src="{{ $authProfilePhoto }}"
-                                         title="{{ Auth::user()->name }}"
-                                         alt="{{ Auth::user()->name }}"
-                                         onerror="this.onerror=null;this.src='{{ asset('assets/images/users/avatar-1.jpg') }}'">
-                                     
-
+                                         src="{{ 'https://vnrseeds.co.in/file-view/Employee_Image/' . session('company_id') . '/' . session('emp_code') . '.jpg' }}"
+                                        title="{{ Auth::user()->name }}"
+                                        alt="{{ Auth::user()->name }}"
+                                        onerror="this.onerror=null;this.src='{{ asset('assets/images/users/avatar-1.jpg') }}'">
                                     <span class="text-start ms-xl-2">
                                         <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text text-capitalize">{{ Auth::user()->name }}</span>
                                         <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">{{ Auth::user()->roles->pluck('name')->implode(', ') }}</span>

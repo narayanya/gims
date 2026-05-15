@@ -84,8 +84,9 @@ class LoginController extends Controller
             return redirect()->route('login')->with('error', 'Token subject does not match the provided employee ID.');
         }
 
-        // ── Look up the active user ──────────────────────────────────────────
-        $user = User::where('employee_id', $employeeId)
+        // ── Look up the active user (with core_employee for company_id) ─────
+        $user = User::with('employee')
+            ->where('employee_id', $employeeId)
             ->where('status', 1)
             ->first();
 
@@ -108,6 +109,10 @@ class LoginController extends Controller
         Auth::login($user, false);
 
         $request->session()->regenerate();
+
+        // ── Store company_id and emp_code in session ─────────────────────────
+        $request->session()->put('company_id', $user->employee?->company_id);
+        $request->session()->put('emp_code',   $user->emp_code);
 
         ActivityLog::log('login', 'auth', $user->id, $user->name);
 
@@ -146,6 +151,12 @@ class LoginController extends Controller
 
     protected function authenticated(Request $request, $user): void
     {
+        // Eager-load core_employee to get company_id
+        $user->loadMissing('employee');
+
+        $request->session()->put('company_id', $user->employee?->company_id);
+        $request->session()->put('emp_code',   $user->emp_code);
+
         ActivityLog::log('login', 'auth', $user->id, $user->name);
     }
 

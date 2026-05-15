@@ -119,6 +119,11 @@
                         <p class="text-sage-muted text-xs italic text-danger">Below {{ 10 }} units</p>
                     </div>
                 </div>
+                @php
+                    $user = auth()->user();
+                @endphp
+                @if($user->hasRole(['super-admin','admin','manager']))
+
                 <div class="row">
                     <div class="col-xl-9 col-lg-8 col-md-12 mt-4 mt-xl-0">
                         <!-- Storage Tank Status Section -->
@@ -374,11 +379,8 @@ h-full rounded-full"
                             </div>
                         </section>
                     </div>
-                    <div class="col-xl-3 col-lg-4 col-md-12 mt-4">
-                        
-                        
-                        
 
+                    <div class="col-xl-3 col-lg-4 col-md-12 mt-4">
                         <div
                             class="card card-height-80 bg-white dark:bg-background-dark rounded-xl border border-sage-light dark:border-sage-deep/30 shadow-sm overflow-hidden">
                             <div class="card-header align-items-center d-flex">
@@ -489,59 +491,11 @@ h-full rounded-full"
                             </div>
                         </div> <!-- .card-->
                     </div> <!-- .col-->
+                    
                 </div>
+                @endif
 
-
-                <div class="col d-none">
-
-                    <div class="h-100">
-                        <div class="row mb-3 pb-1">
-                            <div class="col-12">
-                                <div class="d-flex align-items-lg-center flex-lg-row flex-column">
-                                    <div class="flex-grow-1">
-                                        <h4 class="fs-16 mb-1">Good Morning, Mahesh!</h4>
-                                        <p class="text-muted mb-0">Here's what's happening with your store today.</p>
-                                    </div>
-
-                                </div><!-- end card header -->
-                            </div>
-                            <!--end col-->
-                        </div>
-                        <!--end row-->
-
-
-
-                        <div class="row">
-                            <div class="col-xl-4">
-                                <div class="card card-height-100">
-                                    <div class="card-header align-items-center d-flex">
-                                        <h4 class="card-title mb-0 flex-grow-1">title</h4>
-
-                                    </div><!-- end card header -->
-
-                                    <div class="card-body">
-                                        gfh
-                                    </div>
-                                </div> <!-- .card-->
-                            </div> <!-- .col-->
-
-                            <div class="col-xl-8">
-                                <div class="card">
-                                    <div class="card-header align-items-center d-flex">
-                                        <h4 class="card-title mb-0 flex-grow-1">Recent Orders</h4>
-
-                                    </div><!-- end card header -->
-
-                                    <div class="card-body">
-                                        dd
-                                    </div>
-                                </div> <!-- .card-->
-                            </div> <!-- .col-->
-                        </div> <!-- end row-->
-
-                    </div> <!-- end .h-100-->
-
-                </div> <!-- end col -->
+                <!-- end col -->
                 <div class="container d-none">
                     <div class="row justify-content-center">
                         <div class="col-md-8">
