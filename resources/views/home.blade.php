@@ -122,10 +122,208 @@
                 @php
                     $user = auth()->user();
                 @endphp
-                @if($user->hasRole(['super-admin','admin','manager']))
+                
 
                 <div class="row">
+                   
                     <div class="col-xl-9 col-lg-8 col-md-12 mt-4 mt-xl-0">
+                        {{-- Today Transaction --}}
+                        @if($user->hasRole(['super-admin','admin','manager', 'researcher', 'dispatcher']))
+<div class="mt-4">
+    <div class="flex items-center justify-between mb-3">
+        <h4 class="text-lg font-bold text-slate-800 dark:text-slate-100">
+            Today Transaction
+        </h4>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+
+        {{-- Add Accession --}}
+        <div
+            class="bg-white dark:bg-background-dark rounded-2xl border border-slate-200 dark:border-slate-700 p-3 shadow-sm">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+                    <p class="text-xs text-slate-500 mb-1">
+                        Add Accession
+                    </p>
+
+                    <h3 class="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                        {{ $todayAccessionCount }}
+                    </h3>
+                </div>
+
+                <div
+                    class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+
+                        <path stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4" />
+                    </svg>
+
+                </div>
+
+            </div>
+        </div>
+
+        {{-- Add Lot --}}
+        <div
+            class="bg-white dark:bg-background-dark rounded-2xl border border-slate-200 dark:border-slate-700 p-3 shadow-sm">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+                    <p class="text-xs text-slate-500 mb-1">
+                        Add Lot
+                    </p>
+
+                    <h3 class="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                        {{ $todayLotCount }}
+                    </h3>
+                </div>
+
+                <div
+                    class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+
+                        <path stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M20 13V7a2 2 0 00-2-2h-3V3H9v2H6a2 2 0 00-2 2v6m16 0v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4m16 0H4" />
+                    </svg>
+
+                </div>
+
+            </div>
+        </div>
+
+        {{-- New Request --}}
+        <div
+            class="bg-white dark:bg-background-dark rounded-2xl border border-slate-200 dark:border-slate-700 p-3 shadow-sm">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+                    <p class="text-xs text-slate-500 mb-1">
+                        New Request
+                    </p>
+
+                    <h3 class="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                        {{ $todayRequestCount }}
+                    </h3>
+                </div>
+
+                <div
+                    class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
+
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+
+                        <path stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 10h8m-8 4h5m-7 6h10a2 2 0 002-2V6a2 2 0 00-2-2H8l-4 4v10a2 2 0 002 2z" />
+                    </svg>
+
+                </div>
+
+            </div>
+        </div>
+
+        {{-- Dispatching --}}
+        <div
+            class="bg-white dark:bg-background-dark rounded-2xl border border-slate-200 dark:border-slate-700 p-3 shadow-sm">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+                    <p class="text-xs text-slate-500 mb-1">
+                        Dispatching
+                    </p>
+
+                    <h3 class="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                        {{ $todayDispatchCount }}
+                    </h3>
+                </div>
+
+                <div
+                    class="w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center">
+
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+
+                        <path stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 17l-4-4m0 0l4-4m-4 4h16" />
+                    </svg>
+
+                </div>
+
+            </div>
+        </div>
+
+        {{-- Inter Transfer --}}
+        <div
+            class="bg-white dark:bg-background-dark rounded-2xl border border-slate-200 dark:border-slate-700 p-3 shadow-sm">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+                    <p class="text-xs text-slate-500 mb-1">
+                        Inter Transfer
+                    </p>
+
+                    <h3 class="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                        {{ $todayTransferCount }}
+                    </h3>
+                </div>
+
+                <div
+                    class="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
+
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+
+                        <path stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7" />
+                    </svg>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+@endif
+
+@if($user->hasRole(['super-admin','admin','manager']))
                         <!-- Storage Tank Status Section -->
                         <div class="mb-8 mt-4">
                             <div class="flex items-center justify-between mb-3">
@@ -182,7 +380,7 @@
                                                 </p>
 
                                                 <p class="text-sage-900 dark:text-white text-xs font-bold">
-                                                    {{ $storage->usage_percentage ?? 0 }}% Full
+                                                    {{ $storage->usage_percentage ?? 0 }}% Fill
                                                 </p>
 
                                             </div>
@@ -214,7 +412,7 @@ h-full rounded-full"
 
                             </div>
                         </div>
-
+                        @endif
                         <!-- Low Stock Alert Section -->
                         @if($lowStockAccessions->count())
                         <div class="mb-4 mt-4">
@@ -259,7 +457,7 @@ h-full rounded-full"
                             </div>
                         </div>
                         @endif
-
+                        @if($user->hasRole(['super-admin','admin','manager']))
                         <!-- Data Table Section -->
                         <section
                             class="bg-white dark:bg-background-dark rounded-xl border border-sage-light dark:border-sage-deep/30 shadow-sm overflow-hidden">
@@ -286,26 +484,7 @@ h-full rounded-full"
                                     </thead>
 
                                     <tbody class="divide-y divide-sage-light dark:divide-sage-deep/30">
-                                        <tr
-                                            class="hover:bg-background-light/50 dark:hover:bg-sage-deep/5 transition-colors d-none">
-                                            <td class="px-3 py-2 text-sm font-mono text-slate-900 dark:text-slate-100">
-                                                ACC-4902-X</td>
-                                            <td class="px-3 py-2 text-sm">
-                                                <div class="italic">Triticum aestivum</div>
-                                                <div class="text-[10px] text-slate-400 uppercase">Wheat / Poaceae</div>
-                                            </td>
-                                            <td class="px-3 py-2 text-sm">Central Anatolia, TR</td>
-                                            <td class="px-3 py-2">
-                                                <span
-                                                    class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 uppercase">Available</span>
-                                            </td>
-                                            <td class="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">14 Oct 2023
-                                            </td>
-                                            <td class="px-3 py-2">
-                                                <button
-                                                    class="material-symbols-outlined text-slate-400 hover:text-primary transition-colors">more_vert</button>
-                                            </td>
-                                        </tr>
+                                       
                                         @forelse($recentAccessions as $accession)
                                             <tr
                                                 class="hover:bg-background-light/50 dark:hover:bg-sage-deep/5 transition-colors">
@@ -378,9 +557,121 @@ h-full rounded-full"
                                 </table>
                             </div>
                         </section>
+                        
+                        <section
+    class="bg-white dark:bg-background-dark rounded-xl border border-sage-light dark:border-sage-deep/30 shadow-sm overflow-hidden mt-4">
+
+    <div
+        class="p-3 border-b border-sage-light dark:border-sage-deep/30 flex justify-between items-center">
+
+        <h4 class="text-lg font-bold text-slate-900 dark:text-slate-100"
+            style="font-size:17px;">
+            Lot Inter Transfer
+        </h4>
+
+        <a href="{{ route('lot-transfer.index') }}" class="view-all">
+            View All Records
+        </a>
+    </div>
+
+    {{-- Horizontal Scroll --}}
+    <div class="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-300">
+
+        <div class="flex gap-4 p-4 min-w-max">
+
+            @forelse($lotTransfers as $transfer)
+
+                <div
+                    class="w-[340px] flex-shrink-0 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-sm hover:shadow-lg transition duration-300">
+
+                    {{-- Header --}}
+                    <div class="p-3 border-b border-slate-200 dark:border-slate-700">
+
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h5 class="font-bold text-slate-800 dark:text-slate-100">
+                                  {{ $transfer->lot->lot_number }}
+                                </h5>
+
+                                <p class="text-xs text-slate-500 mt-1">
+                                    {{ $transfer->created_at->format('d-m-Y') }}
+                                </p>
+                            </div>
+
+                            <span
+                                class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                Qty {{ $transfer->quantity }}
+                            </span>
+                        </div>
+
+                        <div class="mt-3">
+                            <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                {{ $transfer->crop->crop_name ?? '-' }}
+                            </p>
+
+                            <p class="text-xs text-slate-500">
+                                Accession:
+                                {{ $transfer->accession->accession_number ?? '-' }}
+                            </p>
+                        </div>
+
+                    </div>
+
+                    {{-- Body --}}
+                    <div class="p-2 space-y-4">
+
+                        {{-- From --}}
+                        <div
+                            class="rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800 p-2">
+
+                            <p class="text-xs font-bold text-red-600 mb-2">
+                                Storage FROM
+                            </p>
+
+                            <div class="space-y-1 text-xs text-slate-700 dark:text-slate-300">
+
+                                <p>
+                                    {{ $transfer->fromStorage->name ?? '-' }}<i class="ri-arrow-right-line me-1 text-danger"></i> {{ $transfer->fromRack->name ?? '-' }}<i class="ri-arrow-right-line me-1 text-danger"></i> {{ $transfer->fromBin->name ?? '-' }}<i class="ri-arrow-right-line me-1 text-danger"></i> {{ $transfer->fromContainer->name ?? '-' }}
+                                </p>
+
+                            </div>
+                        </div>
+
+                        {{-- To --}}
+                        <div class="rounded-xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800 p-2">
+                            <p class="text-xs font-bold text-green-600 mb-2">
+                                TO
+                            </p>
+
+                            <div class="space-y-1 text-xs text-slate-700 dark:text-slate-300">
+                                <p>
+                                    {{ $transfer->toStorage->name ?? '-' }}<i class="ri-arrow-right-line me-1 text-success"></i> {{ $transfer->toRack->name ?? '-' }}<i class="ri-arrow-right-line me-1 text-success"></i> {{ $transfer->toBin->name ?? '-' }}<i class="ri-arrow-right-line me-1 text-success"></i> {{ $transfer->toContainer->name ?? '-' }}
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            @empty
+
+                <div class="w-full text-center py-10 text-slate-500">
+                    No transfer records found.
+                </div>
+
+            @endforelse
+
+        </div>
+
+    </div>
+
+</section>
+@endif
                     </div>
 
                     <div class="col-xl-3 col-lg-4 col-md-12 mt-4">
+                        @if($user->hasRole(['super-admin','admin','manager', 'researcher', 'dispatcher']))
                         <div
                             class="card card-height-80 bg-white dark:bg-background-dark rounded-xl border border-sage-light dark:border-sage-deep/30 shadow-sm overflow-hidden">
                             <div class="card-header align-items-center d-flex">
@@ -438,7 +729,8 @@ h-full rounded-full"
 
                             </div>
                         </div> <!-- .card-->
-
+                        @endif
+                        @if($user->hasRole(['super-admin','admin','manager']))
                         <div
                             class="card bg-white dark:bg-background-dark rounded-xl border border-sage-light dark:border-sage-deep/30 shadow-sm overflow-hidden">
                             <div class="card-header align-items-center d-flex">
@@ -490,36 +782,98 @@ h-full rounded-full"
                             @endforelse
                             </div>
                         </div> <!-- .card-->
-                    </div> <!-- .col-->
-                    
-                </div>
-                @endif
-
-                <!-- end col -->
-                <div class="container d-none">
-                    <div class="row justify-content-center">
-                        <div class="col-md-8">
-                            <div class="card">
-                                <div class="card-header">{{ __('Dashboard') }}</div>
-
-                                <div class="card-body">
-                                    @if (session('status'))
-                                        <div class="alert alert-success" role="alert">
-                                            {{ session('status') }}
-                                        </div>
-                                    @endif
-
-                                    {{ __('You are logged in!') }}
+                        @endif
+                        
+                        @if($user->hasRole(['super-admin','admin','manager', 'researcher', 'dispatcher']))
+                        <div class="card bg-white dark:bg-background-dark rounded-xl border border-sage-light dark:border-sage-deep/30 shadow-sm overflow-hidden mt-4">
+                            <div class="card-header align-items-center d-flex">
+                                <div class="d-flex justify-content-between w-100">
+                                    <h4 class="text-lg font-bold text-slate-900 dark:text-slate-100"
+                                        style="font-size:17px;">Dispatches</h4>
+                                    <a href="" class="view-all">View All</a>
                                 </div>
+
+                            </div><!-- end card header -->
+
+                            <div class="card-body p-2">
+                                @forelse ($dispatchRequests as $dr)
+                                    <div class="request-card mt-0 mb-2">
+
+                                        <div class="d-flex justify-content-between">
+                                            <div class="seed-name">
+                                                Request-{{ $dr->id }}
+                                            </div>
+                                            <div class="">
+                                                @if ($dr->status == 'pending')
+                                                    <span class="badge bg-warning text-dark">Pending</span>
+                                                @elseif($dr->status == 'approved')
+                                                    <span class="badge bg-success">Approved</span>
+                                                @elseif($dr->status == 'rejected')
+                                                    <span class="badge bg-danger">Rejected</span>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <div class="row mt-1">
+                                            <div class="col-6">
+                                                <div>{{ $dr->crop->crop_name ?? '-' }}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-6 text-end">
+                                                <div class="qty">Qty. {{ $dr->quantity }}G</div>
+                                            </div>
+                                            <div class="col-6 text-[12px] text-slate-400">
+                                              {{ $dr->request_date ? $dr->request_date->format('d M Y') : '-' }}
+                                            </div>
+                                            <div class="col-6 text-end text-[12px] text-slate-400">
+                                                {{ $dr->requester_name ?? '-' }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="text-center text-muted py-3">
+                                        No dispatch requests found
+                                    </div>
+                                @endforelse
+                                <H5 class="border-bottom pb-2">Dispatch Order</H5>
+                                @forelse($recentDispatches as $dispatch)
+                                    <div class="dispatch-card mt-2 border-bottom mb-2 pb-2">
+                                        <div class="row">
+                                            <div class="col-7">
+                                         
+                                                <div class="entry">
+                                                    {{ $dispatch->created_at?->format('d M Y') }}
+                                                </div>
+                                                <div class="dispatch-number">
+                                                    Dispt No.: {{ $dispatch->dispatch_number ?? 'N/A' }}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-5 text-end">
+                                                <div class="code">
+                                                    Acc.: {{ $dispatch->accession?->accession_number ?? 'N/A' }}
+                                                </div>
+                                                
+                                                <div class="qty text-slate-600">
+                                                    Qty: {{ number_format($dispatch->quantity, 2) }} {{ $dispatch->capacityUnit?->name ?? '' }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>  
+                                @empty
+                                    <div class="text-center text-muted p-3">
+                                        No recent dispatches found
+                                    </div>
+                                @endforelse
                             </div>
-                        </div>
+                        
+                    </div> <!-- .col-->
+                    @endif
                     </div>
                 </div>
+            
 
+                <!-- end col -->
             </div>
-
-
-
-            <!-- Dashboard init -->
-            <!--<script src="{{ asset('assets/js/pages/dashboard-ecommerce.init.js') }}"></script>-->
         @endsection

@@ -34,6 +34,16 @@ class RoleSeeder extends Seeder
                 'slug' => 'user',
                 'description' => 'Basic user with limited access to view data'
             ],
+            [
+                'name' => 'Researcher',
+                'slug' => 'researcher',
+                'description' => 'Basic researcher with limited access to view data'
+            ],
+            [
+                'name' => 'Dispatcher',
+                'slug' => 'dispatcher',
+                'description' => 'Basic dispatcher with limited access to view data'
+            ],
         ];
 
         foreach ($roles as $role) {

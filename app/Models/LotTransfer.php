@@ -22,7 +22,7 @@ class LotTransfer extends Model
         'remarks', 'transferred_by',
     ];
 
-    public function lot()         { return $this->belongsTo(Lot::class); }
+    public function lot()         { return $this->belongsTo(Lot::class, 'lot_id'); }
     public function fromStorage() { return $this->belongsTo(Storage::class, 'from_storage_id'); }
     public function toStorage()   { return $this->belongsTo(Storage::class, 'to_storage_id'); }
 
@@ -84,5 +84,10 @@ class LotTransfer extends Model
     {
         return $this->belongsTo(\App\Models\User::class, 'transferred_by');
     }
+     public function transferredBy()
+    {
+        return $this->belongsTo(User::class, 'transferred_by');
+    }
+
 }
 

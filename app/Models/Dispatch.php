@@ -62,4 +62,5 @@ class Dispatch extends Model
         return $this->hasMany(\App\Models\WarehouseTransfer::class, 'batch_id', 'batch_id');
     }
     public function unit()      { return $this->belongsTo(Unit::class, 'capacity_unit_id'); }
+    
 }

@@ -240,4 +240,3 @@
             <div class="sidebar-background"></div>
         </div>
         <!-- Left Sidebar End -->
-                                <li class="nav-item">

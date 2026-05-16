@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Accession;
 use App\Models\Crop;
+use App\Models\Dispatch;
 use App\Models\Variety;
 use App\Models\Lot;
+use App\Models\LotTransfer;
 use App\Models\Warehouse;
 use App\Models\SeedRequest;
 use App\Models\StorageTime;
@@ -39,6 +41,7 @@ class HomeController extends Controller
         $totalLots = Lot::count();
         $totalWarehouses = Warehouse::count();
 
+
         // Low stock threshold
         $lowStockThreshold = 10;
 
@@ -68,6 +71,11 @@ class HomeController extends Controller
                     ->latest()
                     ->take(5)
                     ->get();
+        $dispatchRequests = SeedRequest::with(['crop'])
+                    ->where('status', 'approved')
+                    ->latest()
+                    ->take(3)
+                    ->get();
 
         $storages = Storage::with(['storageType', 'warehouse.state',
             'warehouse.district',
@@ -82,6 +90,38 @@ class HomeController extends Controller
             ->orderBy('expiry_date')
             ->take(5)
             ->get();
+        
+        $recentDispatches = Dispatch::with(['accession.crop', 'itn'])
+            ->latest()
+            ->take(3)
+            ->get();
+
+         $lotTransfers = \App\Models\LotTransfer::with([
+                'crop',
+                'accession',
+                'fromStorage',
+                'toStorage',
+                'fromRack',
+                'toRack',
+                'fromBin',
+                'toBin',
+                'fromContainer',
+                'toContainer',
+                'transferredBy'
+            ])
+            ->latest()
+            ->take(4)
+            ->get();
+
+            $todayAccessionCount = Accession::whereDate('created_at', today())->count();
+
+$todayLotCount = Lot::whereDate('created_at', today())->count();
+
+$todayRequestCount = SeedRequest::whereDate('created_at', today())->count();
+
+$todayDispatchCount = Dispatch::whereDate('created_at', today())->count();
+
+$todayTransferCount = LotTransfer::whereDate('created_at', today())->count();
 
         return view('home', compact(
             'totalAccessions',
@@ -92,11 +132,21 @@ class HomeController extends Controller
             'totalWarehouses',
             'recentAccessions',
             'latestRequests',
+            'dispatchRequests',
             'storages',
             'storageTimes',
             'lowStockCount',
             'lowStockAccessions',
             'expiringSoon',
+            'recentDispatches',
+            'lotTransfers',
+            'todayAccessionCount',
+            'todayLotCount',
+            'todayRequestCount',
+            'todayDispatchCount',
+            'todayTransferCount'
         ));
     }
+
+    
 }
