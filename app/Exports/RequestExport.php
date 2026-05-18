@@ -1,0 +1,36 @@
+<?php
+
+namespace App\Exports;
+
+use App\Models\SeedRequest;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+
+class RequestExport implements FromCollection, WithHeadings
+{
+    public function collection()
+    {
+        return SeedRequest::with(['crop'])->get()->map(function ($a) {
+            return [
+                'accession_number' => $a->accession_number,                
+                'crop' => $a->crop->crop_name ?? '',
+                'source' => $a->source,
+                'origin_country' => $a->origin_country,
+                'collection_date' => $a->collection_date,
+                'remarks' => $a->remarks,
+            ];
+        });
+    }
+
+    public function headings(): array
+    {
+        return [
+            'Accession Number',
+            'Crop',
+            'Source',
+            'Origin Country',
+            'Collection Date',
+            'Remarks',
+        ];
+    }
+}

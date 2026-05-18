@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Crop extends Model
 {
     protected $table = 'core_crop';    
+    protected $guarded = [];
     protected $fillable = [
         'crop_name',
         'crop_code',

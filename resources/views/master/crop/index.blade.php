@@ -19,9 +19,14 @@
                     <a href="{{ route('cropRequests.index') }}" class="btn btn-sm btn-secondary">Crop Request List</a>
                     <button class="btn btn-sm btn-primary d-none" data-bs-toggle="modal" data-bs-target="#cropModal"
                        id="addCropBtn">
-                        <i class="ri-add-line me-1"></i>New Crop
+                        <i class="ri-add-line me-1"></i>Add New Crop
+                    </button>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#importModal">
+                        <i class="ri-upload-line me-1"></i>Import
                     </button>
                 </div>
+
+                
             </div>
 
             {{-- Search & Filter Bar --}}
@@ -415,6 +420,48 @@
 
 
 @section('modals')
+    <!-- Import Modal -->
+
+    <div class="modal fade" id="importModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Import Crop Master</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form action="{{ route('crops.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Upload CSV / Excel File</label>
+                            <input type="file" name="file" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <a href="{{ route('crop.crop-template') }}" class="text-decoration-none">
+                                <i class="ri-download-line me-1"></i>Download sample CSV template
+                            </a>
+                        </div>
+
+                        <p class="text-muted small">
+                            Columns format:
+                            <b></b>
+                        </p>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Import</button>
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Crop Modal -->
     <div class="modal fade" id="newCropRequestModal" tabindex="-1">
         <div class="modal-dialog modal-md modal-dialog-centered">

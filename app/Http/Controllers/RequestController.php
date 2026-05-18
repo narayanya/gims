@@ -9,10 +9,12 @@ use App\Models\Accession;
 use App\Models\Notification;
 use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SeedRequestMail;
+use App\Exports\RequestExport;
 
 
 class RequestController extends Controller
@@ -460,6 +462,9 @@ class RequestController extends Controller
         ]);
     }
 
-    
+    public function export()
+    {
+        return Excel::download(new RequestExport, 'request.xlsx');
+    }
     
 }

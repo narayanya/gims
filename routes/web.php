@@ -74,9 +74,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/accessions/sample-template', function () {
         return response()->download(public_path('templates/accessions_sample.csv'));
     })->name('accessions.template');
+
     Route::get('/accessions/passport-template', function () {
         return response()->download(public_path('templates/accessions_passport_sample.csv'));
     })->name('accessions.passport-template');
+
+
     Route::get('/accessions/{id}',           [AccessionController::class, 'show'])->name('accessions.show')->middleware('permission:accession.view');
     Route::get('/accessions/{id}/json',      [AccessionController::class, 'showJson'])->name('accessions.show.json');
     Route::get('/accessions/{id}/edit',      [AccessionController::class, 'edit'])->name('accessions.edit')->middleware('permission:accession.edit');
@@ -127,6 +130,9 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     // Crop Master
     Route::resource('crops', App\Http\Controllers\CropController::class)->except(['show', 'create']);
     Route::post('/crops/import', [CropController::class, 'import'])->name('crops.import');
+    Route::get('/crop/crop-template', function () {
+        return response()->download(public_path('templates/GIMS-Master-CROP.csv'));
+    })->name('crop.crop-template');
 
     // Variety/Seed Master
     Route::resource('varieties', App\Http\Controllers\VarietyController::class)->except(['show', 'create']);
@@ -157,6 +163,9 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::post('/containers',            [App\Http\Controllers\StorageLocationMasterController::class, 'containerStore'])->name('containers.store');
     Route::put('/containers/{container}', [App\Http\Controllers\StorageLocationMasterController::class, 'containerUpdate'])->name('containers.update');
     Route::delete('/containers/{container}', [App\Http\Controllers\StorageLocationMasterController::class, 'containerDestroy'])->name('containers.destroy');
+    Route::get('/storage/storage-template', function () {
+        return response()->download(public_path('templates/storage-template.csv'));
+    })->name('storage.storage-template');
 
     // Storage Location Master
     Route::resource('storage-locations', App\Http\Controllers\StorageLocationController::class)->except(['show', 'create']);
@@ -275,6 +284,8 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::get('/get-accessions/{variety_id}', [App\Http\Controllers\RequestController::class,'getAccessions'])->name('get.accessions');
     Route::get('/get-varieties/{id}', [RequestController::class, 'getVarieties'])->name('get.varieties');
     Route::get('/get-accessions/{id}', [RequestController::class, 'getAccessions'])->name('get.accessions');
+
+    Route::get('/requests/export',         [RequestController::class, 'export'])->name('requests.export')->middleware('permission:requests.export');
     
     Route::get('/employee/{id}', function ($id) {
         $emp = \Illuminate\Support\Facades\DB::table('core_employee')

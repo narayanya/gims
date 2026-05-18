@@ -16,6 +16,9 @@
                 <a href="{{ route('inter.transfer') }}" class="btn btn-primary btn-sm">
                     <i class="ri-add-line me-1"></i> Inter Transfer Location
                 </a>
+                <a href="" class="btn btn-sm btn-primary">
+                            <i class="ri-download-line me-1"></i>Export
+                        </a>
             </div>
             <!--<a href="{{ route('lot-management.create') }}" class="btn btn-primary btn-sm">
                 <i class="ri-add-line me-1"></i> Add New Lot

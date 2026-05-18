@@ -31,7 +31,12 @@
         <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
+                    <div class="d-flex justify-content-between">
                     <h5>Request</h5>
+                    <a href="{{ route('requests.export') }}" class="btn btn-sm btn-outline-primary mb-2">
+                            <i class="ri-download-line me-1"></i>Export
+                        </a>
+                    </div>
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
@@ -94,7 +99,12 @@
         <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
-                    <h5>ITN</h5>
+                    <div class="d-flex justify-content-between">
+                        <h5>ITN</h5>
+                        <a href="" class="btn btn-sm btn-outline-primary mb-2">
+                            <i class="ri-download-line me-1"></i>Export
+                        </a>
+                    </div>
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
@@ -172,7 +182,12 @@
         <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
-                    <h5 class="mb-3">Dispatched Orders</h5>
+                    <div class="d-flex justify-content-between">
+                        <h5 class="mb-3">Dispatched Orders</h5>
+                        <a href="" class="btn btn-sm btn-outline-primary mb-2">
+                            <i class="ri-download-line me-1"></i>Export
+                        </a>
+                    </div>
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>

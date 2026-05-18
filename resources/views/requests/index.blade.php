@@ -33,6 +33,10 @@
                 <a href="{{ route('requests.create') }}" class="btn btn-sm btn-primary" >
                     <i class="ri-add-line me-1"></i>New Request
                 </a>
+
+                <a href="{{ route('requests.export') }}" class="btn btn-sm btn-primary">
+                            <i class="ri-download-line me-1"></i>Export
+                        </a>
             </div>
         </div>
         

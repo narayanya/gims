@@ -9,6 +9,9 @@
                 <h3 class="text-xl font-bold">Storage Location Master</h3>
                 <p class="text-muted mb-0" style="font-size:13px">Manage Rack, Bin and Container masters</p>
             </div>
+            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#importModal">
+                        <i class="ri-upload-line me-1"></i>Import
+                    </button>
         </div>
 
         @if(session('success'))
@@ -227,6 +230,46 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="importModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Import Crop Master</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form action="{{ route('crops.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Upload CSV / Excel File</label>
+                            <input type="file" name="file" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <a href="{{ route('storage.storage-template') }}" class="text-decoration-none">
+                                <i class="ri-download-line me-1"></i>Download sample CSV template
+                            </a>
+                        </div>
+
+                        <p class="text-muted small">
+                            Columns format:
+                            <b></b>
+                        </p>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Import</button>
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')

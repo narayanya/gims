@@ -188,12 +188,20 @@ if ($monthDiff < 3) {
 
     public function import(Request $request)
     {
-
         $request->validate([
             'file' => 'required|mimes:csv,xlsx,xls'
         ]);
 
-        Excel::import(new CropImport, $request->file('file'));
+        $import = new CropImport;
+        Excel::import($import, $request->file('file'));
+
+        $failures = $import->errors();
+
+        if ($failures && count($failures) > 0) {
+            $messages = collect($failures)->map(fn($e) => $e->getMessage())->implode(' | ');
+            return redirect()->route('crops.index')
+                ->with('warning', 'Import completed with errors: ' . $messages);
+        }
 
         return redirect()->route('crops.index')
             ->with('success', 'Crops imported successfully!');
