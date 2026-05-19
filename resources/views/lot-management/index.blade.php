@@ -16,7 +16,7 @@
                 <a href="{{ route('inter.transfer') }}" class="btn btn-primary btn-sm">
                     <i class="ri-add-line me-1"></i> Inter Transfer Location
                 </a>
-                <a href="" class="btn btn-sm btn-primary">
+                <a href="{{ route('lot.export') }}" class="btn btn-sm btn-success">
                             <i class="ri-download-line me-1"></i>Export
                         </a>
             </div>
@@ -158,10 +158,17 @@
                     </a>
                 </div>
                 @endif
+                <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+                    <div>
+                        Showing {{ $lots->firstItem() }} to {{ $lots->lastItem() }}
+                        of {{ $lots->total() }} results
+                    </div>
+
+                    <div>
+                        {{ $lots->links() }}
+                    </div>
+                </div>
             </div>
-            @if($lots->hasPages())
-            <div class="card-footer">{{ $lots->links() }}</div>
-            @endif
         </div>
 
     </div>

@@ -4,14 +4,31 @@
 <div class="row justify-content-center">
     <div class="col-12">
 
+        @php $tab = request('tab', 'rack'); @endphp
+
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
             <div>
                 <h3 class="text-xl font-bold">Storage Location Master</h3>
                 <p class="text-muted mb-0" style="font-size:13px">Manage Rack, Bin and Container masters</p>
             </div>
-            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#importModal">
-                        <i class="ri-upload-line me-1"></i>Import
+            <div class="d-flex gap-2">
+                @if($tab === 'rack')
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#importRackModal">
+                        <i class="ri-upload-line me-1"></i>Import Racks
                     </button>
+                @elseif($tab === 'bin')
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#importBinModal">
+                        <i class="ri-upload-line me-1"></i>Import Bins
+                    </button>
+                @elseif($tab === 'container')
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#importContainerModal">
+                        <i class="ri-upload-line me-1"></i>Import Containers
+                    </button>
+                @endif
+                <a href="{{ route('storage-location-master.export') }}" class="btn btn-sm btn-success">
+                    <i class="ri-download-line me-1"></i>Export
+                </a>
+            </div>
         </div>
 
         @if(session('success'))
@@ -27,12 +44,10 @@
         {{-- Tabs --}}
         <ul class="nav nav-tabs mb-3" id="slmTabs">
             <!--<li class="nav-item"><a class="nav-link {{ request('tab','section')=='section' ? 'active' : '' }}" href="?tab=section">Section</a></li>-->
-            <li class="nav-item"><a class="nav-link {{ request('tab', 'rack')=='rack' ? 'active' : '' }}" href="?tab=rack">Rack</a></li>
-            <li class="nav-item"><a class="nav-link {{ request('tab')=='bin' ? 'active' : '' }}" href="?tab=bin">Bin</a></li>
-            <li class="nav-item"><a class="nav-link {{ request('tab')=='container' ? 'active' : '' }}" href="?tab=container">Container</a></li>
+            <li class="nav-item"><a class="nav-link {{ $tab=='rack' ? 'active' : '' }}" href="?tab=rack">Rack</a></li>
+            <li class="nav-item"><a class="nav-link {{ $tab=='bin' ? 'active' : '' }}" href="?tab=bin">Bin</a></li>
+            <li class="nav-item"><a class="nav-link {{ $tab=='container' ? 'active' : '' }}" href="?tab=container">Container</a></li>
         </ul>
-
-        @php $tab = request('tab','rack'); @endphp
 
         {{-- ── SECTION ── --}}
         {{-- @if($tab === 'section')
@@ -116,6 +131,16 @@
                         @endforelse
                     </tbody>
                 </table>
+                <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap p-2">
+                    <div>
+                        Showing {{ $racks->firstItem() }} to {{ $racks->lastItem() }}
+                        of {{ $racks->total() }} results
+                    </div>
+
+                    <div>
+                        {{ $racks->links() }}
+                    </div>
+                </div>
             </div>
             @if($racks->hasPages())<div class="card-footer">{{ $racks->appends(['tab'=>'rack'])->links() }}</div>@endif
         </div>
@@ -157,6 +182,16 @@
                     </tbody>
                 </table>
             </div>
+            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap p-2">
+                    <div>
+                        Showing {{ $bins->firstItem() }} to {{ $bins->lastItem() }}
+                        of {{ $bins->total() }} results
+                    </div>
+
+                    <div>
+                        {{ $bins->links() }}
+                    </div>
+                </div>
             @if($bins->hasPages())<div class="card-footer">{{ $bins->appends(['tab'=>'bin'])->links() }}</div>@endif
         </div>
         @endif
@@ -199,6 +234,16 @@
                     </tbody>
                 </table>
             </div>
+            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap p-2">
+                    <div>
+                        Showing {{ $containers->firstItem() }} to {{ $containers->lastItem() }}
+                        of {{ $containers->total() }} results
+                    </div>
+
+                    <div>
+                        {{ $containers->links() }}
+                    </div>
+                </div>
             @if($containers->hasPages())<div class="card-footer">{{ $containers->appends(['tab'=>'container'])->links() }}</div>@endif
         </div>
         @endif
@@ -231,41 +276,85 @@
     </div>
 </div>
 
-<div class="modal fade" id="importModal">
+    <div class="modal fade" id="importRackModal">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Import Crop Master</h5>
+                    <h5 class="modal-title">Import Racks</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-
-                <form action="{{ route('crops.import') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('racks.import') }}" method="POST" enctype="multipart/form-data">
                     @csrf
-
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label">Upload CSV / Excel File</label>
                             <input type="file" name="file" class="form-control" required>
                         </div>
-
-                        <div class="mb-3">
-                            <a href="{{ route('storage.storage-template') }}" class="text-decoration-none">
-                                <i class="ri-download-line me-1"></i>Download sample CSV template
-                            </a>
-                        </div>
-
-                        <p class="text-muted small">
-                            Columns format:
-                            <b></b>
+                        <p class="text-muted small mb-0">
+                            Required columns: <b>name</b><br>
+                            Optional: <b>code, warehouse, storage, description, status</b>
                         </p>
-
                     </div>
-
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary">Import</button>
                         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
+    <div class="modal fade" id="importBinModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Import Bins</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ route('bins.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Upload CSV / Excel File</label>
+                            <input type="file" name="file" class="form-control" required>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            Required columns: <b>name</b><br>
+                            Optional: <b>code, rack, description, status</b>
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Import</button>
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="importContainerModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Import Containers</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ route('containers.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Upload CSV / Excel File</label>
+                            <input type="file" name="file" class="form-control" required>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            Required columns: <b>name</b><br>
+                            Optional: <b>code, container_type, capacity_no_of_pouches, unit, length, width, height, dimension_unit, description, status</b>
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Import</button>
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    </div>
                 </form>
             </div>
         </div>

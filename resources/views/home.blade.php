@@ -638,7 +638,7 @@ h-full rounded-full"
                         </div>
 
                         {{-- To --}}
-                        <div class="rounded-xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800 p-2">
+                        <div class="rounded-xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800 p-2 mt-2">
                             <p class="text-xs font-bold text-green-600 mb-2">
                                 TO
                             </p>

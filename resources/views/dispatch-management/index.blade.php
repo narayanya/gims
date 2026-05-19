@@ -93,6 +93,16 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+                    <div>
+                        Showing {{ $requests->firstItem() }} to {{ $requests->lastItem() }}
+                        of {{ $requests->total() }} results
+                    </div>
+
+                    <div>
+                        {{ $requests->links() }}
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -177,6 +187,16 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+                    <div>
+                        Showing {{ $itns->firstItem() }} to {{ $itns->lastItem() }}
+                        of {{ $itns->total() }} results
+                    </div>
+
+                    <div>
+                        {{ $itns->links() }}
+                    </div>
+                </div>
             </div>
         </div>
         <div class="card">
@@ -249,8 +269,18 @@
                             @endif
                         </tbody>
                     </table>
+                    
                 </div>
-               
+               <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+                    <div>
+                        Showing {{ $dispatches->firstItem() }} to {{ $dispatches->lastItem() }}
+                        of {{ $dispatches->total() }} results
+                    </div>
+
+                    <div>
+                        {{ $dispatches->links() }}
+                    </div>
+                </div>
             </div>
            
         </div>

@@ -34,6 +34,11 @@ class SeedQuality extends Model
         return $this->belongsTo(Accession::class);
     }
 
+    public function lot()
+    {
+        return $this->belongsTo(Lot::class);
+    }
+
     public function researcher()
     {
         return $this->belongsTo(User::class, 'researcher_id');

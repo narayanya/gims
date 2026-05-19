@@ -120,16 +120,20 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::get('/lot-management/{id}/quality', [LotController::class, 'getQualityDetails']);
     Route::get('/inter-transfer-location', [LotController::class, 'interTransfer'])
     ->name('inter.transfer');
+    
     Route::get('/quality-control', [LotController::class, 'qualityControl'])->name('quality-control.index');
+    Route::get('/quality-control-history', [LotController::class, 'qualityHistoryControl'])->name('quality-control.history');
     Route::post('/quality-control/{lotId}/save', [LotController::class, 'qualityControlSave'])->name('quality-control.save');
     Route::get('/quality-control/{lotId}/qualities', [LotController::class, 'getLotQualities'])->name('quality-control.qualities');
     Route::get('/get-lot-by-number', [LotController::class, 'getLotByNumber']);
+     Route::get('/lot/export',         [LotController::class, 'export'])->name('lot.export')->middleware('permission:lot.export');
     Route::get('/lot-transfer-export', [LotTransferController::class, 'export'])
     ->name('lot-transfer.export');
 
     // Crop Master
     Route::resource('crops', App\Http\Controllers\CropController::class)->except(['show', 'create']);
     Route::post('/crops/import', [CropController::class, 'import'])->name('crops.import');
+    Route::get('/crops/export',         [CropController::class, 'export'])->name('crops.export')->middleware('permission:crops.export');
     Route::get('/crop/crop-template', function () {
         return response()->download(public_path('templates/GIMS-Master-CROP.csv'));
     })->name('crop.crop-template');
@@ -151,6 +155,10 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
 
     // Storage Location Sub-Masters (Section, Rack, Bin, Container)
     Route::get('/storage-location-master', [App\Http\Controllers\StorageLocationMasterController::class, 'index'])->name('storage-location-master.index');
+    Route::get('/storage-location-master/export', [App\Http\Controllers\StorageLocationMasterController::class, 'export'])->name('storage-location-master.export');
+    Route::post('/racks/import',       [App\Http\Controllers\StorageLocationMasterController::class, 'rackImport'])->name('racks.import');
+    Route::post('/bins/import',        [App\Http\Controllers\StorageLocationMasterController::class, 'binImport'])->name('bins.import');
+    Route::post('/containers/import',  [App\Http\Controllers\StorageLocationMasterController::class, 'containerImport'])->name('containers.import');
     Route::post('/sections',              [App\Http\Controllers\StorageLocationMasterController::class, 'sectionStore'])->name('sections.store');
     Route::put('/sections/{section}',     [App\Http\Controllers\StorageLocationMasterController::class, 'sectionUpdate'])->name('sections.update');
     Route::delete('/sections/{section}',  [App\Http\Controllers\StorageLocationMasterController::class, 'sectionDestroy'])->name('sections.destroy');

@@ -3,34 +3,180 @@
 namespace App\Exports;
 
 use App\Models\Accession;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithTitle;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
-class AccessionsExport implements FromCollection, WithHeadings
+class AccessionsExport implements FromQuery, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithTitle
 {
-    public function collection()
+    public function title(): string
     {
-        return Accession::with(['crop'])->get()->map(function ($a) {
-            return [
-                'accession_number' => $a->accession_number,                
-                'crop' => $a->crop->crop_name ?? '',
-                'source' => $a->source,
-                'origin_country' => $a->origin_country,
-                'collection_date' => $a->collection_date,
-                'remarks' => $a->remarks,
-            ];
-        });
+        return 'Accessions';
+    }
+
+    public function query()
+    {
+        return Accession::with([
+            'crop',
+            'country',
+            'state',
+            'district',
+            'city',
+            'warehouse',
+            'storageLocation',
+            'storageType',
+            'storageTime',
+            'storageCondition',
+            'capacityUnit',
+        ])->orderBy('id');
     }
 
     public function headings(): array
     {
         return [
+            // Basic
+            '#',
             'Accession Number',
-            'Crop',
-            'Source',
-            'Origin Country',
+            'Accession Name',
+            'Sample ID',
+            'Year of Arrival',
+            'Regeneration Cut of Year',
+            'Source Type',
+            'External Source',
+            'Requester Show',
+            'Status',
+
+            // Crop
+            'Crop Name',
+            'Crop Code',
+            'Scientific Name',
+
+            // Collection
+            'Collection Number',
             'Collection Date',
-            'Remarks',
+            'Collector Name',
+            'Donor Name',
+            'Collection Site',
+            'Country',
+            'State',
+            'District',
+            'City / Village',
+            'Latitude',
+            'Longitude',
+            'Altitude',
+            'Pincode',
+
+            // Biological
+            'Biological Status',
+            'Sample Type',
+            'Reproductive Type',
+
+            // Storage
+            'Warehouse',
+            'Storage Location',
+            'Storage Type',
+            'Storage Condition',
+            'Storage Time',
+            'Capacity Unit',
+
+            // Documentation
+            'Barcode Type',
+            'Barcode',
+            'Notes',
+
+            // Dates
+            'Entry Date',
+            'Recheck Date',
+            'Expiry Date',
+            'Created At',
+        ];
+    }
+
+    public function map($accession): array
+    {
+        static $index = 0;
+        $index++;
+
+        return [
+            // Basic
+            $index,
+            $accession->accession_number,
+            $accession->accession_name,
+            $accession->sample_id,
+            $accession->year_of_arrival,
+            $accession->regen_year,
+            $accession->acc_source,
+            $accession->ext_source,
+            $accession->requester_show,
+            $accession->status == 1 ? 'Active' : 'Inactive',
+
+            // Crop
+            $accession->crop?->crop_name,
+            $accession->crop?->crop_code,
+            $accession->crop?->scientific_name,
+
+            // Collection
+            $accession->collection_number,
+            $accession->collection_date?->format('d-m-Y'),
+            $accession->collector_name,
+            $accession->donor_name,
+            $accession->collection_site,
+            $accession->country?->country_name,
+            $accession->state?->state_name,
+            $accession->district?->district_name,
+            $accession->city?->city_village_name,
+            $accession->latitude,
+            $accession->longitude,
+            $accession->altitude,
+            $accession->pincode,
+
+            // Biological
+            $accession->biological_status,
+            $accession->sample_type,
+            $accession->reproductive_type,
+
+            // Storage
+            $accession->warehouse?->name,
+            $accession->storageLocation?->name,
+            $accession->storageType?->name,
+            $accession->storageCondition?->name,
+            $accession->storageTime?->name,
+            $accession->capacityUnit?->name,
+
+            // Documentation
+            $accession->barcode_type,
+            $accession->barcode,
+            $accession->notes,
+
+            // Dates
+            $accession->entry_date?->format('d-m-Y'),
+            $accession->recheck_date?->format('d-m-Y'),
+            $accession->expiry_date?->format('d-m-Y'),
+            $accession->created_at?->format('d-m-Y H:i'),
+        ];
+    }
+
+    public function styles(Worksheet $sheet): array
+    {
+        return [
+            // Header row — green background, white bold text, centered
+            1 => [
+                'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+                'fill' => [
+                    'fillType'   => Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FF2D6A4F'],
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical'   => Alignment::VERTICAL_CENTER,
+                ],
+            ],
         ];
     }
 }

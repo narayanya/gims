@@ -10,9 +10,12 @@
                 <h3 class="text-xl font-bold">Lot Quality Control</h3>
                 <p class="text-muted mb-0" style="font-size:13px">Select a lot to view and manage its seed quality information</p>
             </div>
-            <a href="{{ route('lot-management') }}" class="btn btn-sm btn-outline-secondary">
-                <i class="ri-arrow-left-line me-1"></i> Back to Lot List
-            </a>
+            <div class="">
+                <a href="{{ route('quality-control.history') }}" class="btn btn-sm btn-outline-secondary">Lot Quality History</a>
+                <a href="{{ route('lot-management') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="ri-arrow-left-line me-1"></i> Back to Lot List
+                </a>
+            </div>
         </div>
 
         {{-- Alerts --}}

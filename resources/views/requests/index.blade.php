@@ -250,8 +250,16 @@ Regeneration
                         </tbody>
                     </table>
                 </div>
-                <div class="mt-3">
-                    {{ $requests->links() }}
+                
+                <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap p-2">
+                    <div>
+                        Showing {{ $requests->firstItem() }} to {{ $requests->lastItem() }}
+                        of {{ $requests->total() }} results
+                    </div>
+
+                    <div>
+                        {{ $requests->links() }}
+                    </div>
                 </div>
             </div>
         </div>
@@ -262,6 +270,7 @@ Regeneration
             </div>
         </div>
         @endif
+        
 
         <div class="card">
             <div class="card-header">
@@ -373,6 +382,16 @@ Regeneration
                             @endforeach
                             </tbody>
                     </table>
+                    <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap p-2">
+                        <div>
+                            Showing {{ $requests->firstItem() }} to {{ $requests->lastItem() }}
+                            of {{ $requests->total() }} results
+                        </div>
+
+                        <div>
+                            {{ $requests->links() }}
+                        </div>
+                    </div>
              </div>
         </div>
     </div>

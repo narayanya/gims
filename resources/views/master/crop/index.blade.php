@@ -24,6 +24,9 @@
                     <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#importModal">
                         <i class="ri-upload-line me-1"></i>Import
                     </button>
+                    <a href="{{ route('crops.export') }}" class="btn btn-sm btn-success">
+                            <i class="ri-download-line me-1"></i>Export
+                        </a>
                 </div>
 
                 

@@ -16,18 +16,18 @@ class DispatchController extends Controller
     // ✅ List all approved requests (ready for dispatch)
     public function index()
     {
-        $dispatches = Dispatch::with(['request', 'accession', 'itn'])->latest()->get();   
+        $dispatches = Dispatch::with(['request', 'accession', 'itn'])->latest()->paginate(10);   
         $requests = SeedRequest::with(['user','crop','unit','accession.lots'])
             ->where('status', 'approved')
             ->latest()
-            ->get();
+            ->paginate(10);
         $itns = \App\Models\Itn::with([
             'lot',
             'crop',
             'accession',
             'fromWarehouse',
             'toWarehouse'
-        ])->latest()->get();
+        ])->latest()->paginate(10);
 
         return view('dispatch-management.index', compact('requests', 'dispatches' , 'itns'));
     }

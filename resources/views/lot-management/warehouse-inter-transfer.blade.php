@@ -281,7 +281,18 @@
                 @endforelse
                </tbody>
         </table> 
+        <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+        <div>
+            Showing {{ $wTransfers->firstItem() }} to {{ $wTransfers->lastItem() }}
+            of {{ $wTransfers->total() }} results
+        </div>
+
+        <div>
+            {{ $wTransfers->links() }}
+        </div>
+    </div>
      </div>
+     
         </div>
 </div>
 @endsection

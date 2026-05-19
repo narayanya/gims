@@ -10,6 +10,11 @@ use App\Models\Unit;
 use Illuminate\Http\Request;
 use App\Models\StorageLocation;
 use App\Models\Warehouse;
+use App\Exports\StorageLocationMasterExport;
+use App\Imports\RackImport;
+use App\Imports\BinImport;
+use App\Imports\ContainerImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 
 class StorageLocationMasterController extends Controller
@@ -127,5 +132,39 @@ class StorageLocationMasterController extends Controller
     {
         $container->update(['status'=>0]);
         return back()->with('success','Container deactivated.');
+    }
+
+    public function export()
+    {
+        return Excel::download(
+            new StorageLocationMasterExport,
+            'storage-location-master-' . now()->format('Y-m-d') . '.xlsx'
+        );
+    }
+
+    // ── Import ───────────────────────────────────────────────────────────
+
+    public function rackImport(\Illuminate\Http\Request $request)
+    {
+        $request->validate(['file' => 'required|mimes:csv,xlsx,xls']);
+        Excel::import(new RackImport, $request->file('file'));
+        return redirect()->route('storage-location-master.index', ['tab' => 'rack'])
+            ->with('success', 'Racks imported successfully.');
+    }
+
+    public function binImport(\Illuminate\Http\Request $request)
+    {
+        $request->validate(['file' => 'required|mimes:csv,xlsx,xls']);
+        Excel::import(new BinImport, $request->file('file'));
+        return redirect()->route('storage-location-master.index', ['tab' => 'bin'])
+            ->with('success', 'Bins imported successfully.');
+    }
+
+    public function containerImport(\Illuminate\Http\Request $request)
+    {
+        $request->validate(['file' => 'required|mimes:csv,xlsx,xls']);
+        Excel::import(new ContainerImport, $request->file('file'));
+        return redirect()->route('storage-location-master.index', ['tab' => 'container'])
+            ->with('success', 'Containers imported successfully.');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Crop;
 use Illuminate\Http\Request;
 use App\Imports\CropImport;
+use App\Exports\CropExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\CropCategory;
 use App\Models\CropType;
@@ -205,6 +206,10 @@ if ($monthDiff < 3) {
 
         return redirect()->route('crops.index')
             ->with('success', 'Crops imported successfully!');
+    }
+    public function export()
+    {
+        return Excel::download(new CropExport, 'crop_list.xlsx');
     }
 
     public function getCropDetails($id)

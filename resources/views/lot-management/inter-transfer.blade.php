@@ -305,7 +305,18 @@
                 @endforelse
             </tbody>
         </table>
+        <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+            <div>
+                Showing {{ $transfers->firstItem() }} to {{ $transfers->lastItem() }}
+                of {{ $transfers->total() }} results
+            </div>
+
+            <div>
+                {{ $transfers->links() }}
+            </div>
+        </div>
     </div>
+    
 </div>
     </div>
 </div>

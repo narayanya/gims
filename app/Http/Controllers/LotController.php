@@ -14,6 +14,8 @@ use App\Models\Crop;
 use App\Models\Rack;
 use App\Models\Bin;
 use App\Models\Container;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\LotExport;
 
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
@@ -515,6 +517,11 @@ class LotController extends Controller
 
     }
 
+    public function export()
+    {
+        return Excel::download(new LotExport, 'lot.xlsx');
+    }
+
     public function getLotByNumber(Request $request)
     {
         $lot = \App\Models\Lot::with([
@@ -571,6 +578,21 @@ class LotController extends Controller
         $users      = User::orderBy('name')->get(['id','name']);
 
         return view('lot-management.quality-control', compact('crops', 'accessions', 'storages', 'users'));
+    }
+    
+    public function qualityHistoryControl()
+    {
+        $qualityHistories = SeedQuality::with([
+            'lot',
+            'researcher'
+        ])
+        ->latest()
+        ->paginate(10);
+
+        return view(
+            'lot-management.quality-history-control',
+            compact('qualityHistories')
+        );
     }
 
     /**

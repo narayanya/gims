@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -35,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
         SeedRequest::observe(new ActivityObserver('request'));
         \App\Models\Storage::observe(new ActivityObserver('storage'));
         \App\Models\Lot::observe(new ActivityObserver('lot'));
+        Paginator::useBootstrapFive();
 
         View::composer('*', function ($view) {
             $pendingRequestCount = 0;

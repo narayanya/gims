@@ -32,7 +32,7 @@
                             <option value="depleted">Depleted</option>
                         </select>
                     </div>
-                    <div class="col-md-3 pt-4">
+                    <div class="col-md-2 pt-4">
                         <select class="form-select form-select-sm" id="warehouseFilter">
                             <option value="">All Warehouses</option>
 
@@ -42,19 +42,19 @@
 
                         </select>
                     </div>
-                    <div class="col-md-5 d-flex align-items-end gap-2">
+                    <div class="col-md-6 d-flex align-items-end gap-2">
                         <button class="" id="resetFilters">
                             <i class="ri-refresh-line"></i>
                         </button>
-                        <a href="{{ route('accessions.export') }}" class="btn btn-sm btn-primary">
-                            <i class="ri-download-line me-1"></i>Export
-                        </a>
                         @if(auth()->user()->hasPermission('accession.create'))
+                        <a href="{{ route('accessionform') }}" class="btn btn-sm btn-primary">
+                            <i class="ri-add-line me-1"></i>Add Accession
+                        </a>
                         <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#importModal">
                             <i class="ri-upload-line me-1"></i>Import
                         </button>
-                        <a href="{{ route('accessionform') }}" class="btn btn-sm btn-primary">
-                            <i class="ri-add-line me-1"></i>Add Accession
+                        <a href="{{ route('accessions.export') }}" class="btn btn-sm btn-success">
+                            <i class="ri-download-line me-1"></i>Export
                         </a>
                         @endif
                     </div>
@@ -201,13 +201,23 @@
                                             <li><a class="dropdown-item text-danger" href="#"><i
                                                         class="ri-delete-bin-line me-2"></i>Delete</a></li>
                                             </ul>
-                                        </div>
+                                        
                                         </td>
                                     </tr>
                                 @endforelse
                         </tbody>
                     </table>
-                    {{ $accessions->links() }}
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+                    <div>
+                        Showing {{ $accessions->firstItem() }} to {{ $accessions->lastItem() }}
+                        of {{ $accessions->total() }} results
+                    </div>
+
+                    <div>
+                        {{ $accessions->links() }}
+                    </div>
+                </div>
                 </div>
             </div>
         </div>

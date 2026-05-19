@@ -40,7 +40,7 @@ class PermissionController extends Controller
                 'workflow'=> ['mrn', 'export'],
             ],
             'report' => [
-                'access'  => ['view', 'export', 'expiry', 'transaction'],
+                'access'  => ['view', 'export', 'expiry', 'transaction', 'request'],
             ],
             'menu' => [
                 'access'  => ['dashboard', 'accession', 'lot', 'storage', 'dispatch', 'request', 'reports', 'masters', 'settings', 'logs'],

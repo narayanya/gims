@@ -228,3 +228,17 @@ svg {
 .empty-notification-elem  img.img-fluid{
   width: 40px;
 }
+
+.pagination {
+        margin-bottom: 0;
+    }
+
+    .pagination .page-link {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+
+    .pagination svg {
+        width: 14px;
+        height: 14px;
+    }

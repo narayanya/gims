@@ -168,6 +168,16 @@
                                     </a>
                                 </div>
                             @endif
+                            {{--<div class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+                                <div>
+                                    Showing {{ $storages->firstItem() }} to {{ $storages->lastItem() }}
+                                    of {{ $storages->total() }} results
+                                </div>
+
+                                <div>
+                                    {{ $storages->links() }}
+                                </div>
+                            </div> --}}
                         </div>
                     </div>
                 </div>
