@@ -302,7 +302,7 @@
                     document.getElementsByName('season_start_month_id')[0].value = this.dataset.start_month || '';
                     document.getElementsByName('season_end_month_id')[0].value = this.dataset.end_month || '';
                     document.getElementsByName('pouch_standard_id')[0].value = this.dataset.pouch_standard_id || '';
-                    document.getElementsByName('update_status')[0].value = this.dataset.update_status || '';
+                    
                     
                     document.getElementsByName('crop_name')[0].readOnly = true;
                     document.getElementsByName('crop_code')[0].readOnly = true;
@@ -323,11 +323,11 @@
 
                     let status = this.dataset.update_status;
 
-                    if (status !== undefined) {
-                        document.querySelectorAll('input[name="update_status"]').forEach(r => {
-                            r.checked = (r.value === status);
-                        });
-                    }
+                    
+                    document.querySelectorAll('input[name="update_status"]').forEach(r => {
+                        r.checked = (r.value === status);
+                    });
+                                     
 
                     form.appendChild(method);
 
@@ -965,15 +965,29 @@
                                         <label class="form-label">Update Status</label>
 
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="update_status" value="1"
-                                                {{ old('update_status', $crop->update_status ?? '') == '1' ? 'checked' : '' }}>
-                                            <label class="form-check-label">Yes</label>
+                                            <input 
+                                                class="form-check-input"
+                                                type="radio"
+                                                name="update_status"
+                                                id="update_yes"
+                                                value="1"
+                                            >
+                                            <label class="form-check-label" for="update_yes">
+                                                Yes
+                                            </label>
                                         </div>
 
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="update_status" value="0"
-                                                {{ old('update_status', $crop->update_status ?? '') == '0' ? 'checked' : '' }}>
-                                            <label class="form-check-label">No</label>
+                                            <input 
+                                                class="form-check-input"
+                                                type="radio"
+                                                name="update_status"
+                                                id="update_no"
+                                                value="0"
+                                            >
+                                            <label class="form-check-label" for="update_no">
+                                                No
+                                            </label>
                                         </div>
                                     </div>
 

@@ -457,6 +457,252 @@ h-full rounded-full"
                             </div>
                         </div>
                         @endif
+                        <div class="card shadow-sm border-0 rounded-4 mb-4">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0 fw-bold">Monthly Transactions</h5>
+        </div>
+
+        <div style="position: relative; height:380px;">
+            <canvas id="monthlyTransactionChart"></canvas>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const monthlyData = @json($monthlyData);
+
+const labels = monthlyData.map(item => item.month);
+
+new Chart(document.getElementById('monthlyTransactionChart'), {
+
+    type: 'bar',
+
+    data: {
+        labels: labels,
+
+        datasets: [
+
+            {
+    label: 'Incoming',
+    data: monthlyData.map(item => item.incoming),
+    backgroundColor: '#4F8EF7',
+    borderRadius: 10,
+    borderSkipped: false,
+    categoryPercentage: 0.5,
+    barPercentage: 0.6,
+    maxBarThickness: 22,
+},
+
+{
+    label: 'Dispatch',
+    data: monthlyData.map(item => item.dispatch),
+    backgroundColor: '#57C271',
+    borderRadius: 10,
+    borderSkipped: false,
+    categoryPercentage: 0.5,
+    barPercentage: 0.6,
+    maxBarThickness: 22,
+},
+
+{
+    label: 'Transfer',
+    data: monthlyData.map(item => item.transfer),
+    backgroundColor: '#F28C4B',
+    borderRadius: 10,
+    borderSkipped: false,
+    categoryPercentage: 0.5,
+    barPercentage: 0.6,
+    maxBarThickness: 22,
+},
+
+{
+    label: 'QC Entries',
+    data: monthlyData.map(item => item.qc),
+    backgroundColor: '#F2C94C',
+    borderRadius: 10,
+    borderSkipped: false,
+    categoryPercentage: 0.5,
+    barPercentage: 0.6,
+    maxBarThickness: 22,
+}
+
+        ]
+    },
+
+    options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+        interaction: {
+            mode: 'index',
+            intersect: false
+        },
+
+        layout: {
+    padding: {
+        left: 5,
+        right: 5
+    }
+},
+
+        plugins: {
+
+            legend: {
+                position: 'bottom',
+
+                labels: {
+                    usePointStyle: true,
+                    pointStyle: 'circle',
+                    padding: 25,
+                    font: {
+                        size: 14
+                    }
+                }
+            },
+
+            tooltip: {
+
+                backgroundColor: '#fff',
+                titleColor: '#111',
+                bodyColor: '#111',
+                borderColor: '#ddd',
+                borderWidth: 1,
+                padding: 14,
+
+                displayColors: true,
+
+                callbacks: {
+                    label: function(context) {
+                        return `${context.dataset.label}   ${context.raw}`;
+                    }
+                }
+            }
+        },
+
+        scales: {
+
+            x: {
+                 stacked: false,
+                grid: {
+                    display: false
+                },
+
+                ticks: {
+                    color: '#666',
+                    font: {
+                        size: 13
+                    }
+                }
+            },
+
+            y: {
+
+                beginAtZero: true,
+
+                grid: {
+                    borderDash: [5,5],
+                    color: '#e5e7eb'
+                },
+
+                ticks: {
+                    stepSize: 50,
+                    color: '#666',
+                    font: {
+                        size: 12
+                    }
+                },
+
+                border: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div class="card shadow-sm border-0 rounded-4 mb-4">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0 fw-bold">
+                Total Available Seed Quantity in Gram
+            </h5>
+        </div>
+
+        <div style="position: relative; height:350px;">
+            <canvas id="cropQuantityChart"></canvas>
+        </div>
+
+    </div>
+</div>
+
+<script>
+
+const cropStockData = @json($cropStockChart);
+
+const cropLabels = cropStockData.map(item => item.crop_name);
+
+const cropQuantities = cropStockData.map(item => 
+    parseFloat(item.total_quantity) || 0
+);
+
+
+new Chart(document.getElementById('cropQuantityChart'), {
+
+    type: 'bar',
+
+    data: {
+        labels: cropLabels,
+
+        datasets: [{
+            label: 'Available Quantity',
+
+            data: cropQuantities,
+
+            backgroundColor: [
+                '#4F8EF7',
+                '#57C271',
+                '#F28C4B',
+                '#F2C94C',
+                '#9B51E0',
+                '#EB5757'
+            ],
+
+            borderRadius: 10,
+            borderSkipped: false,
+
+            categoryPercentage: 0.6,
+            barPercentage: 0.7,
+
+            maxBarThickness: 32
+        }]
+    },
+
+    options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+        plugins: {
+
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+</script>
+
                         @if($user->hasRole(['super-admin','admin','manager']))
                         <!-- Data Table Section -->
                         <section
@@ -870,7 +1116,119 @@ h-full rounded-full"
                         
                     </div> <!-- .col-->
                     @endif
+
+                    <div class="card shadow-sm border-0 rounded-4">
+                        <div class="card-body">
+
+                            <p class="text-muted border-bottom mb-2 pb-2">
+                                Most Requested Crop
+                            </p>
+
+                            <h4 class="fw-bold">
+                                {{ $topCrop->crop_name ?? 'N/A' }}
+                            </h4>
+
+                            <div class="d-flex gap-2 mt-2">
+
+                                <span class="badge bg-primary">
+                                    {{ $topCrop->total_requests ?? 0 }} Requests
+                                </span>
+
+                                <span class="badge bg-success">
+                                    {{ $topCrop->total_quantity ?? 0 }} Qty
+                                </span>
+
+                            </div>
+
+                        </div>
                     </div>
+
+                    <div class="card shadow-sm border-0 rounded-4 ">
+                        <div class="card-body">
+
+                            <p class="text-muted border-bottom mb-2 pb-2">
+                                Pending Seed Quality Samples  <span class="float-end mt-2 topbar-badge fs-10 translate-middle badge rounded-pill bg-danger">{{ $pendingQCCount }}</span>
+                            </p>
+
+                            <table class="table align-middle">
+
+                                <thead>
+                                    <tr>
+                                        <th>Lot No</th>
+                                        <th>Crop</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    @foreach($pendingQCSamples as $sample)
+
+                                    <tr>
+                                        <td>{{ $sample->lot_number }}</td>
+                                        <td>{{ $sample->crop_name }}</td>
+                                        <td>{{ \Carbon\Carbon::parse($sample->created_at)->format('d M Y') }}</td>
+                                    </tr>
+
+                                    @endforeach
+
+                                </tbody>
+
+                            </table>
+
+                            <small class="text-muted">
+                                Samples awaiting quality control
+                            </small>
+
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-0 rounded-4">
+                        <div class="card-body">
+
+                            <p class="text-muted border-bottom mb-2 pb-2">
+                                Active Regeneration Cycles <span class="float-end mt-2 topbar-badge fs-10 translate-middle badge rounded-pill bg-success">{{ $activeRegenerationCount }}</span>
+                            </p>
+
+                            <table class="table align-middle">
+
+                            <thead>
+                                <tr>
+                                    <th>Accession</th>
+                                    <th>Crop</th>
+                                    <th>Regeneration Date</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @foreach($activeRegenerationCycles as $item)
+
+                                <tr>
+                                    <td>{{ $item->accession_number }}</td>
+
+                                    <td>{{ $item->crop_name }}</td>
+
+                                    <td>
+                                        {{ \Carbon\Carbon::parse($item->recheck_date)->format('d M Y') }}
+                                    </td>
+                                </tr>
+
+                                @endforeach
+
+                            </tbody>
+
+                        </table>
+
+                            <small class="text-muted">
+                                Upcoming regeneration schedules
+                            </small>
+
+                        </div>
+                    </div>
+
+                    </div>
+
                 </div>
             
 

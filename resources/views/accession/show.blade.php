@@ -33,7 +33,7 @@
 </small><br>
 
 <small class="text-secondary">
-    <b>Re-check: {{ $accession->recheck_date ? \Carbon\Carbon::parse($accession->recheck_date)->format('d F Y') : '-' }}</b>
+    <b>New Regeneration Date: {{ $accession->recheck_date ? \Carbon\Carbon::parse($accession->recheck_date)->format('d F Y') : '-' }}</b>
 </small><br>
 
 <small class="text-danger">

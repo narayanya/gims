@@ -134,12 +134,12 @@
                                             <option value="Invoice"
                                                 {{ old('ext_source', $accession->ext_source ?? '') == 'Invoice' ? 'selected' : '' }}>
                                                 Invoice</option>
-                                            <option value="Recive"
-                                                {{ old('ext_source', $accession->ext_source ?? '') == 'Recive' ? 'selected' : '' }}>Recive
+                                            <option value="Receive"
+                                                {{ old('ext_source', $accession->ext_source ?? '') == 'Receive' ? 'selected' : '' }}>Receive
                                             </option>
-                                            <option value="Agriments"
-                                                {{ old('ext_source', $accession->ext_source ?? '') == 'Agriments' ? 'selected' : '' }}>
-                                                Agriments</option>
+                                            <option value="Agreements"
+                                                {{ old('ext_source', $accession->ext_source ?? '') == 'Agreements' ? 'selected' : '' }}>
+                                                Agreements</option>
                                             <option value="Import License"
                                                 {{ old('ext_source', $accession->ext_source ?? '') == 'Import License' ? 'selected' : '' }}>
                                                 Import License</option>
@@ -209,7 +209,7 @@
                                         
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label required">Accession Name</label>
+                                        <label class="form-label required">Accession Id</label>
                                         <input type="text" name="accession_name"
                                             class="form-control @error('accession_name') is-invalid @enderror"
                                             value="{{ old('accession_name', $accession->accession_name ?? '') }}"

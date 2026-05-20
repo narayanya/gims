@@ -175,7 +175,7 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                                             <tr>
                                                 <th>Reference No.</th>
                                                 <th>Number of Seeds</th>
-                                                <th>Number of Bag</th>
+                                                <th>Number of Pouch</th>
                                                 <th>Per Seed Weight (avg)</th>
                                                 <th>Quantity </th>
                                                 <th>Unit</th>

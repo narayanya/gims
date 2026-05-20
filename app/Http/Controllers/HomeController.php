@@ -9,6 +9,8 @@ use App\Models\Dispatch;
 use App\Models\Variety;
 use App\Models\Lot;
 use App\Models\LotTransfer;
+use App\Models\SeedQuality;
+use Illuminate\Support\Facades\DB;
 use App\Models\Warehouse;
 use App\Models\SeedRequest;
 use App\Models\StorageTime;
@@ -123,6 +125,114 @@ $todayDispatchCount = Dispatch::whereDate('created_at', today())->count();
 
 $todayTransferCount = LotTransfer::whereDate('created_at', today())->count();
 
+$monthlyData = [];
+
+    for ($m = 1; $m <= 12; $m++) {
+
+        $monthlyData[] = [
+            'month' => date('M', mktime(0,0,0,$m,1)),
+
+            'incoming' => Accession::whereMonth('created_at', $m)->count(),
+
+            'dispatch' => Dispatch::whereMonth('created_at', $m)->count(),
+
+            'transfer' => LotTransfer::whereMonth('created_at', $m)->count(),
+
+            'qc' => SeedQuality::whereMonth('created_at', $m)->count(),
+        ];
+    }
+
+    $cropStockChart = DB::table('core_crop')
+
+    ->leftJoin('lots', 'core_crop.id', '=', 'lots.crop_id')
+
+    ->leftJoin('seed_quantities', 'lots.id', '=', 'seed_quantities.lot_id')
+
+    ->where('core_crop.update_status', 1)
+
+    ->select(
+        'core_crop.crop_name',
+        DB::raw('ROUND(COALESCE(SUM(seed_quantities.quantity),0),2) as total_quantity')
+    )
+
+    ->groupBy('core_crop.id', 'core_crop.crop_name')
+
+    ->orderByDesc('total_quantity')
+
+    ->get();
+// For Most Requested Crop
+    $mostRequestedCrops = DB::table('dispatches')
+
+    ->join('lots', 'dispatches.lot_id', '=', 'lots.id')
+
+    ->join('core_crop', 'lots.crop_id', '=', 'core_crop.id')
+
+    ->select(
+        'core_crop.crop_name',
+
+        DB::raw('COUNT(dispatches.id) as total_requests'),
+
+        DB::raw('ROUND(SUM(dispatches.quantity),2) as total_quantity')
+    )
+
+    ->groupBy('core_crop.id', 'core_crop.crop_name')
+
+    ->orderByDesc('total_quantity')
+
+    ->get();
+
+    $topCrop = $mostRequestedCrops->first();
+    
+    //For Pending QC Samples
+
+    $pendingQCSamples = DB::table('lots')
+
+        ->leftJoin('seed_qualities', 'lots.id', '=', 'seed_qualities.lot_id')
+
+        ->join('core_crop', 'lots.crop_id', '=', 'core_crop.id')
+
+        ->whereNull('seed_qualities.id')
+
+        ->select(
+            'lots.id',
+            'lots.lot_number',
+            'core_crop.crop_name',
+            'lots.created_at'
+        )
+
+        ->latest('lots.created_at')
+
+        ->get();
+
+    $pendingQCCount = $pendingQCSamples->count();
+
+    //regunation date  dashboard
+
+    $activeRegenerationCycles = DB::table('accessions')
+
+    ->join('core_crop', 'accessions.crop_id', '=', 'core_crop.id')
+
+    ->whereNotNull('accessions.recheck_date')
+
+    ->whereDate(
+        'accessions.recheck_date',
+        '<=',
+        now()->addMonths(12)
+    )
+
+    ->select(
+        'accessions.id',
+        'accessions.accession_number',
+        'accessions.accession_name',
+        'accessions.recheck_date',
+        'core_crop.crop_name'
+    )
+
+    ->orderBy('accessions.recheck_date')
+
+    ->get();
+    $activeRegenerationCount = $activeRegenerationCycles->count();
+
         return view('home', compact(
             'totalAccessions',
             'totalCrops',
@@ -144,7 +254,14 @@ $todayTransferCount = LotTransfer::whereDate('created_at', today())->count();
             'todayLotCount',
             'todayRequestCount',
             'todayDispatchCount',
-            'todayTransferCount'
+            'todayTransferCount',
+            'monthlyData',
+            'cropStockChart',
+            'topCrop',
+            'pendingQCSamples',
+            'pendingQCCount',
+            'activeRegenerationCount',
+            'activeRegenerationCycles'
         ));
     }
 
