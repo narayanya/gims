@@ -50,7 +50,6 @@
                                 <th>Accession No</th>
                                 <th>Accession Name</th>
                                 <th>Crop</th>
-                                <th>Variety</th>
                                 <th>Quantity</th>
                                 <th>Warehouse</th>
                                 <th>Status</th>
@@ -62,7 +61,6 @@
                                 <th>Request No</th>
                                 <th>Requester</th>
                                 <th>Crop</th>
-                                <th>Variety</th>
                                 <th>Quantity</th>
                                 <th>Status</th>
                                 <th>Date</th>

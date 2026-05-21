@@ -354,6 +354,8 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::get('/dispatch/{id}', [DispatchController::class, 'show'])->name('dispatch.show');
     Route::post('/dispatch/{id}', [DispatchController::class, 'store'])->name('dispatch.store');
     Route::get('/dispatch-print/{id}', [DispatchController::class, 'print'])->name('dispatch.print');
+    Route::get('/dispatch-report', [DispatchController::class, 'dispatchReport'])
+    ->name('dispatch.report');
     
 
     Route::post('/requests/{id}/return', [SeedReturnController::class, 'store'])->name('requests.return');

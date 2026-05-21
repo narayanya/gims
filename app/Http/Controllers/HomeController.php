@@ -71,7 +71,7 @@ class HomeController extends Controller
         $latestRequests = SeedRequest::with(['crop'])
                     ->where('status', 'pending')
                     ->latest()
-                    ->take(5)
+                    ->take(3)
                     ->get();
         $dispatchRequests = SeedRequest::with(['crop'])
                     ->where('status', 'approved')
@@ -178,7 +178,7 @@ $monthlyData = [];
     ->groupBy('core_crop.id', 'core_crop.crop_name')
 
     ->orderByDesc('total_quantity')
-
+    ->limit(3)
     ->get();
 
     $topCrop = $mostRequestedCrops->first();
@@ -201,7 +201,7 @@ $monthlyData = [];
         )
 
         ->latest('lots.created_at')
-
+        ->limit(3)
         ->get();
 
     $pendingQCCount = $pendingQCSamples->count();
@@ -229,7 +229,7 @@ $monthlyData = [];
     )
 
     ->orderBy('accessions.recheck_date')
-
+    ->limit(3)
     ->get();
     $activeRegenerationCount = $activeRegenerationCycles->count();
 

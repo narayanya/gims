@@ -22,6 +22,7 @@ class PermissionController extends Controller
             'lot' => [
                 'core'    => ['view', 'create', 'edit', 'delete'],
                 'data'    => ['import', 'export', 'transfer'],
+                'workflow'=> ['transfer', 'quality_update'],
             ],
             'crop' => [
                 'core'    => ['view', 'create', 'edit', 'delete'],
@@ -29,7 +30,8 @@ class PermissionController extends Controller
             ],
             'storage' => [
                 'core'    => ['view', 'create', 'edit', 'delete'],
-                'data'    => ['export', 'transfer'],
+                'workflow'=> ['transfer'],
+                'data'    => ['export'],
             ],
             'request' => [
                 'core'    => ['view', 'create', 'edit', 'delete'],
@@ -40,13 +42,40 @@ class PermissionController extends Controller
                 'workflow'=> ['mrn', 'export'],
             ],
             'report' => [
-                'access'  => ['view', 'export', 'expiry', 'transaction', 'request'],
+                'access'  => ['view', 'summary', 'export', 'expiry', 'transaction', 'request'],
             ],
             'menu' => [
-                'access'  => ['dashboard', 'accession', 'lot', 'storage', 'dispatch', 'request', 'reports', 'masters', 'settings', 'logs'],
+                'access'  => ['dashboard', 'accession', 'lot', 'storage', 'dispatch', 'request', 'reports', 'masters', 'master_settings', 'settings', 'logs'],
             ],
             'settings' => [
-                'admin'   => ['view', 'users', 'roles', 'permissions', 'masters'],
+                'admin'   => ['view', 'users', 'roles', 'permissions', 'masters','logs',],
+            ],
+            'master' => [
+                'access' => [
+                    'crop',
+                    'category',
+                    'crop_category',
+                    'crop_type',
+                    'variety_type',
+                    'season',
+                    'seed_class',
+                    'unit',
+                    'soil_type',
+                    'arrival_type',
+                    'pouch',
+                    'location',
+                    'employee',
+                    'quality',
+                ],
+            ],
+            'storage_master' => [
+                'access' => [
+                    'warehouse',
+                    'storage_type',
+                    'storage_time',
+                    'storage_condition',
+                    'rack_bin',
+                ],
             ],
         ];
 

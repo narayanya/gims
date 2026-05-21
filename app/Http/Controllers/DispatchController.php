@@ -229,19 +229,45 @@ class DispatchController extends Controller
     
 
     public function print($id)
-{
-    $dispatch = Dispatch::with([
-        'request.crop',
-        'request.unit',
-        'request.user',
-        'request.approvedBy',
-        'itn.fromWarehouse',
-        'itn.toWarehouse',
-        'itn.fromStorage',
-        'itn.toStorage',
-        'accession'
-    ])->findOrFail($id);
+    {
+        $dispatch = Dispatch::with([
+            'request.crop',
+            'request.unit',
+            'request.user',
+            'request.approvedBy',
+            'itn.fromWarehouse',
+            'itn.toWarehouse',
+            'itn.fromStorage',
+            'itn.toStorage',
+            'accession'
+        ])->findOrFail($id);
 
-    return view('dispatch-management.print', compact('dispatch'));
-}
+        return view('dispatch-management.print', compact('dispatch'));
+    }
+
+    public function dispatchReport(Request $request)
+    {
+        $query = Dispatch::with([
+            'request',
+            'accession',
+            'lot'
+        ]);
+
+        // Date Filter
+        if ($request->filled('date_from')) {
+            $query->whereDate('dispatched_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('dispatched_at', '<=', $request->date_to);
+        }
+
+        // Latest First
+        $dispatches = $query
+            ->orderByDesc('id')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('report.dispatch_report', compact('dispatches'));
+    }
 }

@@ -64,20 +64,45 @@
                             </a>
                             <div class="collapse menu-visible menu-dropdown {{ request()->is('categories*','crop-categories*','crop-types*','variety-types*','seasons*','seed-classes*','units*','soil-types*','arrival-types*','pouches*','location*','employees*') ? 'show' : '' }}" id="sidebarMasterSetting">
                                 <ul class="nav nav-sm flex-column">
+                                    @if(auth()->user()->hasPermission('categories.index'))
                                     <li class="nav-item"><a href="{{ route('categories.index') }}" class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}">Category Master</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('crop-categories.index'))
                                     <li class="nav-item"><a href="{{ route('crop-categories.index') }}" class="nav-link {{ request()->routeIs('crop-categories.*') ? 'active' : '' }}">Crop Category</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('crop-types.index'))
                                     <li class="nav-item"><a href="{{ route('crop-types.index') }}" class="nav-link {{ request()->routeIs('crop-types.*') ? 'active' : '' }}">Crop Type</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('variety-types.index'))
                                     <li class="nav-item"><a href="{{ route('variety-types.index') }}" class="nav-link {{ request()->routeIs('variety-types.*') ? 'active' : '' }}">Variety Type</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('seasons.index'))
                                     <li class="nav-item"><a href="{{ route('seasons.index') }}" class="nav-link {{ request()->routeIs('seasons.*') ? 'active' : '' }}">Season</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('seed-classes.index'))
                                     <li class="nav-item"><a href="{{ route('seed-classes.index') }}" class="nav-link {{ request()->routeIs('seed-classes.*') ? 'active' : '' }}">Seed Class</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('units.index'))
                                     <li class="nav-item"><a href="{{ route('units.index') }}" class="nav-link {{ request()->routeIs('units.*') ? 'active' : '' }}">Weight/Capacity Unit</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('soil-types.index'))
                                     <li class="nav-item"><a href="{{ route('soil-types.index') }}" class="nav-link {{ request()->routeIs('soil-types.*') ? 'active' : '' }}">Soil Type</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('arrival-types.index'))
                                     <li class="nav-item"><a href="{{ route('arrival-types.index') }}" class="nav-link {{ request()->routeIs('arrival-types.*') ? 'active' : '' }}">Arrival Type</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('pouches.index'))
                                     <li class="nav-item"><a href="{{ route('pouches.index') }}" class="nav-link {{ request()->routeIs('pouches.*') ? 'active' : '' }}">Pouch Master</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('location.countries'))
                                     <li class="nav-item"><a href="{{ route('location.countries') }}" class="nav-link {{ request()->routeIs('location.*') ? 'active' : '' }}">Location Master</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('master.employees.index'))
                                     <li class="nav-item"><a href="{{ route('master.employees.index') }}" class="nav-link {{ request()->routeIs('master.employees.*') ? 'active' : '' }}">Employee Master</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('quality-master.index'))
                                     <li class="nav-item"><a href="{{ route('quality-master.index') }}" class="nav-link {{ request()->routeIs('quality-master.*') ? 'active' : '' }}">Quality Master</a></li>
-                                    
+                                    @endif
                                 </ul>
                             </div>
                         </li>
@@ -139,12 +164,24 @@
                             </a>
                             <div class="collapse menu-visible menu-dropdown {{ request()->is('storage-management','storage-locations*','warehouses*','storage-types*','storage-times*','storage-conditions*','storage-location-master*') ? 'show' : '' }}" id="sidebarMasterStorage">
                                 <ul class="nav nav-sm flex-column">
+                                    @if(auth()->user()->hasPermission('storage-management.index'))
                                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('storage-management.*') ? 'active' : '' }}" href="{{ route('storage-management.index') }}">Storage List</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('warehouses.index'))
                                     <li class="nav-item"><a href="{{ route('warehouses.index') }}" class="nav-link {{ request()->routeIs('warehouses.*') ? 'active' : '' }}">Warehouse Master</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('storage-types.index'))
                                     <li class="nav-item"><a href="{{ route('storage-types.index') }}" class="nav-link {{ request()->routeIs('storage-types.*') ? 'active' : '' }}">Storage Type</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('storage-times.index'))
                                     <li class="nav-item"><a href="{{ route('storage-times.index') }}" class="nav-link {{ request()->routeIs('storage-times.*') ? 'active' : '' }}">Storage Time</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('storage-conditions.index'))
                                     <li class="nav-item"><a href="{{ route('storage-conditions.index') }}" class="nav-link {{ request()->routeIs('storage-conditions.*') ? 'active' : '' }}">Storage Condition</a></li>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('storage-location-master.index'))
                                     <li class="nav-item"><a href="{{ route('storage-location-master.index') }}" class="nav-link {{ request()->routeIs('storage-location-master.*') ? 'active' : '' }}">Rack / Bin / Container</a></li>
+                                    @endif
                                 </ul>
                             </div>
                         </li>
@@ -176,9 +213,21 @@
                             </a>
                             <div class="collapse menu-visible menu-dropdown {{ request()->routeIs('report.*','expiry.*') ? 'show' : '' }}" id="sidebarReport">
                                 <ul class="nav nav-sm flex-column">
+                                    @if(auth()->user()->hasPermission('report.request'))
                                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('report.request') ? 'active' : '' }}" href="{{ route('report.request') }}">Request Report</a></li>
+                                    @endif
+
+                                    @if(auth()->user()->hasPermission('report.summary'))
                                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('report.summary') ? 'active' : '' }}" href="{{ route('report.summary') }}">Summary Report</a></li>
+                                    @endif
+
+                                    @if(auth()->user()->hasPermission('report.expiry'))
                                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('expiry.report') ? 'active' : '' }}" href="{{ route('expiry.report') }}">Expiry Report</a></li>
+                                    @endif
+
+                                    @if(auth()->user()->hasPermission('report.expiry'))
+                                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('expiry.report') ? 'active' : '' }}" href="{{ route('dispatch.report') }}">Dispatch Report</a></li>
+                                    @endif
                                 </ul>
                             </div>
                         </li>

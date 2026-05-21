@@ -55,6 +55,10 @@ class Dispatch extends Model
     {
         return $this->belongsTo(\App\Models\Itn::class);
     }
+     public function lot()
+    {
+        return $this->belongsTo(Lot::class);
+    }
 
     // All warehouse transfers in the same batch
     public function batchTransfers()
