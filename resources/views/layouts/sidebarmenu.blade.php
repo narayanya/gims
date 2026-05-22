@@ -208,10 +208,10 @@
                         {{-- Reports --}}
                         @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasPermission('menu.reports'))
                         <li class="nav-item">
-                            <a class="nav-link menu-link {{ request()->routeIs('report.*','expiry.*') ? 'active' : '' }}" href="{{ route('report.reports') }}" >
+                            <a class="nav-link menu-link {{ request()->routeIs('report.*', 'report.summary', 'expiry.*', 'dispatch.*') ? 'active' : '' }}" href="{{ route('report.reports') }}" >
                                 <i class="ri-file-chart-line"></i> <span>Reports</span>
                             </a>
-                            <div class="collapse menu-visible menu-dropdown {{ request()->routeIs('report.*','expiry.*') ? 'show' : '' }}" id="sidebarReport">
+                            <div class="collapse menu-visible menu-dropdown {{ request()->routeIs('report.*', 'report.summary' ,'expiry.*', 'dispatch.*') ? 'show' : '' }}" id="sidebarReport">
                                 <ul class="nav nav-sm flex-column">
                                     @if(auth()->user()->hasPermission('report.request'))
                                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('report.request') ? 'active' : '' }}" href="{{ route('report.request') }}">Request Report</a></li>
@@ -226,7 +226,7 @@
                                     @endif
 
                                     @if(auth()->user()->hasPermission('report.expiry'))
-                                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('expiry.report') ? 'active' : '' }}" href="{{ route('dispatch.report') }}">Dispatch Report</a></li>
+                                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('dispatch.report') ? 'active' : '' }}" href="{{ route('dispatch.report') }}">Dispatch Report</a></li>
                                     @endif
                                 </ul>
                             </div>

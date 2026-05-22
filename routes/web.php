@@ -45,6 +45,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/accession/{id}/history', [ReportController::class, 'accessionHistory'])->name('report.accession.history');
     Route::get('/reports/lot/{id}/history', [ReportController::class, 'lotHistory'])->name('report.lot.history');
     Route::get('/reports/request', [ReportController::class, 'requestReport'])->name('report.request')->middleware('permission:report.view');
+    
     Route::get('/reports/request/download', [ReportController::class, 'downloadRequestReport'])->name('report.request.download')->middleware('permission:report.export');
     Route::get('/reports/expiry-report', [ReportController::class, 'expiryReport'])->name('expiry.report')->middleware('permission:report.expiry');
     Route::get('/reports/expiry-report/download', [ReportController::class, 'downloadExpiryReport'])->name('expiry.report.download')->middleware('permission:report.export');

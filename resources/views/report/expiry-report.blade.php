@@ -2,96 +2,235 @@
 
 @section('content')
 <div class="row justify-content-center">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-sage-muted/20 pb-2">
-                <div class="items-center gap-3">
-                    <h3 class="text-sage-900 dark:text-white text-xl font-bold leading-tight flex items-center gap-2 w-100">
-                       Expire Report
-                    </h3>
-                    <p class="text-sage-600 dark:text-sage-400 text-sm mb-1" style="color: #777777">View expire data</p>
-                </div>
-                <a href="{{ route('expiry.report.download') }}" class="btn btn-sm btn-primary">
-                    <i class="ri-download-line me-1"></i>Download Report
-                </a>
+    <div class="col-12">
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-sage-muted/20 pb-2">
+            <div class="items-center gap-3">
+                <h3 class="text-sage-900 dark:text-white text-xl font-bold leading-tight flex items-center gap-2 w-100">
+                    Expire Report
+                </h3>
+
+                <p class="text-sage-600 dark:text-sage-400 text-sm mb-1" style="color: #777777">
+                    View expiry data with filters
+                </p>
             </div>
 
-    <table class="table table-bordered table-striped">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Accession ID</th>
-                <th>Accession</th>
-                <th>Crop</th>
-                <th>Storage</th>
-                <th>Re-check Date</th>
-                <th>Expiry Date</th>
-                <th>Status</th>
-            </tr>
-        </thead>
+            <div class="d-flex gap-2">
 
-        <tbody>
-        @foreach($accessions as $key => $accession)
+                <!-- Download -->
+                <a href="{{ route('expiry.report.download', request()->query()) }}"
+                   class="btn btn-sm btn-primary">
+                    <i class="ri-download-line me-1"></i>
+                    Download Report
+                </a>
+            </div>
+        </div>
 
-            @php
-                $expiry = $accession->expiry_date 
-                    ? \Carbon\Carbon::parse($accession->expiry_date) 
-                    : null;
+        <!-- Filter Section -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
 
-                $daysLeft = $expiry 
-                    ? now()->diffInDays($expiry, false) 
-                    : null;
+                <form method="GET" class="row g-2 align-items-end">
 
-                if (!$expiry) {
-                    $status = ['label' => 'N/A', 'class' => 'secondary'];
-                } elseif ($daysLeft < 0) {
-                    $status = ['label' => 'Expired', 'class' => 'danger'];
-                } elseif ($daysLeft <= 3) {
-                    $status = ['label' => 'Critical', 'class' => 'danger'];
-                } elseif ($daysLeft <= 10) {
-                    $status = ['label' => 'Expiring Soon', 'class' => 'warning'];
-                } else {
-                    $status = ['label' => 'Safe', 'class' => 'success'];
-                }
-            @endphp
+                    <!-- From Date -->
+                    <div class="col-md-2">
+                        <label class="form-label text-muted small">
+                            From Date
+                        </label>
 
-            <tr>
-                <td>{{ $key + 1 }}</td>
-                <td>
-                    {{ $accession->accession_id }}
-                </td>
-                <td>
-                    {{ $accession->accession_name ?? $accession->accession_number }}
-                </td>
+                        <input type="date"
+                               name="date_from"
+                               class="form-control form-control-sm"
+                               value="{{ request('date_from') }}">
+                    </div>
 
-                <td>
-                    {{ $accession->crop->crop_name ?? '-' }}
-                </td>
-                <td>
-                    <span class="badge bg-info">
-                        {{ $accession->storageTime->code ?? '-' }}
-                    </span>
-                </td>
+                    <!-- To Date -->
+                    <div class="col-md-2">
+                        <label class="form-label text-muted small">
+                            To Date
+                        </label>
 
-                <td>
-                    {{ $accession->recheck_date 
-                        ? \Carbon\Carbon::parse($accession->recheck_date)->format('d M Y') 
-                        : '-' 
-                    }}
-                </td>
+                        <input type="date"
+                               name="date_to"
+                               class="form-control form-control-sm"
+                               value="{{ request('date_to') }}">
+                    </div>
 
-                <td>
-                    {{ $expiry ? $expiry->format('d M Y') : '-' }}
-                </td>
+                    <!-- Status -->
+                    <div class="col-md-2">
+                        <label class="form-label text-muted small">
+                            Status
+                        </label>
 
-                <td>
-                    <span class="badge bg-{{ $status['class'] }}">
-                        {{ $status['label'] }}
-                    </span>
-                </td>
-            </tr>
+                        <select name="status" class="form-select form-select-sm">
+                            <option value="">All Status</option>
 
-        @endforeach
-        </tbody>
-    </table>
+                            <option value="expired"
+                                {{ request('status') == 'expired' ? 'selected' : '' }}>
+                                Expired
+                            </option>
+
+                            <option value="critical"
+                                {{ request('status') == 'critical' ? 'selected' : '' }}>
+                                Critical
+                            </option>
+
+                            <option value="soon"
+                                {{ request('status') == 'soon' ? 'selected' : '' }}>
+                                Expiring Soon
+                            </option>
+
+                            <option value="safe"
+                                {{ request('status') == 'safe' ? 'selected' : '' }}>
+                                Safe
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Filter -->
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-sm btn-primary ">
+                            <i class="ri-filter-line me-1"></i>
+                            Filter
+                        </button>
+                        <a href="{{ route('expiry.report') }}"
+                           class="btn btn-sm btn-secondary">
+                            Reset
+                        </a>
+                    </div>
+
+                    <!-- Reset -->
+                    <div class="col-md-2">
+                        
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body table-responsive">
+
+                <table class="table table-bordered table-striped align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Accession ID</th>
+                            <th>Accession</th>
+                            <th>Crop</th>
+                            <th>Storage</th>
+                            <th>Regeneration Date</th>
+                            <th>Expiry Date</th>
+                            <th>Days Left</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @forelse($accessions as $key => $accession)
+
+                        @php
+                            $expiry = $accession->expiry_date
+                                ? \Carbon\Carbon::parse($accession->expiry_date)
+                                : null;
+
+                            $daysLeft = $expiry
+                                ? (int) now()->diffInDays($expiry, false)
+                                : null;
+
+                            if (!$expiry) {
+                                $status = ['label' => 'N/A', 'class' => 'secondary'];
+                            } elseif ($daysLeft < 0) {
+                                $status = ['label' => 'Expired', 'class' => 'danger'];
+                            } elseif ($daysLeft <= 3) {
+                                $status = ['label' => 'Critical', 'class' => 'danger'];
+                            } elseif ($daysLeft <= 10) {
+                                $status = ['label' => 'Expiring Soon', 'class' => 'warning'];
+                            } else {
+                                $status = ['label' => 'Safe', 'class' => 'success'];
+                            }
+                        @endphp
+
+                        <tr>
+
+                        
+
+                            <td>
+                                {{ $accession->accession_number }}
+                            </td>
+
+                            <td>
+                                {{ $accession->accession_name ?? $accession->accession_number }}
+                            </td>
+
+                            <td>
+                                {{ $accession->crop->crop_name ?? '-' }}
+                            </td>
+
+                            <td>
+                                <span class="badge bg-info">
+                                    {{ $accession->storageTime->code ?? '-' }}
+                                </span>
+                            </td>
+
+                            <td>
+                                {{ $accession->recheck_date
+                                    ? \Carbon\Carbon::parse($accession->recheck_date)->format('d M Y')
+                                    : '-'
+                                }}
+                            </td>
+
+                            <td>
+                                {{ $expiry ? $expiry->format('d M Y') : '-' }}
+                            </td>
+
+                            <td>
+                                @if(!is_null($daysLeft))
+                                    @if($daysLeft < 0)
+                                        <span class="text-danger fw-bold">
+                                            {{ abs($daysLeft) }} Days Ago
+                                        </span>
+                                    @else
+                                        <span class="text-primary fw-semibold">
+                                            {{ $daysLeft }} Days
+                                        </span>
+                                    @endif
+                                @else
+                                    -
+                                @endif
+                            </td>
+
+                            <td>
+                                <span class="badge bg-{{ $status['class'] }}">
+                                    {{ $status['label'] }}
+                                </span>
+                            </td>
+
+                        </tr>
+
+                    @empty
+
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                No expiry records found
+                            </td>
+                        </tr>
+
+                    @endforelse
+
+                    </tbody>
+                </table>
+
+                <!-- Pagination -->
+                <div class="mt-3">
+                    {{-- $accessions->withQueryString()->links() --}}
+                </div>
+
+            </div>
+        </div>
+
+    </div>
 </div>
 @endsection

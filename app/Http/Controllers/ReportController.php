@@ -368,7 +368,7 @@ class ReportController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $requests = $query->latest()->get();
+        $requests = $query->latest()->paginate(10);
 
         return view('report.request_report', compact('requests'));
     }
@@ -417,8 +417,77 @@ class ReportController extends Controller
 
         return new StreamedResponse($callback, 200, $headers);
     }
+public function expiryReport(Request $request)
+{
+    $accessions = Accession::with([
+            'crop',
+            'storageTime'
+        ])
 
-    public function expiryReport()
+        // Default = next 3 months data
+        ->when(
+            !$request->date_from && !$request->date_to,
+            function ($q) {
+                $q->whereBetween('expiry_date', [
+                    now()->subMonths(3),
+                    now()->addMonths(3)
+                ]);
+            }
+        )
+
+        // From Date Filter
+        ->when($request->date_from, function ($q) use ($request) {
+            $q->whereDate('expiry_date', '>=', $request->date_from);
+        })
+
+        // To Date Filter
+        ->when($request->date_to, function ($q) use ($request) {
+            $q->whereDate('expiry_date', '<=', $request->date_to);
+        })
+
+        // Status Filter
+    ->when($request->status, function ($q) use ($request) {
+
+        if ($request->status == 'expired') {
+
+            $q->whereDate('expiry_date', '<', now());
+
+        } elseif ($request->status == 'critical') {
+
+            $q->whereBetween('expiry_date', [
+                now(),
+                now()->addDays(3)
+            ]);
+
+        } elseif ($request->status == 'soon') {
+
+            $q->whereBetween('expiry_date', [
+                now()->addDays(4),
+                now()->addDays(10)
+            ]);
+
+        } elseif ($request->status == 'safe') {
+
+            $q->whereDate('expiry_date', '>', now()->addDays(10));
+        }
+    })
+
+    // Custom Priority Sorting
+    ->orderByRaw("
+        CASE
+            WHEN expiry_date < CURDATE() THEN 0
+            WHEN expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) THEN 1
+            WHEN expiry_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 4 DAY) AND DATE_ADD(CURDATE(), INTERVAL 10 DAY) THEN 2
+            ELSE 3
+        END
+    ")
+
+    ->orderBy('expiry_date', 'asc')
+        ->paginate(15);
+
+    return view('report.expiry-report', compact('accessions'));
+}
+    /*public function expiryReport()
     {
         $accessions = Accession::with(['crop', 'storageTime'])
             ->whereNotNull('expiry_date')
@@ -426,7 +495,7 @@ class ReportController extends Controller
             ->get();
 
         return view('report.expiry-report', compact('accessions'));
-    }
+    }*/
 
     public function downloadExpiryReport()
     {
