@@ -62,6 +62,7 @@
                                 <th>Created Date</th>
                                 <th>Status</th>
                                 <th width="100">Actions</th>
+                                <th>Dispose</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -142,6 +143,29 @@
                                             <i class="ri-edit-line"></i>
                                         </a>
                                         @endif
+                                    @endauth
+                                </td>
+                                <td>
+                                    @auth
+                                         @if(
+                                                auth()->user()->hasRole(['super-admin', 'admin']) 
+                                                && $lot->status != 'Disposed'
+                                            )
+
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-danger disposeBtn"
+                                                        title="Dispose/Delete"
+                                                        data-id="{{ $lot->id }}"
+                                                        data-lot="{{ $lot->lot_number }}"
+                                                         data-expiry="{{ $lot->expiry_date 
+            ? \Carbon\Carbon::parse($lot->expiry_date)->format('Y-m-d') 
+            : '' }}">
+
+                                                    <i class="ri-delete-bin-line"></i>
+
+                                                </button>
+
+                                            @endif
                                     @endauth
                                 </td>
                             </tr>
@@ -297,8 +321,133 @@
         </div>
     </div>
 </div>
-@endsection
 
+
+@section('modals')
+<div class="modal fade" id="disposeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <form method="POST" id="disposeForm">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        Dispose Lot
+                    </h5>
+                    <button type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                Lot Number
+                            </label>
+                            <input type="text"
+                                   id="disposeLotNumber"
+                                   class="form-control"
+                                   readonly>
+                        </div>
+                        <div class="col-md-3 mb-3">
+
+    <label class="form-label">
+        Expiry Date
+    </label>
+
+    <input type="date"
+           id="disposeLotExpirydate"
+           class="form-control"
+           readonly>
+
+</div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">
+                                Dispose Date
+                            </label>
+                            <input type="date"
+                                   name="dispose_date"
+                                   class="form-control"
+                                   value="{{ date('Y-m-d') }}"
+                                   required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                Dispose Type
+                            </label>
+                            <select name="dispose_type"
+                                    class="form-select"
+                                    required>
+                                <option value="">Select Type </option>
+                                <option value="Expired">Expired                                </option>
+                                <option value="Damaged">Damaged                                </option>
+                                <option value="Infected">Infected                                </option>
+                                <option value="Moisture">Moisture                                </option>
+                                <option value="Other"> Other                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+                                Status
+                            </label>
+
+                            <select name="status"
+                                    class="form-select">
+
+                                <option value="Disposed">
+                                    Disposed
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-12 mb-3">
+
+                            <label class="form-label">
+                                Dispose Reason
+                            </label>
+
+                            <textarea name="dispose_reason"
+                                      class="form-control"
+                                      rows="4"
+                                      required></textarea>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-light"
+                            data-bs-dismiss="modal">
+
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-danger">
+
+                        Dispose Lot
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+@endsection
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -440,6 +589,33 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+
+});
+
+document.querySelectorAll('.disposeBtn').forEach(btn => {
+
+    btn.addEventListener('click', function () {
+
+        let id     = this.dataset.id;
+        let lot    = this.dataset.lot;
+        let expiry = this.dataset.expiry;
+
+        document.getElementById('disposeLotNumber').value = lot;
+
+        let expiryInput = document.getElementById('disposeLotExpirydate');
+
+        if (expiryInput) {
+            expiryInput.value = expiry;
+        }
+
+        document.getElementById('disposeForm').action =
+            `/lot-management/dispose/${id}`;
+
+        new bootstrap.Modal(
+            document.getElementById('disposeModal')
+        ).show();
+
+    });
 
 });
 </script>

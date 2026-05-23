@@ -27,6 +27,9 @@ class Lot extends Model
         'description', 
         'status', 
         'storage_location_id', 'batch_number', 
+         'dispose_date',
+    'dispose_type',
+    'dispose_reason',
     ];
 
     public function accession()     { return $this->belongsTo(Accession::class); }
@@ -76,5 +79,8 @@ class Lot extends Model
         return $this->belongsTo(Container::class);
     }
 
-    
+    public function regunDisposes()
+    {
+        return $this->hasMany(LotRegunDispose::class);
+    }
 }

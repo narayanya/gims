@@ -16,7 +16,7 @@ use App\Models\Bin;
 use App\Models\Container;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\LotExport;
-
+use App\Models\Dispatch;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +39,7 @@ class LotController extends Controller
             'containers' => \App\Models\Container::where('status',1)->orderBy('name')->get(['id','name']),
             'warehouses' => \App\Models\Warehouse::where('status',1)->orderBy('name')->get(['id','name']),
             'users'      => User::orderBy('name')->get(['id','name']),
+            'dispatches' => Dispatch::with(['request', 'accession', 'itn'])->latest()->paginate(10), 
             'seedQuantities' => SeedQuantity::orderBy('id')->get(['id','number_of_seeds', 'number_of_bags','per_seed_weight','quantity','capacity_unit_id','quantity_show', 'reference_number','min_quantity','in_seed','out_seed','return_seed']),
 
         ];
@@ -77,10 +78,17 @@ class LotController extends Controller
 
     public function managementStore(Request $request)
     {
+
+        \Illuminate\Support\Facades\Log::info('LOT STORE DEBUG', [
+            'arrival_type'         => $request->arrival_type,
+            'rejuvenation_program' => $request->rejuvenation_program,
+            'rff_lot_number'       => $request->rff_lot_number,
+        ]);
         // Validation — reference_number only required/unique for Rejuvenation
         $refRules = $request->arrival_type === 'Rejuvenation'
             ? ['required', 'distinct', Rule::unique('lots', 'reference_number')]
             : ['nullable', 'string', 'max:255'];
+
 
         $request->validate([
             'arrival_type'       => 'required|string',
@@ -176,7 +184,7 @@ class LotController extends Controller
                         $lotNumber = "{$reference}-AccA/{$rowNum}-{$sampleId}-{$seq}";
                         break;
                     case 'Return From Field':
-                        $lotNumber = "{$reference}-RTN/{$rowNum}-{$sampleId}-{$seq}";
+                        $lotNumber = "{$reference}-{$request->rejuvenation_program}/{$rowNum}-{$request->prefix}-{$sampleId}-{$seq}-RF";
                         break;
                     default:
                         $lotNumber = "{$reference}-{$rowNum}-{$sampleId}-{$seq}";
@@ -186,8 +194,12 @@ class LotController extends Controller
                     'lot_number'           => $lotNumber,
                     'arrival_type'         => $arrivalType,
                     'reference_number'     => $reference ?: null,
-                    'rejuvenation_program' => $arrivalType === 'Rejuvenation' ? $request->rejuvenation_program : null,
-                    'prefix'               => $arrivalType === 'Rejuvenation' ? $request->prefix : null,
+                    'rejuvenation_program' => in_array($arrivalType, ['Rejuvenation', 'Return From Field'])
+                                                ? $request->rejuvenation_program
+                                                : null,
+                    'prefix'               => in_array($arrivalType, ['Rejuvenation', 'Return From Field'])
+                                        ? $request->prefix
+                                        : null,
                     'sample_id'            => $sampleId,
                     'accession_id'         => $request->accession_id,
                     'storage_id'           => $request->storage_id,
@@ -195,7 +207,7 @@ class LotController extends Controller
                     'bin_id'               => $request->bin_id,
                     'container_id'         => $request->container_id,
                     'unit_id'              => $request->unit_id[$i] ?? null,
-                    'expiry_date'          => $request->expiry_date,
+                    'expiry_date' => $accession->expiry_date,
                     'description'          => $request->description,
                     'status'               => $request->status,
                     'crop_id'              => $accession->crop_id,
@@ -715,6 +727,56 @@ class LotController extends Controller
         });
 
         return response()->json(['success' => true, 'message' => 'Seed quality saved successfully.']);
+    }
+
+   public function getLotDetails(Request $request)
+    {
+        $lotNumber = $request->lot_number;
+
+        $lot = Lot::where('lot_number', $lotNumber)->first();
+
+        if (!$lot) {
+            return response()->json([
+                'status' => false
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'lot' => [
+                'lot_number'            => $lot->lot_number,
+                'rejuvenation_program' => $lot->rejuvenation_program,
+                'prefix'               => $lot->prefix,
+                'sample_id'            => $lot->sample_id,
+            ]
+        ]);
+    }
+
+    public function dispose(Request $request, $id)
+    {
+        $request->validate([
+
+            'dispose_date'   => 'required|date',
+            'dispose_type'   => 'required',
+            'dispose_reason' => 'required',
+
+        ]);
+
+        $lot = Lot::findOrFail($id);
+
+        $lot->update([
+
+            'status'          => 'Disposed',
+            'dispose_date'    => $request->dispose_date,
+            'dispose_type'    => $request->dispose_type,
+            'dispose_reason'  => $request->dispose_reason,
+
+        ]);
+
+        return back()->with(
+            'success',
+            'Lot disposed successfully.'
+        );
     }
 
 }

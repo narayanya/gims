@@ -26,6 +26,7 @@ use App\Http\Controllers\QualityMasterController;
 use App\Http\Controllers\CropRequestController;
 use App\Http\Controllers\EmployeeController;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\LotRegenerationController;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -119,15 +120,28 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::get('/lot-management/accessions-by-storage/{id}', [LotController::class, 'getAccessionsByStorage'])->name('lot-management.accessions-by-storage');
     Route::get('/lot-management/{id}/quantity', [LotController::class, 'getQuantityDetails']);
     Route::get('/lot-management/{id}/quality', [LotController::class, 'getQualityDetails']);
-    Route::get('/inter-transfer-location', [LotController::class, 'interTransfer'])
-    ->name('inter.transfer');
+    Route::get('/inter-transfer-location', [LotController::class, 'interTransfer'])->name('inter.transfer');
+    Route::post('/lot-management/dispose/{id}',
+    [LotController::class, 'dispose'])
+    ->name('lot-management.dispose');
+
+    Route::get('/lot-regeneration', [LotRegenerationController::class, 'index'])
+    ->name('lot-regeneration.index');
+
+    Route::post('/lot-regeneration/store', [LotRegenerationController::class, 'store'])
+        ->name('lot-regeneration.store');
+
+    Route::get('/lot-regeneration/get-lot/{id}', [LotRegenerationController::class, 'getLot'])
+        ->name('lot-regeneration.getLot');
     
     Route::get('/quality-control', [LotController::class, 'qualityControl'])->name('quality-control.index');
     Route::get('/quality-control-history', [LotController::class, 'qualityHistoryControl'])->name('quality-control.history');
     Route::post('/quality-control/{lotId}/save', [LotController::class, 'qualityControlSave'])->name('quality-control.save');
     Route::get('/quality-control/{lotId}/qualities', [LotController::class, 'getLotQualities'])->name('quality-control.qualities');
     Route::get('/get-lot-by-number', [LotController::class, 'getLotByNumber']);
-     Route::get('/lot/export',         [LotController::class, 'export'])->name('lot.export')->middleware('permission:lot.export');
+    Route::get('/lot/export',         [LotController::class, 'export'])->name('lot.export')->middleware('permission:lot.export');
+    Route::get('/get-lot-details', [LotController::class, 'getLotDetails']);
+
     Route::get('/lot-transfer-export', [LotTransferController::class, 'export'])
     ->name('lot-transfer.export');
 

@@ -66,9 +66,49 @@
                                 @endforeach
                             </select>
                         </div>
+                        <div class="col-md-3 mt-2" id="dispatchnField" style="display:none;">
+                            <label class="form-label">
+                                Dispatch Number or Request Number <span class="text-danger">*</span>
+                            </label>
+                            <select name="dispatch_id" id="dispatchSelect" class="form-select">
+                                <option value="">Select Dispatch Number</option>
+                                @foreach($dispatches as $dispatch)
+                                    <option value="{{ $dispatch->id }}"
+                                            data-request="{{ $dispatch->request->request_number ?? '' }}"
+                                            data-lot="{{ $dispatch->lot->lot_number ?? '' }}">
+                                        {{ $dispatch->dispatch_number }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-5 mt-2" id="requestnField" style="display:none;">
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <select name="request_id" id="requestSelect" class="form-select" style="margin-top:27px;">
+                                        <option value="">Select Request Number</option>
+                                        @foreach($dispatches as $dispatch)
+                                            <option value="{{ $dispatch->request_id }}"
+                                                    data-dispatch-id="{{ $dispatch->id }}"
+                                                    data-lot="{{ $dispatch->lot->lot_number ?? '' }}">
+                                                {{ $dispatch->request->request_number ?? '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-7">
+                                    <input type="text" id="lotNumber" class="form-control" readonly
+                                        placeholder="Lot Number" style="margin-top:27px;">
+                                    {{-- Hidden: lot number stored as rejuvenation_program --}}
+                                    <input type="hidden" name="rejuvenation_program" id="rffRejuvHidden"
+                                        value="{{ old('rejuvenation_program', $lot->rejuvenation_program ?? '') }}">
+                                </div>
+                            </div>
+                            
+                        </div>
 
                         {{-- Only shown when Arrival Type = Rejuvenation --}}
-                        <div class="col-md-3 mt-2" id="rejuvenationFields" style="display:none;">
+                        <div class="col-md-2 mt-2" id="rejuvenationFields" style="display:none;">
                             <label class="form-label">Rejuvenation Program <span class="text-danger">*</span></label>
                             <input type="text" name="rejuvenation_program" id="rejuvenation_program" class="form-control"
                                 value="{{ old('rejuvenation_program', $lot->rejuvenation_program ?? '') }}"
@@ -81,6 +121,21 @@
                                 value="{{ old('prefix', $lot->prefix ?? '') }}"
                                 placeholder="e.g. MB"
                                 {{ isset($lot) ? 'readonly style=background-color:#e9ecef;' : '' }}>
+                        </div>
+
+                        
+                        {{-- Source Lot Number — shown only for Return From Field --}}
+                        <div class="col-md-4 mt-2" id="rffLotField" style="display:none;">
+                            <label class="form-label">Source Lot Number</label>
+                            <div class="input-group">
+                                <input type="text" id="rffLotInput" name="rff_lot_number" class="form-control"
+                                    placeholder="Type or paste lot number…"
+                                    value="{{ old('rff_lot_number', isset($lot) && $lot->arrival_type === 'Return From Field' ? $lot->rejuvenation_program : '') }}">
+                                <button type="button" class="btn btn-outline-secondary" id="rffLotSearchBtn">
+                                    <i class="ri-search-line"></i>
+                                </button>
+                            </div>
+                            <div id="rffLotFeedback" class="mt-1 small"></div>
                         </div>
 
                         {{-- Lot Number Preview --}}
@@ -699,10 +754,20 @@ document.addEventListener('DOMContentLoaded', function () {
     const arrivalType        = document.getElementById('arrivalType');
     const rejuvenationFields = document.getElementById('rejuvenationFields');
     const prefixField        = document.getElementById('prefixField');
+    const dispatchnField     = document.getElementById('dispatchnField');
+    const requestnField      = document.getElementById('requestnField');
+    const rffLotField        = document.getElementById('rffLotField');
+    const rffLotInput        = document.getElementById('rffLotInput');
+    const rffRejuvHidden     = document.getElementById('rffRejuvHidden');
+    const rffLotFeedback     = document.getElementById('rffLotFeedback');
     const rejuvInput         = document.getElementById('rejuvenation_program');
     const prefixInput        = document.getElementById('prefix');
     const lotPreviewBox      = document.getElementById('lotPreviewBox');
     const lotNumberPreview   = document.getElementById('lotNumberPreview');
+    const dispatchSelect     = document.getElementById('dispatchSelect');
+    const requestSelect      = document.getElementById('requestSelect');
+    const lotNumber          = document.getElementById('lotNumber');
+    
 
     // Build lot number for a specific row (1-based rowNum)
     function buildRowLotNumber(ref, rowNum) {
@@ -718,10 +783,161 @@ document.addEventListener('DOMContentLoaded', function () {
             case 'Accession Arrival':
                 return `${ref||'{REF}'}-AccA/${rowNum}-${sampleId}-${seq}`;
             case 'Return From Field':
-                return `${ref||'{REF}'}-RTN/${rowNum}-${sampleId}-${seq}`;
+                return `${ref||'{REF}'}-${rejuv}/${rowNum}-${pfx}-${sampleId}-${seq}-RF`;
             default:
                 return '—';
         }
+    }
+
+   
+
+     // Dispatch Change
+    dispatchSelect.addEventListener('change', function () {
+
+        let selected = this.options[this.selectedIndex];
+
+        let requestNumber = selected.dataset.request;
+        let lot           = selected.dataset.lot;
+
+        // Auto select request
+        Array.from(requestSelect.options).forEach(option => {
+
+            option.selected = option.text.trim() === requestNumber;
+
+        });
+
+        // Show lot number
+        lotNumber.value = lot ?? '';
+
+        // Fetch lot details
+        fetchLotDetails(lot);
+
+    });
+
+    // Request Change
+    requestSelect.addEventListener('change', function () {
+
+        let selected = this.options[this.selectedIndex];
+
+        let dispatchId = selected.dataset.dispatchId;
+        let lot            = selected.dataset.lot;
+
+        
+          // Auto select dispatch
+        dispatchSelect.value = dispatchId ?? '';
+
+        // Show lot number
+        lotNumber.value = lot ?? '';
+
+        // Fetch lot details
+        fetchLotDetails(lot);
+
+    });
+
+    function fetchLotDetails(lotNumberValue) {
+
+        if (!lotNumberValue) return;
+
+        fetch(`/get-lot-details?lot_number=${encodeURIComponent(lotNumberValue)}`)
+            .then(res => res.json())
+            .then(data => {
+
+                if (data.status) {
+
+                    let lot = data.lot;
+
+                    // Show fields
+                    rejuvenationFields.style.display = '';
+                    prefixField.style.display = '';
+
+                    // Auto fill values
+                    if (rejuvInput) {
+                        rejuvInput.value = lot.rejuvenation_program ?? '';
+                    }
+
+                    if (prefixInput) {
+                        prefixInput.value = lot.prefix ?? '';
+                    }
+
+                    // sample_id auto fill
+                    let sampleInput = document.getElementById('sample_id_input');
+
+                    if (sampleInput) {
+                        sampleInput.value = lot.sample_id ?? '';
+                    }
+
+                    // hidden field
+                    if (rffRejuvHidden) {
+                        rffRejuvHidden.value = lot.rejuvenation_program ?? '';
+                    }
+
+                    // rebuild preview
+                    buildLotPreview();
+
+                }
+            })
+            .catch(err => {
+                console.log(err);
+            });
+
+    }
+
+    // ── Return From Field: lot number search ─────────────────────────────
+    function fetchRffLot(lotNum) {
+        if (!lotNum) return;
+        rffLotFeedback.innerHTML = '<span class="text-muted">Searching…</span>';
+
+        fetch(`/get-lot-by-number?lot_number=${encodeURIComponent(lotNum)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.status && data.lot) {
+                    const lot = data.lot;
+                    // Store lot number into the single hidden rejuvenation_program field
+                    rffRejuvHidden.value = lot.rejuvenation_program;
+                    rffLotInput.value    = lot.lot_number;
+                    rffLotFeedback.innerHTML =
+                        `<span class="text-success"><i class="ri-check-line"></i> Found: <strong>${lot.lot_number}</strong>` +
+                        (lot.crop      ? ` | Crop: ${lot.crop}`           : '') +
+                        (lot.accession ? ` | Acc: ${lot.accession}`       : '') +
+                        `</span>`;
+                    buildLotPreview();
+                } else {
+                    rffRejuvHidden.value = '';
+                    rffLotFeedback.innerHTML = '<span class="text-danger"><i class="ri-close-line"></i> Lot not found.</span>';
+                }
+            })
+            .catch(() => {
+                rffLotFeedback.innerHTML = '<span class="text-danger">Error fetching lot.</span>';
+            });
+    }
+
+    if (document.getElementById('rffLotSearchBtn')) {
+        document.getElementById('rffLotSearchBtn').addEventListener('click', function () {
+            fetchRffLot(rffLotInput?.value?.trim());
+        });
+    }
+
+    if (rffLotInput) {
+        // Search on Enter key
+        rffLotInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                fetchRffLot(this.value.trim());
+            }
+        });
+        // Sync typed value directly to hidden field as fallback
+        rffLotInput.addEventListener('input', function () {
+            rffRejuvHidden.value = this.value;
+        });
+    }
+
+    // Sync Rejuvenation visible input → single hidden field
+    if (rejuvInput) {
+        rejuvInput.addEventListener('input', function () {
+            if (arrivalType?.value === 'Rejuvenation') {
+                rffRejuvHidden.value = this.value;
+            }
+        });
     }
 
     // Update all row previews + the header preview box
@@ -757,12 +973,36 @@ document.addEventListener('DOMContentLoaded', function () {
     function toggleArrivalFields() {
         const type    = arrivalType ? arrivalType.value : '';
         const isRejuv = type === 'Rejuvenation';
+        const isRFF   = type === 'Return From Field';
 
-        if (rejuvenationFields) rejuvenationFields.style.display = isRejuv ? '' : 'none';
-        if (prefixField)        prefixField.style.display        = isRejuv ? '' : 'none';
+        if (rejuvenationFields) {
+            rejuvenationFields.style.display = (isRejuv || isRFF) ? '' : 'none';
+        }
+
+        if (prefixField) {
+            prefixField.style.display = (isRejuv || isRFF) ? '' : 'none';
+        }
+        
+        if (dispatchnField)     dispatchnField.style.display     = isRFF   ? '' : 'none';
+        if (requestnField)      requestnField.style.display      = isRFF   ? '' : 'none';
+        if (rffLotField)        rffLotField.style.display        = isRFF   ? '' : 'none';
 
         if (rejuvInput)  rejuvInput.required  = isRejuv;
         if (prefixInput) prefixInput.required = isRejuv;
+
+        if (dispatchSelect) dispatchSelect.required = isRFF;
+        if (requestSelect)  requestSelect.required  = isRFF;
+
+        // Sync hidden field based on active type
+        if (isRejuv && rejuvInput && rffRejuvHidden) {
+            rffRejuvHidden.value = rejuvInput.value;
+        }
+        if (isRFF && rffLotInput && rffRejuvHidden) {
+            rffRejuvHidden.value = rffLotInput.value;
+        }
+        if (!isRejuv && !isRFF && rffRejuvHidden) {
+            rffRejuvHidden.value = '';
+        }
 
         buildLotPreview();
     }
@@ -1340,6 +1580,16 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     $('form').on('submit', function(e){
+
+        // ── Sync rejuvenation_program hidden field ──────────────────────
+        const type = arrivalType?.value;
+        if (type === 'Rejuvenation' && rejuvInput) {
+            rffRejuvHidden.value = rejuvInput.value;
+        } else if (type === 'Return From Field' && rffLotInput) {
+            rffRejuvHidden.value = rffLotInput.value;
+        } else {
+            rffRejuvHidden.value = '';
+        }
 
         // ── Capacity check ──────────────────────────────────────────────
         if (_storageData) {
