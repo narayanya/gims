@@ -8,10 +8,15 @@ class LotRegeneration extends Model
 {
      protected $fillable = [
         'lot_id',
-        'type',
-        'date',
-        'reason',
-        'status'
+    'old_regen_year',
+    'old_expiry_date',
+    'old_regeneration_date',
+
+    'regen_year',
+    'expiry_date',
+    'regeneration_date',
+    'reason',
+    'status',
     ];
 
     public function lot()

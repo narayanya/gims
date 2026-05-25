@@ -13,9 +13,7 @@ class Lot extends Model
         'rejuvenation_program', 
         'prefix', 
         'sample_id',
-        'lot_type_id',  
         'unit_id',
-        
         'storage_id',
         'section_id',
         'rack_id', 
@@ -27,9 +25,11 @@ class Lot extends Model
         'description', 
         'status', 
         'storage_location_id', 'batch_number', 
-         'dispose_date',
-    'dispose_type',
-    'dispose_reason',
+        'dispose_date',
+        'dispose_type',
+        'dispose_reason',
+        'regeneration_date',
+        'regen_year'
     ];
 
     public function accession()     { return $this->belongsTo(Accession::class); }
@@ -81,6 +81,6 @@ class Lot extends Model
 
     public function regunDisposes()
     {
-        return $this->hasMany(LotRegunDispose::class);
+        return $this->hasMany(LotRegeneration::class);
     }
 }

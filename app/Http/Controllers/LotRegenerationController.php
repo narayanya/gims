@@ -32,12 +32,18 @@ class LotRegenerationController extends Controller
     }
 
     $transfers = $query->latest()->paginate(10);
+    
  
     return view('lot-regeneration.index', [
         'crops' => Crop::where('update_status', 1)->orderBy('crop_name')->get(['id','crop_code','crop_name']),
         'accessions' => Accession::where('status', 1)->orderBy('accession_number')->get(['id','crop_id','accession_number']),
         'storages'   => Storage::where('status', 1)->orderBy('name')->get(['id','storage_id','name']),
-        'lot'        => null,
+        'lots'        => Lot::with('accession')
+            ->orderBy('created_at', 'desc')
+            ->paginate(12),
+        'regenerations' => LotRegeneration::with('lot')
+                    ->latest()
+                    ->get(),
 
         // ✅ ADD THIS
         'transfers'  => $transfers,
@@ -62,22 +68,36 @@ class LotRegenerationController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+
+   public function store(Request $request)
     {
         $request->validate([
-            'lot_id' => 'required|exists:lots,id',
-            'type'   => 'required|in:Regeneration,Dispose',
-            'date'   => 'required|date',
-            'reason' => 'nullable|string',
-            'status' => 'required'
+            'from_lot_id'  => 'required|exists:lots,id',
+            'regen_year'   => 'nullable',
+            'expiry_date'  => 'nullable|date',
+            'recheck_date' => 'nullable|date',
+            'reason'       => 'nullable|string',
         ]);
 
+        $lot = Lot::findOrFail($request->from_lot_id);
+
         LotRegeneration::create([
-            'lot_id' => $request->lot_id,
-            'type'   => $request->type,
-            'date'   => $request->date,
+
+            'lot_id' => $lot->id,
+            'old_expiry_date' => $lot->expiry_date,
+            'old_regen_year' => $lot->regen_year,
+            'old_regeneration_date' => $lot->regeneration_date,
+            'regen_year' => $request->regen_year,
+            'expiry_date' => $request->expiry_date,
+            'regeneration_date' => $request->recheck_date,
             'reason' => $request->reason,
-            'status' => $request->status,
+        ]);
+
+        // optional lot table update
+        Lot::where('id', $request->from_lot_id)->update([
+            'regen_year'         => $request->regen_year,
+            'expiry_date'        => $request->expiry_date,
+            'regeneration_date'  => $request->recheck_date,
         ]);
 
         return back()->with('success', 'Saved Successfully');

@@ -170,6 +170,8 @@
                             </select>
                             <input hidden type="text" id="sample_id_input" name="sample_id"
 value="{{ old('sample_id', $accession->sample_id ?? '') }}">
+
+
                         </div>
 
                         <div class="col-md-8 mt-2">
@@ -384,20 +386,6 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                             </div>
                         </div>
 
-                        {{-- Section (filtered by storage) --}}
-                        {{--<div class="col-md-3 mt-2">
-                            <label class="form-label">Section (Category/Zone)<span class="text-danger">*</span></label>
-                            <select name="section_id" id="sectionSelect" class="form-select" required>
-                                <option value="">Select Section</option>
-                                @foreach ($sections as $section)
-                                    <option value="{{ $section->id }}"
-                                        data-storage="{{ $section->storage_id }}"
-                                        {{ $selectedSection == $section->id ? 'selected' : '' }}>
-                                        {{ $section->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>--}}
 
                         {{-- Rack (filtered by section) --}}
                         <div class="col-md-3 mt-2">

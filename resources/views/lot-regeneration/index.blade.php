@@ -35,16 +35,64 @@
                     <tr>
                         <th>#</th>
                         <th>Lot Number</th>
-                        <th>Entry Date</th>
+                        <th>Lot Entry Date</th>
                         <th>Expiry Date</th>
                         <th>Regeneration Date</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
+                @forelse($lots as $key => $lot)
+                    <tr>
+                        <td>{{ $key + 1 }}</td>
 
+                        <td>{{ $lot->lot_number }}</td>
+
+                        <td>
+                            {{ \Carbon\Carbon::parse($lot->created_at)->format('d-m-Y') }}
+                        </td>
+
+                        <td>
+                            {{ $lot->expiry_date 
+                                ? \Carbon\Carbon::parse($lot->expiry_date)->format('d-m-Y') 
+                                : '-' }}
+                        </td>
+
+                        <td>
+                            {{ $lot->regeneration_date 
+                                ? \Carbon\Carbon::parse($lot->regeneration_date)->format('d-m-Y') 
+                                : '-' }}
+                        </td>
+
+                        <td>
+                            <button 
+                                class="btn btn-sm btn-outline-secondary regenerationBtn "
+                                data-id="{{ $lot->id }}"
+                                data-lot="{{ $lot->lot_number }}"
+                            >
+                                Action
+                            </button>
+                        </td>
+                    </tr>
+                @empty
+                <tr>
+                    <td colspan="6" class="text-center text-muted">
+                        No Record Found
+                    </td>
+                </tr>
+                @endforelse
                 </tbody>
                 </table>
+                <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap p-2">
+                        <div>
+                            Showing {{ $lots->firstItem() }} to {{ $lots->lastItem() }}
+                            of {{ $lots->total() }} results
+                        </div>
+
+                        <div>
+                            {{ $lots->links() }}
+                        </div>
+                    </div>
             </div>
         </div>
         </div>
@@ -68,7 +116,8 @@
                                     <select id="from_crop" class="form-select">
                                         <option value="">Select Crop</option>
                                         @foreach($crops as $c)
-                                            <option value="{{ $c->id }}">{{ $c->crop_name }}-{{ $c->crop_code }} </option>
+                                            <option value="{{ $c->id }}" data-regen="{{ $c->regeneration_cut_year }}" data-start="{{ $c->season_start_month_id ?? '' }}"
+    data-end="{{ $c->season_end_month_id ?? '' }}" >{{ $c->crop_name }}-{{ $c->crop_code }} </option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -139,12 +188,19 @@
                                 <input type="number" id="regen_year" name="regen_year" class="form-control"
                                     value="{{ old('regen_year', $accession->regen_year ?? '') }}"
                                     placeholder="Enter number only" min="0.1" max="100" step="0.1">
+                                
                             </div>
 
                             <div class="col-md-4">
                                 <label class="form-label">Expiry Date <span class="text-danger">*</span></label>
                                 <input type="date" id="expiry_date" name="expiry_date" class="form-control"
                                     value="{{ old('expiry_date', now()->addMonth(0)->format('Y-m-d')) }}" min="{{ date('Y-m-d') }}">
+                                    <small class="text-muted">
+                                        Old:
+                                        <span id="old1_expiry_date">
+                                            {{ old('expiry_date', now()->format('d-m-Y')) }}
+                                        </span>
+                                    </small>
                             </div>
 
                             <div class="col-md-4">
@@ -152,6 +208,12 @@
                                         class="text-danger">*</span></label>
                                 <input type="date" id="recheck_date" name="recheck_date" class="form-control"
                                     value="{{ old('recheck_date', $accession->recheck_date ?? '') }}" min="{{ date('Y-m-d') }}">
+                                    <small class="text-muted">
+                                        Old:
+                                        <span id="old_recheck_date">
+                                            {{ old('recheck_date', $accession->recheck_date ?? '') }}
+                                        </span>
+                                    </small>
                             </div>
                         </div>
 
@@ -160,7 +222,7 @@
                                 <textarea name="reason" class="form-control"></textarea>
                             </div>
                             <div class="col-md-12">
-                                <button class="btn btn-primary d-none">
+                                <button class="btn btn-primary">
                                     Save
                                 </button>
                             </div>
@@ -187,31 +249,97 @@
                         <th>#</th>
                         <th>Lot Number</th>
                         <th>Entry Date</th>
+                        <th>Old Regeneration Cut of Year</th>
                         <th>Old Expiry Date</th>
                         <th>Old Regeneration Date</th>
                         <th>Regeneration Cut of Year</th>
                         <th>New Expiry Date</th>
                         <th>New Regeneration Date</th>
-                        <th>Type</th>
                         <th>Date</th>
                         <th>Reason</th>
                     </tr>
                 </thead>
-
                 <tbody>
 
-                   {{-- @foreach($records as $key => $row)
+                @forelse($regenerations as $key => $row)
 
-                        <tr>
-                            <td>{{ $key + 1 }}</td>
-                            <td>{{ $row->lot->lot_number ?? '-' }}</td>
-                            <td>{{ $row->type }}</td>
-                            <td>{{ $row->date }}</td>
-                            <td>{{ $row->reason }}</td>
-                            <td>{{ $row->status }}</td>
-                        </tr>
+                <tr>
 
-                    @endforeach--}}
+                    <td>{{ $key + 1 }}</td>
+
+                    {{-- Lot Number --}}
+                    <td>
+                        {{ $row->lot->lot_number ?? '-' }}
+                    </td>
+
+                    {{-- Entry Date --}}
+                    <td>
+                        {{ $row->lot && $row->lot->created_at
+                            ? \Carbon\Carbon::parse($row->lot->created_at)->format('d-m-Y')
+                            : '-' }}
+                    </td>
+
+                    {{-- Old Regen Year --}}
+                    <td>
+                        {{ $row->old_regen_year ?? '-' }}
+                    </td>
+
+                    {{-- Old Expiry Date --}}
+                    <td>
+                        {{ $row->old_expiry_date
+                            ? \Carbon\Carbon::parse($row->old_expiry_date)->format('d-m-Y')
+                            : '-' }}
+                    </td>
+
+                    {{-- Old Regeneration Date --}}
+                    <td>
+                        {{ $row->old_regeneration_date
+                            ? \Carbon\Carbon::parse($row->old_regeneration_date)->format('d-m-Y')
+                            : '-' }}
+                    </td>
+
+                    {{-- New Regen Year --}}
+                    <td>
+                        {{ $row->regen_year ?? '-' }}
+                    </td>
+
+                    {{-- New Expiry Date --}}
+                    <td>
+                        {{ $row->expiry_date
+                            ? \Carbon\Carbon::parse($row->expiry_date)->format('d-m-Y')
+                            : '-' }}
+                    </td>
+
+                    {{-- New Regeneration Date --}}
+                    <td>
+                        {{ $row->regeneration_date
+                            ? \Carbon\Carbon::parse($row->regeneration_date)->format('d-m-Y')
+                            : '-' }}
+                    </td>
+
+                    {{-- Date --}}
+                    <td>
+                        {{ $row->created_at
+                            ? \Carbon\Carbon::parse($row->created_at)->format('d-m-Y')
+                            : '-' }}
+                    </td>
+
+                    {{-- Reason --}}
+                    <td>
+                        {{ $row->reason ?? '-' }}
+                    </td>
+
+                </tr>
+
+                @empty
+
+                <tr>
+                    <td colspan="11" class="text-center text-muted">
+                        No Regeneration History Found
+                    </td>
+                </tr>
+
+                @endforelse
 
                 </tbody>
 
@@ -347,16 +475,34 @@ document.addEventListener('DOMContentLoaded', function () {
                         data-section="${lot.section?.name || '—'}"
                         data-rack="${lot.rack?.name || '—'}"
                         data-bin="${lot.bin?.name || '—'}"
-                        data-container="${lot.container?.name || '—'}">
+                        data-container="${lot.container?.name || '—'}"
+                         data-regen_year="${lot.regen_year}"
+    data-expiry_date="${lot.expiry_date}"
+    data-recheck_date="${lot.regeneration_date}"
+    >
                         ${lot.lot_number} (Avail: ${qtyShow} ${unit})
                     </option>`;
                 });
             });
     });
+    function formatDisplayDate(dateString) {
+
+        if (!dateString) return '—';
+
+        let d = new Date(dateString);
+
+        let day   = String(d.getDate()).padStart(2, '0');
+        let month = String(d.getMonth() + 1).padStart(2, '0');
+        let year  = d.getFullYear();
+
+        return `${day}-${month}-${year}`;
+    }
 
     // ── FROM: Lot → show details ──────────────────────────────────────────
     document.getElementById('from_lot').addEventListener('change', function () {
         const sel = this.options[this.selectedIndex];
+        const cropOption =
+    cropSelect.options[cropSelect.selectedIndex];
         const box = document.getElementById('from_lotInfo');
         if (!this.value) { box.classList.add('d-none'); return; }
         document.getElementById('fl_lot_number').textContent = sel.dataset.lotno   || '—';
@@ -368,93 +514,78 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('fl_rack').textContent       = sel.dataset.rack    || '—';
         document.getElementById('fl_bin').textContent       = sel.dataset.bin    || '—';
         document.getElementById('fl_container').textContent       = sel.dataset.container    || '—';
-        box.classList.remove('d-none');
-    });
+        
 
-    // ── TO: Storage → load racks/bins/containers ─────────────────────────
-    document.getElementById('to_storage').addEventListener('change', function () {
-        const id  = this.value;
-        const box = document.getElementById('to_storageInfo');
-        const locationFields      = document.getElementById('to_locationFields');
-        const locationPlaceholder = document.getElementById('to_locationPlaceholder');
+        window._cropSeason = {
+            start_month:
+                parseInt(cropOption.dataset.start) || 0,
+            end_month:
+                parseInt(cropOption.dataset.end) || 0,
+        };
 
-        // Reset all location dropdowns
-        resetSelect('to_rack',      'Select Rack');
-        resetSelect('to_bin',       'Select Bin',  true);
-        resetSelect('to_container', 'Select Container');
-        hideHint('to_rack_empty');
-        hideHint('to_bin_empty');
+        document.getElementById('old1_expiry_date').textContent =
+            formatDisplayDate(sel.dataset.expiry_date || '—');
 
-        if (!id) {
-            box.classList.add('d-none');
-            locationFields.classList.add('d-none');
-            locationPlaceholder.classList.remove('d-none');
-            return;
+        document.getElementById('old_recheck_date').textContent =
+            formatDisplayDate(sel.dataset.recheck_date || '—');
+
+        // =========================
+        // OLD VALUES
+        // =========================
+
+        let regenYear  = parseFloat(sel.dataset.regen_year || 0);
+
+        let oldExpiry  = sel.dataset.expiry_date;
+        let oldRecheck = sel.dataset.recheck_date;
+
+        // =========================
+        // AUTO FILL REGEN YEAR
+        // =========================
+
+        document.getElementById('regen_year').value = regenYear;
+
+        // =========================
+        // NEW EXPIRY DATE
+        // old expiry + regen year
+        // =========================
+
+        if (oldExpiry && regenYear > 0) {
+
+            let expiryDate = new Date(oldExpiry);
+
+            expiryDate.setFullYear(
+                expiryDate.getFullYear() + regenYear
+            );
+
+            let expiryFormatted =
+                expiryDate.toISOString().split('T')[0];
+
+            document.getElementById('expiry_date').value =
+                expiryFormatted;
         }
 
-        // Load storage info
-        fetch(`/get-storage-lots/${id}`)
-            .then(r => r.json())
-            .then(d => {
-                document.getElementById('to_warehouse').textContent  = d.storage.warehouse || '—';
-                document.getElementById('to_type').textContent       = d.storage.storage_type || '—';
-                document.getElementById('to_condition').textContent  = d.storage.storage_condition || '—';
-                document.getElementById('to_time').textContent       = d.storage.storage_time || '—';
-                document.getElementById('to_temp').textContent       = d.storage.temperature ? `${d.storage.temperature}` : '—';
-                document.getElementById('to_humidity').textContent   = d.storage.humidity ? `${d.storage.humidity}` : '—';
-                document.getElementById('to_capacity').textContent   = d.storage.capacity ? `${d.storage.capacity} ${d.unit||''}` : '—';
-                document.getElementById('to_available').textContent  = d.available ? `${d.available} ${d.unit||''}` : '—';
-                box.classList.remove('d-none');
-            });
+        // =========================
+        // NEW RECHECK DATE
+        // old recheck + regen year
+        // =========================
 
-        // Load racks/bins/containers filtered by storage
-        fetch(`/get-storage-hierarchy/${id}`)
-            .then(r => r.json())
-            .then(d => {
-                window._toBins       = d.bins       || [];
-                window._toContainers = d.containers || [];
+        if (oldRecheck && regenYear > 0) {
 
-                // Populate racks directly from storage (no section filter)
-                const rackSel = document.getElementById('to_rack');
-                const racks   = d.racks || [];
-                if (racks.length === 0) {
-                    showHint('to_rack_empty');
-                } else {
-                    hideHint('to_rack_empty');
-                    racks.forEach(r => rackSel.add(new Option(r.name, r.id)));
-                    rackSel.disabled = false;
-                }
+            let recheckDate = new Date(oldRecheck);
 
-                // Populate containers
-                const conSel = document.getElementById('to_container');
-                d.containers.forEach(c => {
-                    const label = c.container_type ? `${c.name} (${c.container_type})` : c.name;
-                    conSel.add(new Option(label, c.id));
-                });
+            recheckDate.setFullYear(
+                recheckDate.getFullYear() + regenYear
+            );
 
-                locationFields.classList.remove('d-none');
-                locationPlaceholder.classList.add('d-none');
-            });
-    });
+            let recheckFormatted =
+                recheckDate.toISOString().split('T')[0];
 
-    // ── TO: Rack → filter Bins ────────────────────────────────────────────
-    document.getElementById('to_rack').addEventListener('change', function () {
-        const rid = this.value;
-        resetSelect('to_bin', 'Select Bin', true);
-        hideHint('to_bin_empty');
-
-        if (!rid) return;
-
-        const filtered = (window._toBins || []).filter(b => b.rack_id == rid);
-        const binSel   = document.getElementById('to_bin');
-
-        if (filtered.length === 0) {
-            showHint('to_bin_empty');
-        } else {
-            filtered.forEach(b => binSel.add(new Option(b.name, b.id)));
-            binSel.disabled = false;
+            document.getElementById('recheck_date').value =
+                recheckFormatted;
         }
-    });
+            
+            box.classList.remove('d-none');
+        });
 
     // ── Helpers ───────────────────────────────────────────────────────────
     function resetSelect(id, placeholder, disable = false) {
@@ -492,6 +623,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     setTimeout(() => {
                         let lotSelect = document.getElementById('from_lot');
 
+                        
+
                         // add option if not exists
                         let option = new Option(lot.lot_number, lot.id, true, true);
                         lotSelect.append(option);
@@ -503,6 +636,240 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         }
     });
+
+
+    
+
+
+
+    
+    // =========================
+            // DATE AUTO CALC
+            // =========================
+
+    const expiryInput    = document.getElementById('expiry_date');
+    const regenInput     = document.getElementById('recheck_date');
+    const regenYearInput = document.getElementById('regen_year');
+
+    @php
+        $seasonStart = 0;
+        $seasonEnd   = 0;
+        if (isset($accession) && $accession && $accession->crop && $accession->crop->season) {
+            $seasonStart = (int) $accession->crop->season->start_month;
+            $seasonEnd   = (int) $accession->crop->season->end_month;
+        }
+        if (isset($accession) && $accession && $accession->crop) {
+            $seasonStart = (int) $accession->crop->season_start_month_id;
+            $seasonEnd   = (int) $accession->crop->season_end_month_id;
+        }
+    @endphp
+
+    // Season seeded from PHP on edit (crop already selected), updated via AJAX on crop change
+    window._cropSeason = {
+        season_start_month_id: {{ $accession->crop->season_start_month_id ?? 0 }},
+        season_end_month_id: {{ $accession->crop->season_end_month_id ?? 0 }},
+        start_month: {{ $seasonStart }},
+        end_month: {{ $seasonEnd }}
+    };
+
+    console.log("Season from PHP:", window._cropSeason);
+    
+
+    function formatDate(d) {
+        const y   = d.getFullYear();
+        const m   = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
+    // Check if month is inside season (handles wrap-around e.g. Rabi: Nov–Mar)
+    function isMonthInSeason(month, start, end) {
+        if (start <= end) {
+            return month >= start && month <= end;
+        } else {
+            return month >= start || month <= end;
+        }
+    }
+
+    // ✅ EVENTS
+    const cropSelect = document.getElementById('from_crop');
+
+    if (cropSelect) {
+
+        cropSelect.addEventListener('change', function () {
+
+            const selectedOption =
+                this.options[this.selectedIndex];
+
+            // regen year
+            regenYearInput.value =
+                selectedOption.dataset.regen || '';
+
+            // crop season
+            window._cropSeason = {
+
+                start_month:
+                    parseInt(selectedOption.dataset.start) || 0,
+
+                end_month:
+                    parseInt(selectedOption.dataset.end) || 0,
+            };
+
+            console.log(window._cropSeason);
+
+            calculateAllDates();
+
+        });
+
+    }
+
+    // Auto-fill Regeneration Cut of Year when crop is selected
+    /*cropSelect.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const regenYear = selectedOption.getAttribute('data-regen');
+        regenYearInput.value = regenYear ?? '';
+        // Note: calculateAllDates() is called by the jQuery AJAX handler
+        // after the season is loaded, so we don't call it here.
+    });*/
+
+    regenYearInput.addEventListener('input', function () {
+
+        if (cropSelect.value === '') {
+
+            alert('Please select a Crop first.');
+
+            this.value = '';
+
+            expiryInput.value = '';
+            regenInput.value  = '';
+
+            cropSelect.focus();
+
+            return;
+        }
+
+        calculateAllDates();
+    });
+
+    cropSelect.addEventListener('change', function () {
+        const selectedOption =
+        this.options[this.selectedIndex];
+
+        // ✅ auto fill regen year
+        const regenYear =
+            selectedOption.getAttribute('data-regen');
+
+        regenYearInput.value = regenYear ?? '';
+
+        // ✅ calculate after value set
+        setTimeout(() => {
+
+            calculateAllDates();
+
+        }, 100);
+    });
+
+    // Auto-fill on edit page load
+    window.addEventListener('load', function () {
+        if (cropSelect && cropSelect.value) {
+            // Only auto-fill if empty
+            if (!regenYearInput.value) {
+                const selectedOption = cropSelect.options[cropSelect.selectedIndex];
+
+                regenYearInput.value =
+                    selectedOption.getAttribute('data-regen') ?? '';
+            }
+            // Season is already seeded from PHP (_cropSeason), calculate immediately
+            calculateAllDates();
+        }
+    });
+
+    // CALCULATION LOGIC:
+    //   Expiry     = today + regen_years  (same day/month, N years ahead)
+    //   Regen Date = expiry month IN season  → same date as expiry
+    //              = expiry month OUT of season → (expiry year - 1), season start month, same day
+    // Example: today=29-Apr-2026, years=2, Kharif(Jun-Oct)
+    //   Expiry = 29-Apr-2028  (Apr is outside Jun-Oct)
+    //   Regen  = 29-Jun-2027  (2028-1=2027, start month=Jun, day=29)
+    window.calculateAllDates = function () {
+
+        const years = parseFloat(regenYearInput.value);
+
+        if (isNaN(years) || years <= 0) {
+
+            // ✅ reset dates when input empty
+            expiryInput.value = '';
+            regenInput.value  = '';
+
+            return;
+        }
+
+        const today = new Date();
+
+        // ✅ convert decimal year to months
+        const totalMonths = years * 12;
+
+        // ✅ expiry date
+        const expiry = new Date(today);
+
+        expiry.setMonth(
+            expiry.getMonth() + parseInt(totalMonths)
+        );
+
+        expiryInput.value = formatDate(expiry);
+
+        // ✅ PRIORITY:
+        // crop season month first
+        let startMonth =
+            window._cropSeason.season_start_month_id
+            || window._cropSeason.start_month;
+
+        let endMonth =
+            window._cropSeason.season_end_month_id
+            || window._cropSeason.end_month;
+
+        // ✅ no season
+        if (!startMonth || !endMonth) {
+
+            regenInput.value = formatDate(expiry);
+
+            return;
+        }
+
+        const expMonth = expiry.getMonth() + 1;
+
+        let regen;
+
+        // ✅ season match
+        if (
+            isMonthInSeason(
+                expMonth,
+                startMonth,
+                endMonth
+            )
+        ) {
+
+            regen = new Date(expiry);
+
+        } else {
+
+            // ✅ first day of season month
+            const regenYear =
+                expiry.getFullYear() - 1;
+
+            const regenMonth =
+                startMonth - 1;
+
+            regen = new Date(
+    regenYear,
+    regenMonth,
+    expiry.getDate()
+);
+        }
+        
+
+        regenInput.value = formatDate(regen);
+    }
 
 });
 </script>

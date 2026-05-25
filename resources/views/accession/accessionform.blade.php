@@ -1098,7 +1098,7 @@
 
     // Auto-fill Regeneration Cut of Year when crop is selected
     cropSelect.addEventListener('change', function () {
-        const selectedOption = this.options[this.selectedIndex];
+        const selectedpOtion = this.options[this.selectedIndex];
         const regenYear = selectedOption.getAttribute('data-regen');
         regenYearInput.value = regenYear ?? '';
         // Note: calculateAllDates() is called by the jQuery AJAX handler

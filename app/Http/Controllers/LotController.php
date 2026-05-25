@@ -207,10 +207,15 @@ class LotController extends Controller
                     'bin_id'               => $request->bin_id,
                     'container_id'         => $request->container_id,
                     'unit_id'              => $request->unit_id[$i] ?? null,
-                    'expiry_date' => $accession->expiry_date,
+
+                     // store accession dates
+                    'expiry_date'       => $accession->expiry_date,
+                    'regeneration_date' => $accession->recheck_date,
+                    'regen_year'        => $accession->regen_year,
                     'description'          => $request->description,
                     'status'               => $request->status,
                     'crop_id'              => $accession->crop_id,
+
                 ]);
 
                 if (!$newLot->id) {
