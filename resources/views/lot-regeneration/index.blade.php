@@ -65,11 +65,9 @@
                         </td>
 
                         <td>
-                            <button 
-                                class="btn btn-sm btn-outline-secondary regenerationBtn "
+                            <button class="btn btn-sm btn-outline-secondary regenerationBtn "
                                 data-id="{{ $lot->id }}"
-                                data-lot="{{ $lot->lot_number }}"
-                            >
+                                data-lot="{{ $lot->lot_number }}">
                                 Action
                             </button>
                         </td>
@@ -103,12 +101,12 @@
                 @csrf
                             <div class="row">
                                 
-                                <div class="col-md-12 mb-3">
+                                <div class="col-md-12">
                                     <label class="form-label">Search Lot Number </label>
                                     <input type="text" id="lot_search" class="form-control" placeholder="Search lot number" />
                                     <small class="text-muted">e.g.: 1564-2017-2018/2-MB-1483-02</small>
                                 </div>
-                                <div class="col-md-12 mb-3 text-center">
+                                <div class="col-md-12 text-center">
                                     or
                                 </div>
                                 <div class="mb-3 col-md-6">
@@ -192,7 +190,7 @@
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label">Expiry Date <span class="text-danger">*</span></label>
+                                <label class="form-label">Next Expiry Date <span class="text-danger">*</span></label>
                                 <input type="date" id="expiry_date" name="expiry_date" class="form-control"
                                     value="{{ old('expiry_date', now()->addMonth(0)->format('Y-m-d')) }}" min="{{ date('Y-m-d') }}">
                                     <small class="text-muted">
@@ -223,7 +221,10 @@
                             </div>
                             <div class="col-md-12">
                                 <button class="btn btn-primary">
-                                    Save
+                                    Update
+                                </button>
+                                <button type="reset" class="btn btn-light">
+                                    Reset
                                 </button>
                             </div>
             </form>
@@ -255,7 +256,7 @@
                         <th>Regeneration Cut of Year</th>
                         <th>New Expiry Date</th>
                         <th>New Regeneration Date</th>
-                        <th>Date</th>
+                        <th>Update Date</th>
                         <th>Reason</th>
                     </tr>
                 </thead>
@@ -330,25 +331,17 @@
                     </td>
 
                 </tr>
-
                 @empty
-
                 <tr>
                     <td colspan="11" class="text-center text-muted">
                         No Regeneration History Found
                     </td>
                 </tr>
-
                 @endforelse
-
                 </tbody>
-
             </table>
-
         </div>
-
     </div>
-
 </div>
 </div>
 @endsection
@@ -550,16 +543,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // =========================
 
         if (oldExpiry && regenYear > 0) {
-
             let expiryDate = new Date(oldExpiry);
-
             expiryDate.setFullYear(
                 expiryDate.getFullYear() + regenYear
             );
-
             let expiryFormatted =
                 expiryDate.toISOString().split('T')[0];
-
             document.getElementById('expiry_date').value =
                 expiryFormatted;
         }
@@ -572,14 +561,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (oldRecheck && regenYear > 0) {
 
             let recheckDate = new Date(oldRecheck);
-
             recheckDate.setFullYear(
                 recheckDate.getFullYear() + regenYear
             );
 
             let recheckFormatted =
                 recheckDate.toISOString().split('T')[0];
-
             document.getElementById('recheck_date').value =
                 recheckFormatted;
         }
@@ -637,11 +624,129 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+// =========================
+// ACTION BUTTON CLICK
+// Auto fill Search Lot Number + load all data
+// =========================
 
+document.querySelectorAll('.regenerationBtn').forEach(btn => {
+
+    btn.addEventListener('click', function () {
+
+        let lotNumber = this.dataset.lot;
+
+        // auto fill search box
+        document.getElementById('lot_search').value = lotNumber;
+
+        // auto trigger search
+        fetch(`/get-lot-by-number?lot_number=${lotNumber}`)
+            .then(res => res.json())
+            .then(data => {
+
+                if (!data.status) {
+                    alert('Lot not found');
+                    return;
+                }
+
+                let lot = data.lot;
+
+                // =========================
+                // AUTO SELECT CROP
+                // =========================
+                let cropId =
+                    lot.crop_id ||
+                    lot.crop?.id ||
+                    lot.accession?.crop_id ||
+                    lot.accession?.crop?.id;
+                //console.log('Crop ID:', cropId);
+                let cropSelect =
+                    document.getElementById('from_crop');
+
+                if (cropId) {
+
+                    cropSelect.value = cropId;
+
+                    // force selected
+                    Array.from(cropSelect.options).forEach(option => {
+
+                        if (option.value == cropId) {
+                            option.selected = true;
+                        }
+
+                    });
+
+                    cropSelect.dispatchEvent(
+                        new Event('change')
+                    );
+
+                }
+
+                // =========================
+                // WAIT ACCESSION LOAD
+                // =========================
+                setTimeout(() => {
+
+                    // =========================
+                    // AUTO SELECT ACCESSION
+                    // =========================
+                    if (lot.accession_id) {
+
+                        document.getElementById('from_accesstion').value =
+                            lot.accession_id;
+
+                        document.getElementById('from_accesstion')
+                            .dispatchEvent(new Event('change'));
+                    }
+
+                    // =========================
+                    // WAIT STORAGE LOAD
+                    // =========================
+                    setTimeout(() => {
+
+                        // =========================
+                        // AUTO SELECT STORAGE
+                        // =========================
+                        if (lot.storage_id) {
+
+                            document.getElementById('from_storage').value =
+                                lot.storage_id;
+
+                            document.getElementById('from_storage')
+                                .dispatchEvent(new Event('change'));
+                        }
+
+                        // =========================
+                        // WAIT LOT LOAD
+                        // =========================
+                        setTimeout(() => {
+
+                            let lotSelect =
+                                document.getElementById('from_lot');
+
+                            lotSelect.value = lot.id;
+
+                            lotSelect.dispatchEvent(
+                                new Event('change')
+                            );
+
+                            // scroll form
+                            document.querySelector('form')
+                                .scrollIntoView({
+                                    behavior: 'smooth'
+                                });
+
+                        }, 800);
+
+                    }, 800);
+
+                }, 800);
+
+            });
+
+    });
+
+});
     
-
-
-
     
     // =========================
             // DATE AUTO CALC
@@ -693,8 +798,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ✅ EVENTS
     const cropSelect = document.getElementById('from_crop');
+        cropSelect.addEventListener('change', function () {
 
-    if (cropSelect) {
+        if (
+            !this.options ||
+            this.selectedIndex < 0
+        ) {
+            return;
+        }
+
+        const selectedOption =
+            this.options[this.selectedIndex];
+
+        if (!selectedOption) {
+            return;
+        }
+
+        // regen year
+        regenYearInput.value =
+            selectedOption.dataset.regen || '';
+
+        // crop season
+        window._cropSeason = {
+
+            start_month:
+                parseInt(selectedOption.dataset.start) || 0,
+
+            end_month:
+                parseInt(selectedOption.dataset.end) || 0,
+        };
+
+        calculateAllDates();
+
+    });
+
+    /*if (cropSelect) {
 
         cropSelect.addEventListener('change', function () {
 
@@ -721,7 +859,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         });
 
-    }
+    }*/
 
     // Auto-fill Regeneration Cut of Year when crop is selected
     /*cropSelect.addEventListener('change', function () {
@@ -751,7 +889,7 @@ document.addEventListener('DOMContentLoaded', function () {
         calculateAllDates();
     });
 
-    cropSelect.addEventListener('change', function () {
+    /*cropSelect.addEventListener('change', function () {
         const selectedOption =
         this.options[this.selectedIndex];
 
@@ -767,7 +905,7 @@ document.addEventListener('DOMContentLoaded', function () {
             calculateAllDates();
 
         }, 100);
-    });
+    });*/
 
     // Auto-fill on edit page load
     window.addEventListener('load', function () {
@@ -791,7 +929,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Example: today=29-Apr-2026, years=2, Kharif(Jun-Oct)
     //   Expiry = 29-Apr-2028  (Apr is outside Jun-Oct)
     //   Regen  = 29-Jun-2027  (2028-1=2027, start month=Jun, day=29)
-    window.calculateAllDates = function () {
+    /*window.calculateAllDates = function () {
 
         const years = parseFloat(regenYearInput.value);
 
@@ -861,14 +999,68 @@ document.addEventListener('DOMContentLoaded', function () {
                 startMonth - 1;
 
             regen = new Date(
-    regenYear,
-    regenMonth,
-    expiry.getDate()
-);
+                regenYear,
+                regenMonth,
+                expiry.getDate()
+            );
         }
-        
-
         regenInput.value = formatDate(regen);
+    }*/
+    window.calculateAllDates = function () {
+        const years = parseFloat(regenYearInput.value);
+        if (isNaN(years) || years <= 0) {
+            return;
+        }
+
+        // =========================
+        // GET OLD DATES
+        // =========================
+
+        const oldExpiry =
+            document.getElementById('old1_expiry_date')
+            .textContent.trim();
+
+        const oldRecheck =
+            document.getElementById('old_recheck_date')
+            .textContent.trim();
+
+        // =========================
+        // CONVERT DD-MM-YYYY TO DATE
+        // =========================
+
+        function parseDMY(dateStr) {
+            if (!dateStr || dateStr === '—') {
+                return new Date();
+            }
+            let parts = dateStr.split('-');
+            return new Date(
+                parts[2],
+                parts[1] - 1,
+                parts[0]
+            );
+        }
+
+        let expiry = parseDMY(oldExpiry);
+        let regen  = parseDMY(oldRecheck);
+        // =========================
+        // ADD YEARS
+        // =========================
+
+        expiry.setFullYear(
+            expiry.getFullYear() + years
+        );
+
+        regen.setFullYear(
+            regen.getFullYear() + years
+        );
+
+        // =========================
+        // SET VALUES
+        // =========================
+
+        expiryInput.value = formatDate(expiry);
+        regenInput.value  = formatDate(regen);
+
     }
 
 });

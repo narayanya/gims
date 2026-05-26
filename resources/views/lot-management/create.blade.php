@@ -73,7 +73,8 @@
                             <select name="dispatch_id" id="dispatchSelect" class="form-select">
                                 <option value="">Select Dispatch Number</option>
                                 @foreach($dispatches as $dispatch)
-                                    <option value="{{ $dispatch->id }}"
+                                    <option value="{{ $dispatch->id }}" 
+                                        {{ old('dispatch_id', $lot->dispatch_id ?? '') == $dispatch->id ? 'selected' : '' }}
                                             data-request="{{ $dispatch->request->request_number ?? '' }}"
                                             data-lot="{{ $dispatch->lot->lot_number ?? '' }}">
                                         {{ $dispatch->dispatch_number }}
@@ -89,8 +90,9 @@
                                         <option value="">Select Request Number</option>
                                         @foreach($dispatches as $dispatch)
                                             <option value="{{ $dispatch->request_id }}"
-                                                    data-dispatch-id="{{ $dispatch->id }}"
-                                                    data-lot="{{ $dispatch->lot->lot_number ?? '' }}">
+                                                data-dispatch-id="{{ $dispatch->id }}"
+                                                data-lot="{{ $dispatch->lot->lot_number ?? '' }}"
+                                                @selected(old('request_id', $lot->request_id ?? '') == $dispatch->request_id)>
                                                 {{ $dispatch->request->request_number ?? '' }}
                                             </option>
                                         @endforeach
@@ -98,7 +100,7 @@
                                 </div>
                                 <div class="col-md-7">
                                     <input type="text" id="lotNumber" class="form-control" readonly
-                                        placeholder="Lot Number" style="margin-top:27px;">
+                                        placeholder="Lot Number" value="{{ old('rejuvenation_program', $lot->rejuvenation_program ?? '') }}" style="margin-top:27px;">
                                     {{-- Hidden: lot number stored as rejuvenation_program --}}
                                     <input type="hidden" name="rejuvenation_program" id="rffRejuvHidden"
                                         value="{{ old('rejuvenation_program', $lot->rejuvenation_program ?? '') }}">
@@ -594,39 +596,60 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                             </div>
                         </div>
                         </div>
-                        <div class="col-3 mt-4">
+                        <div class="col-6">
+                            <div class="row">
+                            <div class="col-md-6 d-none">
+                                <label class="form-label">Regeneration Cut of Year <span class="text-danger">*</span></label> 
+                                <input type="number" id="regen_year" name="regen_year" class="form-control"
+                                    value="{{ old('regen_year', $accession->regen_year ?? '') }}"
+                                    placeholder="Enter number only" min="0.1" max="100" step="0.1">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Status <span class="text-danger">*</span></label>
+                                <select name="status" class="form-select" required>
+                                    <option value="">Select Status</option>
+
+                                    <option value="active" 
+                                        {{ old('status', $lot->status ?? '') == 'active' ? 'selected' : '' }}>
+                                        Active
+                                    </option>
+
+                                    <option value="inactive" 
+                                        {{ old('status', $lot->status ?? '') == 'inactive' ? 'selected' : '' }}>
+                                        Inactive
+                                    </option>
+
+                                    <option value="quarantine" 
+                                        {{ old('status', $lot->status ?? '') == 'quarantine' ? 'selected' : '' }}>
+                                        Quarantine
+                                    </option>
+
+                                    <option value="depleted" 
+                                        {{ old('status', $lot->status ?? '') == 'depleted' ? 'selected' : '' }}>
+                                        Depleted
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mt-2 d-none">
+                                <label class="form-label">Expiry Date <span class="text-danger">*</span></label>
+                                <input type="date" id="expiry_date" name="expiry_date" class="form-control"
+                                    value="{{ old('expiry_date', now()->addMonth(0)->format('Y-m-d')) }}" min="{{ date('Y-m-d') }}">
+                            </div>
+
+                            <div class="col-md-6 mt-2 d-none">
+                                <label class="form-label">Next Regeneration Date <span
+                                        class="text-danger">*</span></label>
+                                <input type="date" id="recheck_date" name="recheck_date" class="form-control"
+                                    value="{{ old('recheck_date', $accession->recheck_date ?? '') }}" min="{{ date('Y-m-d') }}">
+                            </div>
+                            </div>
                             <label class="form-label text-danger">Expiry Date:</label>
                             <span id="expiry_input" ></span><br>
                             <label class="form-label text-success">Next Regeneration Date:</label>
                             <span id="expiry_recheck"></span>
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Status <span class="text-danger">*</span></label>
-                            <select name="status" class="form-select" required>
-                                <option value="">Select Status</option>
-
-                                <option value="active" 
-                                    {{ old('status', $lot->status ?? '') == 'active' ? 'selected' : '' }}>
-                                    Active
-                                </option>
-
-                                <option value="inactive" 
-                                    {{ old('status', $lot->status ?? '') == 'inactive' ? 'selected' : '' }}>
-                                    Inactive
-                                </option>
-
-                                <option value="quarantine" 
-                                    {{ old('status', $lot->status ?? '') == 'quarantine' ? 'selected' : '' }}>
-                                    Quarantine
-                                </option>
-
-                                <option value="depleted" 
-                                    {{ old('status', $lot->status ?? '') == 'depleted' ? 'selected' : '' }}>
-                                    Depleted
-                                </option>
-                            </select>
-                        </div>
-                        <div class="col-7">
+                        
+                        <div class="col-6">
                             <label class="form-label">Description / Notes</label>
                             <textarea name="description" class="form-control" rows="2" placeholder="Optional notes about this lot">{{ old('description', $lot->description ?? '') }}</textarea>
                         </div>
@@ -780,27 +803,29 @@ document.addEventListener('DOMContentLoaded', function () {
    
 
      // Dispatch Change
-    dispatchSelect.addEventListener('change', function () {
+     if (dispatchSelect) {
+        dispatchSelect.addEventListener('change', function () {
 
-        let selected = this.options[this.selectedIndex];
+            let selected = this.options[this.selectedIndex];
 
-        let requestNumber = selected.dataset.request;
-        let lot           = selected.dataset.lot;
+            let requestNumber = selected.dataset.request;
+            let lot           = selected.dataset.lot;
 
-        // Auto select request
-        Array.from(requestSelect.options).forEach(option => {
+            // Auto select request
+            Array.from(requestSelect.options).forEach(option => {
 
-            option.selected = option.text.trim() === requestNumber;
+                option.selected = option.text.trim() === requestNumber?.trim();
+
+            });
+
+            // Show lot number
+            lotNumber.value = lot ?? '';
+
+            // Fetch lot details
+            fetchLotDetails(lot);
 
         });
-
-        // Show lot number
-        lotNumber.value = lot ?? '';
-
-        // Fetch lot details
-        fetchLotDetails(lot);
-
-    });
+    }
 
     // Request Change
     requestSelect.addEventListener('change', function () {
@@ -856,7 +881,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     // hidden field
                     if (rffRejuvHidden) {
-                        rffRejuvHidden.value = lot.rejuvenation_program ?? '';
+                        rffRejuvHidden.value = lot.lot_number  ?? '';
                     }
 
                     // rebuild preview
@@ -881,7 +906,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.status && data.lot) {
                     const lot = data.lot;
                     // Store lot number into the single hidden rejuvenation_program field
-                    rffRejuvHidden.value = lot.rejuvenation_program;
+                    rffRejuvHidden.value = lot.lot_number;
                     rffLotInput.value    = lot.lot_number;
                     rffLotFeedback.innerHTML =
                         `<span class="text-success"><i class="ri-check-line"></i> Found: <strong>${lot.lot_number}</strong>` +
@@ -995,6 +1020,21 @@ document.addEventListener('DOMContentLoaded', function () {
         buildLotPreview();
     }
 
+    // Edit mode auto load
+    if (dispatchSelect && dispatchSelect.value) {
+
+        let selected = dispatchSelect.options[dispatchSelect.selectedIndex];
+
+        let lot = selected.dataset.lot || '';
+
+        if (lot) {
+
+            lotNumber.value = lot;
+
+            fetchLotDetails(lot);
+        }
+    }
+
     if (arrivalType) {
         arrivalType.addEventListener('change', toggleArrivalFields);
         toggleArrivalFields(); // run on page load for edit mode
@@ -1009,6 +1049,40 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // EDIT MODE AUTO SELECT
+    if (dispatchSelect && dispatchSelect.value) {
+
+        let selectedDispatch =
+            dispatchSelect.options[dispatchSelect.selectedIndex];
+
+        let requestNumber =
+            selectedDispatch.dataset.request || '';
+
+        let lot =
+            selectedDispatch.dataset.lot || '';
+
+        // Auto select request
+        Array.from(requestSelect.options).forEach(option => {
+
+            option.selected =
+                option.text.trim() === requestNumber.trim();
+
+        });
+
+        // Show lot
+        if (lotNumber) {
+            lotNumber.value = lot;
+        }
+
+        // Hidden field
+        if (rffRejuvHidden) {
+            rffRejuvHidden.value = lot;
+        }
+
+        // Fetch details
+        fetchLotDetails(lot);
+    }
+
     // ── Edit Lot ──────────────────────────────────────────────────────────
     document.querySelectorAll('.editLotBtn').forEach(btn => {
         btn.addEventListener('click', function () {
@@ -1019,6 +1093,8 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('edit_germination').value   = d.germination   || '';
             document.getElementById('edit_moisture').value      = d.moisture      || '';
             document.getElementById('edit_purity').value        = d.purity        || '';
+            document.getElementById('edit_chlorophyll').value        = d.chlorophyll        || '';
+            document.getElementById('edit_waterLevel').value        = d.waterLevel        || '';
             document.getElementById('edit_status').value        = d.status        || 'active';
             document.getElementById('edit_description').value   = d.description   || '';
             document.getElementById('editLotForm').action = `/lot-management/${d.id}`;

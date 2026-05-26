@@ -9,6 +9,7 @@ class Lot extends Model
     protected $fillable = [
         'lot_number',
         'arrival_type',
+        'dispatch_id',
         'reference_number',
         'rejuvenation_program', 
         'prefix', 

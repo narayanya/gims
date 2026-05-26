@@ -34,10 +34,10 @@ class LotController extends Controller
             'units'      => Unit::where('status',1)->orderBy('name')->get(['id','name','code']),
             'crops'      => Crop::where('update_status', 1)->orderBy('crop_name')->get(['id','crop_name']),
             'sections'   => \App\Models\Section::where('status',1)->orderBy('name')->get(['id','name','storage_id']),
-            'racks'      => \App\Models\Rack::where('status',1)->orderBy('name')->get(['id','name','storage_id','warehouse_id']),
-            'bins'       => \App\Models\Bin::where('status',1)->orderBy('name')->get(['id','name','rack_id']),
-            'containers' => \App\Models\Container::where('status',1)->orderBy('name')->get(['id','name']),
-            'warehouses' => \App\Models\Warehouse::where('status',1)->orderBy('name')->get(['id','name']),
+            'racks'      => Rack::where('status',1)->orderBy('name')->get(['id','name','storage_id','warehouse_id']),
+            'bins'       => Bin::where('status',1)->orderBy('name')->get(['id','name','rack_id']),
+            'containers' => Container::where('status',1)->orderBy('name')->get(['id','name']),
+            'warehouses' => Warehouse::where('status',1)->orderBy('name')->get(['id','name']),
             'users'      => User::orderBy('name')->get(['id','name']),
             'dispatches' => Dispatch::with(['request', 'accession', 'itn'])->latest()->paginate(10), 
             'seedQuantities' => SeedQuantity::orderBy('id')->get(['id','number_of_seeds', 'number_of_bags','per_seed_weight','quantity','capacity_unit_id','quantity_show', 'reference_number','min_quantity','in_seed','out_seed','return_seed']),
@@ -65,7 +65,7 @@ class LotController extends Controller
 
     public function managementCreate()
     {
-        $lastRef = \App\Models\Lot::latest('id')->value('reference_number'); 
+        $lastRef = Lot::latest('id')->value('reference_number'); 
         return view('lot-management.create', array_merge($this->formData(), [
             'nextLotNo' => Lot::generateLotNumber(
                 'REF', 'REJUV', 'PFX', 'SMPID', 0
@@ -193,6 +193,7 @@ class LotController extends Controller
                 $newLot = Lot::create([
                     'lot_number'           => $lotNumber,
                     'arrival_type'         => $arrivalType,
+                    'dispatch_id'           =>$request->dispatch_id,
                     'reference_number'     => $reference ?: null,
                     'rejuvenation_program' => in_array($arrivalType, ['Rejuvenation', 'Return From Field'])
                                                 ? $request->rejuvenation_program
@@ -244,10 +245,14 @@ class LotController extends Controller
     {
         $lot = Lot::with(['accession','storage','seedQualities', 'seedQuantities'])->findOrFail($id);
         $lastRef = \App\Models\SeedQuantity::latest('id')->value('reference_number');
+        $dispatches = Dispatch::with(['request', 'lot'])
+                    ->orderBy('id', 'desc')
+                    ->get();
         return view('lot-management.create', array_merge($this->formData(), [
             'nextLotNo' => $lot->lot_number,
             'lot'       => $lot,
             'lastRef'   => $lastRef,
+            'dispatches'=> $dispatches,
         ]));
     }
 
@@ -295,6 +300,11 @@ class LotController extends Controller
             'description'   => $request->description,
             'status'        => $request->status,
             'crop_id'       => $accession->crop_id,
+            // ADD THESE
+            'arrival_type'        => $request->arrival_type,
+            'dispatch_id'         => $request->dispatch_id,
+            'request_id'          => $request->request_id,
+            'rejuvenation_program'=> $request->rejuvenation_program,
         ]);
 
         // 🔥 IMPORTANT: DELETE OLD DATA (LOT BASED)
