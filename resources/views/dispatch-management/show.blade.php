@@ -134,13 +134,6 @@
                                 <small class="text-muted d-block">Accession No.</small>
                                 <strong>{{ $request->accession?->accession_number ?? 'N/A' }}</strong>
                             </div>
-                            
-                            <div class="col-md-4">
-                                <small class="text-muted d-block">Expiry Date</small>
-                                <strong>
-                                    {{ optional($request->accession?->expiry_date)->format('d M Y') ?? 'N/A' }}
-                                </strong>
-                            </div>
                         </div>
                     </div>
                 </div>

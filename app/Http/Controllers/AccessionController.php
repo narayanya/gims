@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Accession;
 use App\Models\Crop;
-use App\Models\Variety;
 use App\Models\Warehouse;
 use App\Models\StorageLocation;
 use App\Models\StorageType;
@@ -91,9 +90,7 @@ class AccessionController extends Controller
             'storage_time'      => $accession->storageTime?->name,
             'biological_status' => $accession->biological_status,
             'sample_type'       => $accession->sample_type,
-            'status'            => $accession->status == 1 ? 'Active' : 'Inactive',
-            'expiry_date'       => $accession->expiry_date?->format('d M Y'),
-            'recheck_date'      => $accession->recheck_date?->format('d M Y'),
+            'status'            => $accession->status == 1 ? 'Active' : 'Inactive',  
             'barcode'           => $accession->barcode,
             'notes'             => $accession->notes,
             'photo_url'         => $accession->images->first()
@@ -203,7 +200,6 @@ class AccessionController extends Controller
         $request->validate([
             'crop_id' => 'required|exists:core_crop,id',
             'sample_id' => 'nullable|string|max:100',
-            'regen_year' => 'nullable|integer|min:1|max:100',
         ]);
 
         //$accession->update($request->all());
@@ -263,7 +259,6 @@ class AccessionController extends Controller
                 'source_document' => 'required_if:acc_source,external|nullable|mimes:pdf,doc,docx,csv|max:5120',
                 'sample_id' => 'required|string|max:100',
                 'year_of_arrival' => 'nullable',
-                'regen_year' => 'nullable|integer|min:1|max:100',
                 'requester_show' => 'required|in:yes,no',
                 'storage_time' => 'nullable|exists:storage_times,id',
                 'accession_name' => 'required|string|max:255',
@@ -295,7 +290,6 @@ class AccessionController extends Controller
                 'storage_location_id'  => 'nullable|exists:storage_locations,id',
                 'storage_time_id'      => 'nullable|exists:storage_times,id',
                 'storage_condition_id' => 'nullable|exists:storage_conditions,id',
-                'storage_type_id'      => 'nullable|exists:storage_types,id',
                 'altitude'             => 'nullable|integer',
                 
                 
@@ -311,8 +305,6 @@ class AccessionController extends Controller
                 'entry_date' => 'nullable|date',
                 'entered_by' => 'nullable|exists:users,id',
                 'status' => 'required',
-                'recheck_date' => 'required|before:expiry_date',
-                'expiry_date' => 'required|date',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return back()->withErrors($e->validator)->withInput();
@@ -442,10 +434,6 @@ class AccessionController extends Controller
     public function export()
     {
         return Excel::download(new AccessionsExport, 'accessions.xlsx');
-    }
-    public function getVarieties($crop_id)
-    {
-        return Variety::where('crop_id',$crop_id)->get();
     }
 
     public function getCities($district_id)

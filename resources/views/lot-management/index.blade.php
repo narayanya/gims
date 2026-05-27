@@ -59,6 +59,7 @@
                                 <th>Qty (Visible)</th>
                                 <th>Unit</th>
                                 <th>Expiry Date</th>
+                                <th>Regeneration Date</th>
                                 <th>Created Date</th>
                                 <th>Status</th>
                                 <th width="100">Actions</th>
@@ -104,8 +105,12 @@
                                 </td>
                                 
                                 
-                                <td>{{ $lot->accession?->expiry_date 
-                                    ? \Carbon\Carbon::parse($lot->accession->expiry_date)->format('d M Y') 
+                                <td>{{ $lot->expiry_date 
+                                    ? \Carbon\Carbon::parse($lot->expiry_date)->format('d M Y') 
+                                    : '—' 
+                                }}</td>
+                                <td>{{ $lot->recheck_date 
+                                    ? \Carbon\Carbon::parse($lot->recheck_date)->format('d M Y') 
                                     : '—' 
                                 }}</td>
                                 <td>{{ $lot->created_at->format('d M Y') }}</td>
@@ -197,9 +202,9 @@
 
     </div>
 </div>
-@endsection
 
-@section('modals')
+
+
 
 
 {{-- View Lot Modal --}}
@@ -223,6 +228,8 @@
                             <div class="col-md-3"><span class="text-muted d-block">Number</span><strong id="vl_lot_number2"></strong></div>
                             <div class="col-md-3"><span class="text-muted d-block">Status</span><strong id="vl_status"></strong></div>
                             <div class="col-md-3"><span class="text-muted d-block">Expiry Date</span><strong id="vl_expiry"></strong></div>
+                            <div class="col-md-3"><span class="text-muted d-block">Regeneration Date</span><strong id="vl_regeneration"></strong></div>
+                            <div class="col-md-3"><span class="text-muted d-block">Regeneration Year</span><strong id="vl_regen_year"></strong></div>
                             <div class="col-md-12"><span class="text-muted d-block">Description</span><strong id="vl_description"></strong></div>
                         </div>
                     </div>
@@ -323,7 +330,7 @@
 </div>
 
 
-@section('modals')
+
 <div class="modal fade" id="disposeModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <form method="POST" id="disposeForm">
@@ -447,8 +454,6 @@
 
 </div>
 
-@endsection
-@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -475,6 +480,8 @@ document.addEventListener('DOMContentLoaded', function () {
         set('vl_lot_master',  d.lot_master);
         set('vl_lot_type',    d.lot_type);
         set('vl_expiry',      d.expiry);
+        set('vl_regeneration', d.germination);
+        set('vl_regen_year', d.regen_year);
         set('vl_status',      d.status);
         set('vl_description', d.description);
         set('vl_st_rack',     d.rack);
@@ -619,4 +626,5 @@ document.querySelectorAll('.disposeBtn').forEach(btn => {
 
 });
 </script>
-@endpush
+@endsection
+

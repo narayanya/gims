@@ -92,8 +92,8 @@
                                    
                                     <th>Status</th>
                                     <th>Collection Date</th>
-                                    <th>Expiry Date</th>
-                                    <th>Recheck Date</th>
+                                   <!-- <th>Expiry Date</th>
+                                    <th>Recheck Date</th>-->
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -127,12 +127,6 @@
                                             @endif
                                         </td>
                                         <td>{{ $accession->collection_date ? $accession->collection_date->format('d M Y') : 'N/A' }}
-                                        </td>
-                                        <td>
-                                            {{ $accession->expiry_date ? $accession->expiry_date->format('d M Y') : 'N/A' }}
-                                        </td>
-                                        <td>
-                                            <b>{{ $accession->recheck_date ? $accession->recheck_date->format('d M Y') : 'N/A' }}</b>
                                         </td>
                                         <td>
                                             
@@ -339,8 +333,6 @@
                     set('v_biological_status', data.biological_status);
                     set('v_sample_type',       data.sample_type);
                     set('v_status',            data.status);
-                    set('v_expiry_date',       data.expiry_date);
-                    set('v_recheck_date',      data.recheck_date);
                     set('v_barcode',           data.barcode);
                     set('v_notes',             data.notes);
 
@@ -403,7 +395,7 @@
 
                         <p class="text-muted small">
                             Columns format:
-                            <b>accession_number, crop, variety, source, origin_country, collection_date, remarks</b>
+                            <b>accession_number, crop, source, origin_country, collection_date, remarks</b>
                         </p>
 
                     </div>
@@ -450,8 +442,6 @@
                     <table class="table table-sm table-bordered mb-3">
                         <tr><th style="width:35%">Available Quantity</th><td id="v_quantity"></td></tr>
                         <tr><th>Storage Time</th><td id="v_storage_time"></td></tr>
-                        <tr><th>Expiry Date</th><td id="v_expiry_date"></td></tr>
-                        <tr><th>Next Recheck Date</th><td id="v_recheck_date"></td></tr>
                     </table>
 
                     {{-- Collection Info --}}

@@ -92,8 +92,6 @@ class AccessionsExport implements FromQuery, WithHeadings, WithMapping, WithStyl
 
             // Dates
             'Entry Date',
-            'Recheck Date',
-            'Expiry Date',
             'Created At',
         ];
     }
@@ -156,8 +154,6 @@ class AccessionsExport implements FromQuery, WithHeadings, WithMapping, WithStyl
 
             // Dates
             $accession->entry_date?->format('d-m-Y'),
-            $accession->recheck_date?->format('d-m-Y'),
-            $accession->expiry_date?->format('d-m-Y'),
             $accession->created_at?->format('d-m-Y H:i'),
         ];
     }

@@ -29,7 +29,7 @@ class LotController extends Controller
     private function formData(): array
     {
         return [
-            'accessions' => Accession::orderBy('accession_number')->get(['id','accession_number','accession_name','expiry_date']),
+            'accessions' => Accession::orderBy('accession_number')->get(['id','accession_number','accession_name']),
             'storages'   => Storage::where('status', 1)->orderBy('name')->get(['id','storage_id','name','warehouse_id']),
             'units'      => Unit::where('status',1)->orderBy('name')->get(['id','name','code']),
             'crops'      => Crop::where('update_status', 1)->orderBy('crop_name')->get(['id','crop_name']),
@@ -49,6 +49,9 @@ class LotController extends Controller
 
     public function managementIndex()
     {
+        $accessions = Accession::with([
+            'crop.season'
+        ])->get();    
         $lots = Lot::with(['accession','storage', 'lotType', 'seedQuantities', 'seedQuantities.unit'])
                    ->whereNotNull('lot_number')
                    ->orderBy('created_at','desc')
@@ -56,8 +59,8 @@ class LotController extends Controller
         
         return view('lot-management.index', array_merge($this->formData(), [
             'lots'      => $lots,
-            
-            //'nextLotNo' => Lot::generateLotNumber(),
+            'accessions' => $accessions,
+           
         ]));
     }
 
@@ -65,6 +68,9 @@ class LotController extends Controller
 
     public function managementCreate()
     {
+        $accessions = Accession::with([
+            'crop.season'
+        ])->get();    
         $lastRef = Lot::latest('id')->value('reference_number'); 
         return view('lot-management.create', array_merge($this->formData(), [
             'nextLotNo' => Lot::generateLotNumber(
@@ -72,6 +78,7 @@ class LotController extends Controller
             ),
             'lot'       => null,
             'lastRef' => $lastRef,
+            'accessions' => $accessions,
         ]));
     }
     
@@ -210,9 +217,9 @@ class LotController extends Controller
                     'unit_id'              => $request->unit_id[$i] ?? null,
 
                      // store accession dates
-                    'expiry_date'       => $accession->expiry_date,
-                    'regeneration_date' => $accession->recheck_date,
-                    'regen_year'        => $accession->regen_year,
+                    'expiry_date'       => $request->expiry_date,
+                    'regeneration_date' => $request->recheck_date,
+                    'regen_year'        => $request->regen_year,
                     'description'          => $request->description,
                     'status'               => $request->status,
                     'crop_id'              => $accession->crop_id,
@@ -290,13 +297,14 @@ class LotController extends Controller
         $lot->update([
             'accession_id'  => $request->accession_id,
             'storage_id'    => $request->storage_id,
-            'section_id'    => $request->section_id,
             'rack_id'       => $request->rack_id,
             'bin_id'        => $request->bin_id,
             'container_id'  => $request->container_id,
             //'quantity'      => $newQty,
             //'unit_id'       => $request->unit_id,
             'expiry_date'   => $request->expiry_date,
+            'recheck_date' => $request->regeneration_date,
+            'regen_year'        => $request->regen_year,
             'description'   => $request->description,
             'status'        => $request->status,
             'crop_id'       => $accession->crop_id,
@@ -467,7 +475,7 @@ class LotController extends Controller
             'sample_type'            => $acc->sample_type,
             'collection_site'        => $acc->collection_site,
             'recheck_date'           => $acc->recheck_date?->format('d M Y'),
-            'regen_year'              => $acc->regen_year,
+            'regen_year'              => $acc->crop?->regeneration_cut_year,
         ]);
     }
 

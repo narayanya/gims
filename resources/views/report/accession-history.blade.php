@@ -46,8 +46,7 @@
                         <div class="col-md-3"><span class="text-muted">Total Qty (Available)</span><br>
                             <strong class="text-success">{{ number_format($seedQuantities->sum('quantity_show'), 2) }} {{ $accession->capacityUnit?->code ?? '' }}</strong>
                         </div>
-                        <div class="col-md-3"><span class="text-muted">Expiry Date</span><br><strong>{{ $accession->expiry_date?->format('d M Y') ?? '—' }}</strong></div>
-                        <div class="col-md-3"><span class="text-muted">Recheck Date</span><br><strong>{{ $accession->recheck_date?->format('d M Y') ?? '—' }}</strong></div>
+                        
                     </div>
                 </div>
             </div>

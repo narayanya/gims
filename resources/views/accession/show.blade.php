@@ -31,14 +31,6 @@
                 <small class="text-success ">
     <b>Entry: {{ $accession->created_at ? $accession->created_at->format('d F Y') : '-' }}</b>
 </small><br>
-
-<small class="text-secondary">
-    <b>New Regeneration Date: {{ $accession->recheck_date ? \Carbon\Carbon::parse($accession->recheck_date)->format('d F Y') : '-' }}</b>
-</small><br>
-
-<small class="text-danger">
-    <b>Expiring Date: {{ $accession->expiry_date ? \Carbon\Carbon::parse($accession->expiry_date)->format('d F Y') : '-' }}</b>
-</small><br>
             </div>
         </div>
     </div>

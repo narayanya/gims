@@ -251,7 +251,6 @@ class RequestController extends Controller
 
                 SeedRequest::create([
                     'crop_id'          => $httpRequest->crop_id[$i],
-                    'variety_id'       => $httpRequest->variety_id[$i] ?? null,
                     'accession_id'     => $accessionId,
                     'quantity'         => $httpRequest->quantity[$i],
                     'unit_id'          => $httpRequest->unit_id[$i],

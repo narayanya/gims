@@ -167,7 +167,10 @@
                             <select name="accession_id" id="accessionSelect" class="form-select" required>
                                 <option value="">Select Accession</option>
                                 @foreach($accessions as $acc)
-                                    <option value="{{ $acc->id }}" {{ $selectedAccession == $acc->id ? 'selected' : '' }}>{{ $acc->accession_number }} — {{ $acc->accession_name }}</option>
+                                    <option value="{{ $acc->id }}" data-regen="{{ optional($acc->crop)->regeneration_cut_year }}" data-season-start="{{ optional(optional($acc->crop)->season)->start_month ?? 0 }}"
+
+    data-season-end="{{ optional(optional($acc->crop)->season)->end_month ?? 0 }}" {{ $selectedAccession == $acc->id ? 'selected' : '' }}>
+                                        {{ $acc->accession_number }} — {{ $acc->accession_name }}</option>
                                 @endforeach
                             </select>
                             <input hidden type="text" id="sample_id_input" name="sample_id"
@@ -188,8 +191,6 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                                         <div class="col-4"><span class="text-muted">Collected:</span> <span id="ad_collected">—</span></div>
                                         <div class="col-4"><span class="text-muted">Sample ID:</span> <span id="ad_sample_id">—</span></div>
                                         <div class="col-4"><span class="text-muted">Regeneration Cut of year:</span> <span id="ad_regeneration">—</span></div>
-                                        <div class="col-4"><span class="text-muted">Expiry Date:</span> <span id="ad_expiryDate">—</span></div>
-                                        <div class="col-4"><span class="text-muted">Next Regeneration Date:</span> <span id="ad_recheckDate">—</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -598,11 +599,11 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                         </div>
                         <div class="col-6">
                             <div class="row">
-                            <div class="col-md-6 d-none">
+                            <div class="col-md-6 ">
                                 <label class="form-label">Regeneration Cut of Year <span class="text-danger">*</span></label> 
                                 <input type="number" id="regen_year" name="regen_year" class="form-control"
-                                    value="{{ old('regen_year', $accession->regen_year ?? '') }}"
-                                    placeholder="Enter number only" min="0.1" max="100" step="0.1">
+                                    value="{{ old('regen_year', $lot->regen_year ?? '') }}"
+                                    placeholder="Enter number only" min="0" max="999"  oninput=" if(this.value.length > 3) this.value = this.value.slice(0,3)">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Status <span class="text-danger">*</span></label>
@@ -630,23 +631,19 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                                     </option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mt-2 d-none">
-                                <label class="form-label">Expiry Date <span class="text-danger">*</span></label>
+                            <div class="col-md-6 mt-2">
+                                <label class="form-label text-danger">Expiry Date <span class="text-danger">*</span></label>
                                 <input type="date" id="expiry_date" name="expiry_date" class="form-control"
-                                    value="{{ old('expiry_date', now()->addMonth(0)->format('Y-m-d')) }}" min="{{ date('Y-m-d') }}">
+                                    value="{{ old('expiry_date', $lot->expiry_date ?? '') }}" min="{{ date('Y-m-d') }}">
                             </div>
 
-                            <div class="col-md-6 mt-2 d-none">
-                                <label class="form-label">Next Regeneration Date <span
+                            <div class="col-md-6 mt-2">
+                                <label class="form-label text-success">Next Regeneration Date <span
                                         class="text-danger">*</span></label>
                                 <input type="date" id="recheck_date" name="recheck_date" class="form-control"
-                                    value="{{ old('recheck_date', $accession->recheck_date ?? '') }}" min="{{ date('Y-m-d') }}">
+                                    value="{{ old('recheck_date', $lot->regeneration_date ?? '') }}" min="{{ date('Y-m-d') }}">
                             </div>
                             </div>
-                            <label class="form-label text-danger">Expiry Date:</label>
-                            <span id="expiry_input" ></span><br>
-                            <label class="form-label text-success">Next Regeneration Date:</label>
-                            <span id="expiry_recheck"></span>
                         </div>
                         
                         <div class="col-6">
@@ -666,93 +663,6 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
             
         </div>
 
-    </div>
-</div>
-@endsection
-
-@section('modals')
-
-{{-- View Lot Modal --}}
-<div class="modal fade" id="viewLotModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <div>
-                    <h5 class="modal-title mb-0"><i class="ri-stack-line me-2"></i>Lot Details</h5>
-                    <small id="vl_lot_number" class="opacity-75"></small>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-
-                {{-- Lot Info --}}
-                <div class="card mb-3">
-                    <div class="card-header bg-light py-2"><strong class="small"><i class="ri-stack-line me-1"></i>Lot Information</strong></div>
-                    <div class="card-body">
-                        <div class="row g-3 small">
-                            <div class="col-md-3"><span class="text-muted d-block">Number</span><strong id="vl_lot_number2"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Lot Master</span><strong id="vl_lot_master"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Lot Type</span><strong id="vl_lot_type"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Status</span><strong id="vl_status"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Expiry Date</span><strong id="vl_expiry"></strong></div>
-                            <div class="col-md-12"><span class="text-muted d-block">Description</span><strong id="vl_description"></strong></div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Accession Details --}}
-                <div class="card mb-3">
-                    <div class="card-header bg-light py-2"><strong class="small"><i class="ri-seedling-line me-1"></i>Accession Details</strong></div>
-                    <div class="card-body">
-                        <div class="row g-3 small" id="vl_accession_section">
-                            <div class="col-md-3"><span class="text-muted d-block">Accession No.</span><strong id="vl_acc_number"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Accession Name</span><strong id="vl_acc_name"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Crop</span><strong id="vl_acc_crop"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Scientific Name</span><strong id="vl_acc_scientific"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Quantity</span><strong id="vl_acc_qty"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Warehouse</span><strong id="vl_acc_warehouse"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Status</span><strong id="vl_acc_status"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Barcode</span><strong id="vl_acc_barcode"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Expiry Date</span><strong id="vl_acc_expiry"></strong></div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Quality Parameters --}}
-                <div class="card mb-3">
-                    <div class="card-header bg-light py-2"><strong class="small"><i class="ri-test-tube-line me-1"></i>Quality Parameters</strong></div>
-                    <div class="card-body">
-                        <div class="row g-3 small">
-                            <div class="col-md-4"><span class="text-muted d-block">Germination %</span><strong id="vl_germination"></strong></div>
-                            <div class="col-md-4"><span class="text-muted d-block">Moisture %</span><strong id="vl_moisture"></strong></div>
-                            <div class="col-md-4"><span class="text-muted d-block">Purity %</span><strong id="vl_purity"></strong></div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Storage Details --}}
-                <div class="card mb-0">
-                    <div class="card-header bg-light py-2"><strong class="small"><i class="ri-archive-line me-1"></i>Storage Details</strong></div>
-                    <div class="card-body">
-                        <div class="row g-3 small" id="vl_storage_section">
-                            <div class="col-md-3"><span class="text-muted d-block">Storage Name</span><strong id="vl_st_name"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Storage ID</span><strong id="vl_st_id"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Warehouse</span><strong id="vl_st_warehouse"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Type</span><strong id="vl_st_type"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Condition</span><strong id="vl_st_condition"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Temperature</span><strong id="vl_st_temp"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Humidity</span><strong id="vl_st_humidity"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Capacity</span><strong id="vl_st_capacity"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Available</span><strong id="vl_st_available"></strong></div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
     </div>
 </div>
 @endsection
@@ -1132,10 +1042,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('ad_collected').textContent  = d.collection_date  || '—';
                 document.getElementById('ad_sample_id').textContent    = d.sample_id          || '—';
                 document.getElementById('ad_regeneration').textContent = d.regen_year     || '—';
-                document.getElementById('ad_expiryDate').textContent     = d.expiry_date     || '-';
-                document.getElementById('expiry_input').textContent = d.expiry_date || '';
-                document.getElementById('expiry_recheck').textContent = d.recheck_date || '—';
-                document.getElementById('ad_recheckDate').textContent = d.recheck_date || '—';
+                document.getElementById('regen_year').value = d.regen_year     || '—';
                 box.classList.remove('d-none');
 
                 document.getElementById('sample_id_input').value = d.sample_id || '';
@@ -1689,7 +1596,235 @@ document.addEventListener('DOMContentLoaded', function () {
 
     });
 
+    // =========================
+    // DATE AUTO CALC - regeneration cut of year
+    // =========================
+
+    const expiryInput    = document.getElementById('expiry_date');
+    const regenInput     = document.getElementById('recheck_date');
+    const regenYearInput = document.getElementById('regen_year');
+
+    @php
+        $seasonStart = 0;
+        $seasonEnd   = 0;
+        if (isset($accession) && $accession && $accession->crop && $accession->crop->season) {
+            $seasonStart = (int) $accession->crop->season->start_month;
+            $seasonEnd   = (int) $accession->crop->season->end_month;
+        }
+        if (isset($accession) && $accession && $accession->crop) {
+            $seasonStart = (int) $accession->crop->season_start_month_id;
+            $seasonEnd   = (int) $accession->crop->season_end_month_id;
+        }
+    @endphp
+
+    // Season seeded from PHP on edit (crop already selected), updated via AJAX on crop change
+    window._cropSeason = {
+        season_start_month_id: {{ $accession->crop->season_start_month_id ?? 0 }},
+        season_end_month_id: {{ $accession->crop->season_end_month_id ?? 0 }},
+        start_month: {{ $seasonStart }},
+        end_month: {{ $seasonEnd }}
+    };
+
+    console.log("Season from PHP:", window._cropSeason);
+    
+
+    function formatDate(d) {
+        const y   = d.getFullYear();
+        const m   = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
+    // Check if month is inside season (handles wrap-around e.g. Rabi: Nov–Mar)
+    function isMonthInSeason(month, start, end) {
+        if (start <= end) {
+            return month >= start && month <= end;
+        } else {
+            return month >= start || month <= end;
+        }
+    }
+
+    // ✅ EVENTS
+    const cropSelect = document.getElementById('accessionSelect');
+
+    cropSelect.addEventListener('change', function () {
+
+        const selectedOption =
+            this.options[this.selectedIndex];
+
+        // AUTO FILL REGEN YEAR
+        const regenYear =
+            selectedOption.dataset.regen || '';
+
+        regenYearInput.value = regenYear;
+
+        // AUTO FILL SEASON
+        window._cropSeason.start_month =
+            parseInt(selectedOption.dataset.seasonStart || 0);
+
+        window._cropSeason.end_month =
+            parseInt(selectedOption.dataset.seasonEnd || 0);
+
+        console.log('Season Start:',
+            window._cropSeason.start_month);
+
+        console.log('Season End:',
+            window._cropSeason.end_month);
+
+        // AUTO CALCULATE
+        calculateAllDates();
+
+    });
+
+    regenYearInput.addEventListener('input', function () {
+
+        if (cropSelect.value === '') {
+
+            alert('Please select a Accession first.');
+
+            this.value = '';
+
+            expiryInput.value = '';
+            regenInput.value  = '';
+
+            cropSelect.focus();
+
+            return;
+        }
+
+        calculateAllDates();
+    });
+
+   /* cropSelect.addEventListener('change', function () {
+        const selectedOption =
+        this.options[this.selectedIndex];
+
+        // ✅ auto fill regen year
+        const regenYear =
+            selectedOption.getAttribute('data-regen');
+
+        regenYearInput.value = regenYear ?? '';
+
+        // ✅ calculate after value set
+        setTimeout(() => {
+
+            calculateAllDates();
+
+        }, 100);
+    });*/
+
+    // Auto-fill on edit page load
+   /* window.addEventListener('load', function () {
+        if (cropSelect && cropSelect.value) {
+            // Only auto-fill if empty
+            if (!regenYearInput.value) {
+                const selectedOption = cropSelect.options[cropSelect.selectedIndex];
+
+                regenYearInput.value =
+                    selectedOption.getAttribute('data-regen') ?? '';
+            }
+            // Season is already seeded from PHP (_cropSeason), calculate immediately
+            calculateAllDates();
+        }
+    });*/
+
+    // CALCULATION LOGIC:
+    //   Expiry     = today + regen_years  (same day/month, N years ahead)
+    //   Regen Date = expiry month IN season  → same date as expiry
+    //              = expiry month OUT of season → (expiry year - 1), season start month, same day
+    // Example: today=29-Apr-2026, years=2, Kharif(Jun-Oct)
+    //   Expiry = 29-Apr-2028  (Apr is outside Jun-Oct)
+    //   Regen  = 29-Jun-2027  (2028-1=2027, start month=Jun, day=29)
+    window.calculateAllDates = function () {
+
+        const years =
+            parseFloat(regenYearInput.value);
+
+        if (isNaN(years) || years <= 0) {
+
+            expiryInput.value = '';
+            regenInput.value  = '';
+
+            return;
+        }
+
+        const today = new Date();
+
+        // =========================
+        // EXPIRY DATE
+        // =========================
+
+        const expiry = new Date(today);
+
+        expiry.setFullYear(
+            expiry.getFullYear() + years
+        );
+
+        expiryInput.value =
+            formatDate(expiry);
+
+        // =========================
+        // SEASON DATA
+        // =========================
+
+        let startMonth =
+            parseInt(window._cropSeason.start_month || 0);
+
+        let endMonth =
+            parseInt(window._cropSeason.end_month || 0);
+
+        console.log('Checking Season:',
+            startMonth,
+            endMonth);
+
+        // If season missing
+        if (!startMonth || !endMonth) {
+
+            regenInput.value =
+                formatDate(expiry);
+
+            return;
+        }
+
+        // =========================
+        // CHECK EXPIRY MONTH
+        // =========================
+
+        const expiryMonth =
+            expiry.getMonth() + 1;
+
+        let regenerationDate;
+
+        // expiry month inside season
+        if (
+            isMonthInSeason(
+                expiryMonth,
+                startMonth,
+                endMonth
+            )
+        ) {
+
+            regenerationDate =
+                new Date(expiry);
+
+        } else {
+
+            // move to season start month
+            regenerationDate = new Date(
+                expiry.getFullYear() - 1,
+                startMonth - 1,
+                1
+            );
+        }
+
+        regenInput.value =
+            formatDate(regenerationDate);
+    };
+
+
 
 });
 </script>
+
+
 @endpush

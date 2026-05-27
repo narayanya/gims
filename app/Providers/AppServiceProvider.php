@@ -4,6 +4,7 @@ namespace App\Providers;
 use App\Models\SeedRequest;
 use App\Models\Notification;
 use App\Models\Accession;
+use App\Models\Lot;
 use App\Models\Crop;
 use App\Models\Variety;
 use App\Observers\ActivityObserver;
@@ -93,7 +94,7 @@ class AppServiceProvider extends ServiceProvider
                     ->count();
             }
 
-            $expiringSoon = Accession::with(['crop'])
+            $expiringSoon = Lot::with(['crop'])
                 ->whereNotNull('expiry_date')
                 ->whereBetween('expiry_date', [
                     Carbon::today(),

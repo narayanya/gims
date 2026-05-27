@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\Accession;
 use App\Models\Crop;
 use App\Models\Dispatch;
-use App\Models\Variety;
 use App\Models\Lot;
 use App\Models\LotTransfer;
 use App\Models\SeedQuality;
@@ -85,7 +84,7 @@ class HomeController extends Controller
 
         $storageTimes = StorageTime::orderBy('code')->get();
 
-        $expiringSoon = Accession::with('crop')
+        $expiringSoon = Lot::with('crop')
             ->whereNotNull('expiry_date')
             ->whereDate('expiry_date', '>=', now())
             ->whereDate('expiry_date', '<=', now()->addDays(30))
@@ -208,14 +207,14 @@ $monthlyData = [];
 
     //regunation date  dashboard
 
-    $activeRegenerationCycles = DB::table('accessions')
-
+   $activeRegenerationCycles = DB::table('lots')
+    ->join('accessions', 'lots.accession_id', '=', 'accessions.id')
     ->join('core_crop', 'accessions.crop_id', '=', 'core_crop.id')
 
-    ->whereNotNull('accessions.recheck_date')
+    ->whereNotNull('lots.regeneration_date')
 
     ->whereDate(
-        'accessions.recheck_date',
+        'lots.regeneration_date',
         '<=',
         now()->addMonths(12)
     )
@@ -224,14 +223,15 @@ $monthlyData = [];
         'accessions.id',
         'accessions.accession_number',
         'accessions.accession_name',
-        'accessions.recheck_date',
+        'lots.regeneration_date',
         'core_crop.crop_name'
     )
 
-    ->orderBy('accessions.recheck_date')
+    ->orderBy('lots.regeneration_date')
     ->limit(3)
     ->get();
-    $activeRegenerationCount = $activeRegenerationCycles->count();
+
+$activeRegenerationCount = $activeRegenerationCycles->count();
 
         return view('home', compact(
             'totalAccessions',

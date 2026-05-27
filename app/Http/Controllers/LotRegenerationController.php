@@ -13,6 +13,16 @@ class LotRegenerationController extends Controller
     public function index(Request $request)
     {
        
+    $crops = Crop::with('season')
+    ->where('update_status', 1)
+    ->orderBy('crop_name')
+    ->get([
+        'id',
+        'crop_code',
+        'crop_name',
+        'regeneration_cut_year',
+        'season_id'
+    ]);
     $query = \App\Models\LotTransfer::with([
         'lot',
         'lot.crop',
@@ -35,7 +45,7 @@ class LotRegenerationController extends Controller
     
  
     return view('lot-regeneration.index', [
-        'crops' => Crop::where('update_status', 1)->orderBy('crop_name')->get(['id','crop_code','crop_name']),
+        'crops' => $crops,
         'accessions' => Accession::where('status', 1)->orderBy('accession_number')->get(['id','crop_id','accession_number']),
         'storages'   => Storage::where('status', 1)->orderBy('name')->get(['id','storage_id','name']),
         'lots'        => Lot::with('accession')
@@ -68,6 +78,38 @@ class LotRegenerationController extends Controller
         ]);
     }
 
+    public function getLotByNumber(Request $request)
+    {
+        $lot = Lot::where(
+            'lot_number', 'crop_id', 'accession_id', 'storage_id',
+             $request->lot_number, $request->crop_id, $request->accession_id, $request->storage_id,
+        )->first();
+
+        if (!$lot) {
+
+            return response()->json([
+                'status' => false
+            ]);
+        }
+
+        return response()->json([
+
+            'status' => true,
+
+            'lot' => [
+
+                'id' => $lot->id,
+
+                'lot_number' => $lot->lot_number,
+
+                'crop_id' => $lot->crop_id,
+
+                'accession_id' => $lot->accession_id,
+
+                'storage_id' => $lot->storage_id,
+            ]
+        ]);
+    }
 
    public function store(Request $request)
     {

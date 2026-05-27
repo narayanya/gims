@@ -226,8 +226,7 @@
                                             class="form-select @error('crop_id') is-invalid @enderror" required>
                                             <option value="">Select Crop</option>
                                             @foreach ($crops as $crop)
-                                                <option value="{{ $crop->id }}"
-                                                    data-regen="{{ $crop->regeneration_cut_year }}"
+                                                <option value="{{ $crop->id }}" 
                                                     {{ old('crop_id', $accession->crop_id ?? '') == $crop->id ? 'selected' : '' }}>
                                                     {{ $crop->crop_name }}</option>
                                             @endforeach
@@ -695,12 +694,12 @@
                                         <label class="form-label">Entered By: {{ auth()->user()->name }}</label>
                                         <input type="hidden" name="entered_by" value="{{ auth()->id() }}">
                                     </div>
-                                    <div class="col-md-4">
+                                    {{--<div class="col-md-4">
                                         <label class="form-label">Regeneration Cut of Year <span class="text-danger">*</span></label> 
                                         <input type="number" id="regen_year" name="regen_year" class="form-control"
                                             value="{{ old('regen_year', $accession->regen_year ?? '') }}"
                                             placeholder="Enter number only" min="0.1" max="100" step="0.1">
-                                    </div>
+                                    </div>--}}
                                     <div class="col-md-4">
                                         <label class="form-label required">Status</label>
                                         <select name="status" class="form-select @error('status') is-invalid @enderror"
@@ -716,7 +715,7 @@
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
-                                    <div class="col-md-4">
+                                    {{--<div class="col-md-4">
                                         <label class="form-label">Expiry Date <span class="text-danger">*</span></label>
                                         <input type="date" id="expiry_date" name="expiry_date" class="form-control"
                                             value="{{ old('expiry_date', now()->addMonth(0)->format('Y-m-d')) }}" min="{{ date('Y-m-d') }}">
@@ -727,7 +726,7 @@
                                                 class="text-danger">*</span></label>
                                         <input type="date" id="recheck_date" name="recheck_date" class="form-control"
                                             value="{{ old('recheck_date', $accession->recheck_date ?? '') }}" min="{{ date('Y-m-d') }}">
-                                    </div>
+                                    </div>--}}
                                 </div>
                             </div>
                         </div>
@@ -1049,7 +1048,7 @@
             // DATE AUTO CALC
             // =========================
 
-    const expiryInput    = document.getElementById('expiry_date');
+    /*const expiryInput    = document.getElementById('expiry_date');
     const regenInput     = document.getElementById('recheck_date');
     const regenYearInput = document.getElementById('regen_year');
 
@@ -1243,13 +1242,8 @@
 
         regenInput.value = formatDate(regen);
     }
-
+*/
     
-
-
-
-           
-
 
             // =========================
             // EDIT MODE FIX 🔥
@@ -1300,25 +1294,6 @@
             });
 
 
-
-          /*  document.querySelector('form').addEventListener('submit', function(e) {
-
-                let crop = document.getElementById('crop_id').value;
-                let variety = document.getElementById('variety_id').value;
-
-                if (!crop || !variety) return;
-
-                fetch(`/check-accession?crop_id=${crop}&variety_id=${variety}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.exists) {
-                            e.preventDefault();
-                            alert('This crop and variety already created.');
-                        }
-                    });
-
-            });*/
-
             document.getElementById('backToAccession')?.addEventListener('click', function() {
                 document.getElementById('accessionForm').style.display = 'block';
                 document.getElementById('regenetionForm').style.display = 'none';
@@ -1364,35 +1339,7 @@
 
             let crop_id = $(this).val();
 
-            /* ----------------------------
-               LOAD VARIETIES
-            -----------------------------*/
-
-            //$('#variety_id').html('<option value="">Loading...</option>');
-
             if (crop_id) {
-
-                /*$.ajax({
-                    url: '/get-varieties/' + crop_id,
-                    type: 'GET',
-                    success: function(data) {
-
-                        let options = '<option value="">Select Variety</option>';
-
-                        data.forEach(function(variety) {
-                            options +=
-                                `<option value="${variety.id}">${variety.variety_name}</option>`;
-                        });
-
-                        $('#variety_id').html(options);
-
-                    },
-                    error: function() {
-                        $('#variety_id').html(
-                            '<option value="">Error loading varieties</option>');
-                    }
-                });*/
-
 
                 /* ----------------------------
                    LOAD CROP DETAILS
@@ -1409,23 +1356,12 @@
                         $('#cropCategory').text(data.crop_category ? data.crop_category.name : '-');
                         $('#type').text(data.crop_type ? data.crop_type.name : '-');
                         $('#season').text(data.season ? data.season.name : '-');
-                        $('#regen_year').val(data.regeneration_cut_year ?? '');
+                       
 
                         // ✅ Update season for date calculation
-                        if (data.season && data.season.start_month && data.season.end_month) {
-                            window._cropSeason.start_month = parseInt(data.season.start_month);
-                            window._cropSeason.end_month   = parseInt(data.season.end_month);
-                        } else {
-                            window._cropSeason.start_month = 0;
-                            window._cropSeason.end_month   = 0;
-                        }
-                        console.log("Season updated:", window._cropSeason);
+                     
 
-                        // Recalculate dates now that season + regen_year are both set
-                        const regenYearEl = document.getElementById('regen_year');
-                        if (regenYearEl && regenYearEl.value) {
-                            calculateAllDates();
-                        }                    },
+                                          },
                     error: function() {
                         $('#scientificName').text('-');
                         $('#family').text('-');
@@ -1434,8 +1370,6 @@
                         $('#cropCategory').text('-');
                         $('#type').text('-');
                         $('#season').text('-');
-                        window._cropSeason.start_month = 0;
-                        window._cropSeason.end_month   = 0;
                     }
                 });
 
@@ -1446,8 +1380,6 @@
                 $('#category').text('-');
                 $('#cropCategory').text('-');
                 $('#type').text('-');
-                window._cropSeason.start_month = 0;
-                window._cropSeason.end_month   = 0;
             }
 
         });

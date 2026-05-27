@@ -12,7 +12,6 @@ class Accession extends Model
         // Basic Information
         'sample_id',
         'year_of_arrival',
-        'regen_year',
         'accession_number',
         'accession_name',
         'acc_source',
@@ -52,7 +51,6 @@ class Accession extends Model
         'storage_time_id',
         'storage_time',
         'storage_condition_id',
-        'storage_type_id',
         
         // Documentation
         'barcode_type',
@@ -66,8 +64,6 @@ class Accession extends Model
         'entered_by',
         'status',
         'created_by',
-         'recheck_date',
-        'expiry_date',
     ];
 
     protected $casts = [
@@ -75,8 +71,6 @@ class Accession extends Model
         'longitude' => 'decimal:8',
         'collection_date' => 'date',
         'entry_date' => 'date',
-        'recheck_date' => 'date',
-        'expiry_date' => 'date',
     ];
 
     /**
@@ -159,6 +153,11 @@ class Accession extends Model
     public function getFormattedQuantityAttribute(): string
     {
         return number_format($this->quantity, 2) . ' ' . $this->unit;
+    }
+
+    public function lots()
+    {
+        return $this->hasMany(Lot::class);
     }
 
     /**
@@ -274,10 +273,7 @@ class Accession extends Model
     {
         return $this->hasMany(SeedQuantity::class);
     }
-    public function lots()
-    {
-        return $this->hasOne(Lot::class, 'accession_id');
-    }
+
     public function seedQuantity()
     {
         return $this->hasOne(SeedQuantity::class, 'lot_id')

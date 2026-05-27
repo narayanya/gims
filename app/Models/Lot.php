@@ -42,7 +42,6 @@ class Lot extends Model
 }
 
     public function crop()          { return $this->belongsTo(Crop::class, 'crop_id'); }
-    public function variety()       { return $this->belongsTo(Variety::class); }
     public function unit()          { return $this->belongsTo(Unit::class); }
     public function seedQualities() { return $this->hasMany(SeedQuality::class, 'lot_id'); }
     public function seedQuantities(){ return $this->hasMany(SeedQuantity::class, 'lot_id'); }

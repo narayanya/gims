@@ -4,7 +4,6 @@ namespace App\Imports;
 
 use App\Models\Accession;
 use App\Models\Crop;
-use App\Models\Variety;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
