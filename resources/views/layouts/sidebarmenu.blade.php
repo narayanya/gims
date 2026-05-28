@@ -98,7 +98,7 @@
                         @endif
 
                         {{-- CoreData Sync --}}
-                        @if(auth()->user()->hasRole(['super-admin', 'admin']))
+                        @if(auth()->user()->hasRole(['super-admin']))
                         <li class="nav-item">
                             <a class="nav-link menu-link {{ request()->is('sync*','core_api*') ? 'active' : '' }}"
                                href="#sidebarSync" data-bs-toggle="collapse" role="button">
@@ -126,19 +126,19 @@
                         {{-- Lot Management --}}
                         @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasPermission('menu.lot'))
                         <li class="nav-item">
-                            <a class="nav-link menu-link {{ request()->is('lot-management','lot-transfer','warehouse-transfer','lot-types*','lots*') ? 'active' : '' }}"
+                            <a class="nav-link menu-link {{ request()->is('lot-management','lot-transfer','warehouse-transfer','quality-control*','lot-regeneration*') ? 'active' : '' }}"
                                href="#sidebarMasterLot" data-bs-toggle="collapse" role="button">
                                 <i class="ri-layout-3-line"></i> <span>Lot / Batch Management</span>
                             </a>
-                            <div class="collapse menu-visible menu-dropdown {{ request()->is('lot-management','lot-transfer','warehouse-transfer','lot-types*','lots*') ? 'show' : '' }}" id="sidebarMasterLot">
+                            <div class="collapse menu-visible menu-dropdown {{ request()->is('lot-management','lot-transfer','warehouse-transfer','quality-control*','lot-regeneration*') ? 'show' : '' }}" id="sidebarMasterLot">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('lot-management') ? 'active' : '' }}" href="{{ route('lot-management') }}">Lot List</a></li>
                                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('lot-transfer.*') ? 'active' : '' }}" href="{{ route('lot-transfer.index') }}">Lot Inter-Transfer</a></li>
                                     @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasPermission('storage.transfer'))
                                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('warehouse-transfer.*') ? 'active' : '' }}" href="{{ route('warehouse-transfer.index') }}">Warehouse Inter-Transfer</a></li>
                                     @endif
-                                    <li class="nav-item"><a class="nav-link" href="{{ route('quality-control.index') }}">Quality Info Update</a></li>
-                                    <li class="nav-item"><a class="nav-link" href="{{ route('lot-regeneration.index') }}">Lot Regneration</a></li>
+                                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('quality-control.*') ? 'active' : '' }}" href="{{ route('quality-control.index') }}">Quality Info Update</a></li>
+                                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('lot-regeneration.*') ? 'active' : '' }}" href="{{ route('lot-regeneration.index') }}">Lot Regneration</a></li>
                                 </ul>
                             </div>
                         </li>

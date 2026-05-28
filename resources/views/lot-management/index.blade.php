@@ -13,7 +13,7 @@
                 <a href="{{ route('lot-management.create') }}" class="btn btn-primary btn-sm">
                     <i class="ri-add-line me-1"></i> Add New Arrival(Lot)
                 </a>
-                <a href="{{ route('inter.transfer') }}" class="btn btn-primary btn-sm">
+                <a href="{{ route('lot-transfer.index') }}" class="btn btn-primary btn-sm">
                     <i class="ri-add-line me-1"></i> Inter Transfer Location
                 </a>
                 <a href="{{ route('lot.export') }}" class="btn btn-sm btn-success">

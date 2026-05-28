@@ -31,7 +31,7 @@ class ReportController extends Controller
             ? Carbon::parse($latestDate)->startOfDay()->subDays(14)
             : Carbon::today()->subDays(14);
 
-        for ($i = 0; $i < 15; $i++) {
+        for ($i = 0; $i < 25; $i++) {
             $date = $startDate->copy()->addDays($i);
 
             $days->push([

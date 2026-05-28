@@ -30,9 +30,10 @@
                                 class="btn btn-sm btn-outline-primary font-bold">Report</a>
                             <a href="{{ route('lot-management.create') }}" class="btn btn-sm btn-primary box-radius"><i
                                     class="ri-add-line me-1"></i> New Arrival(Lot)</a>
-                        @endif
-                        <a href="{{ route('accessionform') }}" class="btn btn-sm btn-primary"><i
+                        
+                            <a href="{{ route('accessionform') }}" class="btn btn-sm btn-primary"><i
                                 class="ri-add-line me-1"></i> New Accession</a>
+                        @endif
                         <a href="{{ route('requests.create') }}" class="btn btn-sm btn-primary"><i
                                 class="ri-add-line me-1"></i> New Request</a>
                     </div>
@@ -457,251 +458,253 @@ h-full rounded-full"
                             </div>
                         </div>
                         @endif
+                        @if (auth()->user()->hasRole(['super-admin', 'admin', 'manager']))
                         <div class="card shadow-sm border-0 rounded-4 mb-4">
-    <div class="card-body">
+                            <div class="card-body">
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="mb-0 fw-bold">Monthly Transactions</h5>
-        </div>
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h5 class="mb-0 fw-bold">Monthly Transactions</h5>
+                                </div>
 
-        <div style="position: relative; height:380px;">
-            <canvas id="monthlyTransactionChart"></canvas>
-        </div>
+                                <div style="position: relative; height:380px;">
+                                    <canvas id="monthlyTransactionChart"></canvas>
+                                </div>
 
-    </div>
-</div>
+                            </div>
+                        </div>
+                        @endif
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<script>
-const monthlyData = @json($monthlyData);
+                    <script>
+                    const monthlyData = @json($monthlyData);
 
-const labels = monthlyData.map(item => item.month);
+                    const labels = monthlyData.map(item => item.month);
 
-new Chart(document.getElementById('monthlyTransactionChart'), {
+                    new Chart(document.getElementById('monthlyTransactionChart'), {
 
-    type: 'bar',
+                        type: 'bar',
 
-    data: {
-        labels: labels,
+                        data: {
+                            labels: labels,
 
-        datasets: [
+                            datasets: [
 
-            {
-    label: 'Incoming',
-    data: monthlyData.map(item => item.incoming),
-    backgroundColor: '#4F8EF7',
-    borderRadius: 10,
-    borderSkipped: false,
-    categoryPercentage: 0.5,
-    barPercentage: 0.6,
-    maxBarThickness: 22,
-},
+                                {
+                        label: 'Incoming',
+                        data: monthlyData.map(item => item.incoming),
+                        backgroundColor: '#4F8EF7',
+                        borderRadius: 10,
+                        borderSkipped: false,
+                        categoryPercentage: 0.5,
+                        barPercentage: 0.6,
+                        maxBarThickness: 22,
+                    },
 
-{
-    label: 'Dispatch',
-    data: monthlyData.map(item => item.dispatch),
-    backgroundColor: '#57C271',
-    borderRadius: 10,
-    borderSkipped: false,
-    categoryPercentage: 0.5,
-    barPercentage: 0.6,
-    maxBarThickness: 22,
-},
+                    {
+                        label: 'Dispatch',
+                        data: monthlyData.map(item => item.dispatch),
+                        backgroundColor: '#57C271',
+                        borderRadius: 10,
+                        borderSkipped: false,
+                        categoryPercentage: 0.5,
+                        barPercentage: 0.6,
+                        maxBarThickness: 22,
+                    },
 
-{
-    label: 'Transfer',
-    data: monthlyData.map(item => item.transfer),
-    backgroundColor: '#F28C4B',
-    borderRadius: 10,
-    borderSkipped: false,
-    categoryPercentage: 0.5,
-    barPercentage: 0.6,
-    maxBarThickness: 22,
-},
+                    {
+                        label: 'Transfer',
+                        data: monthlyData.map(item => item.transfer),
+                        backgroundColor: '#F28C4B',
+                        borderRadius: 10,
+                        borderSkipped: false,
+                        categoryPercentage: 0.5,
+                        barPercentage: 0.6,
+                        maxBarThickness: 22,
+                    },
 
-{
-    label: 'QC Entries',
-    data: monthlyData.map(item => item.qc),
-    backgroundColor: '#F2C94C',
-    borderRadius: 10,
-    borderSkipped: false,
-    categoryPercentage: 0.5,
-    barPercentage: 0.6,
-    maxBarThickness: 22,
-}
-
-        ]
-    },
-
-    options: {
-
-        responsive: true,
-
-        maintainAspectRatio: false,
-
-        interaction: {
-            mode: 'index',
-            intersect: false
-        },
-
-        layout: {
-    padding: {
-        left: 5,
-        right: 5
-    }
-},
-
-        plugins: {
-
-            legend: {
-                position: 'bottom',
-
-                labels: {
-                    usePointStyle: true,
-                    pointStyle: 'circle',
-                    padding: 25,
-                    font: {
-                        size: 14
+                    {
+                        label: 'QC Entries',
+                        data: monthlyData.map(item => item.qc),
+                        backgroundColor: '#F2C94C',
+                        borderRadius: 10,
+                        borderSkipped: false,
+                        categoryPercentage: 0.5,
+                        barPercentage: 0.6,
+                        maxBarThickness: 22,
                     }
-                }
-            },
 
-            tooltip: {
+                            ]
+                        },
 
-                backgroundColor: '#fff',
-                titleColor: '#111',
-                bodyColor: '#111',
-                borderColor: '#ddd',
-                borderWidth: 1,
-                padding: 14,
+                        options: {
 
-                displayColors: true,
+                            responsive: true,
 
-                callbacks: {
-                    label: function(context) {
-                        return `${context.dataset.label}   ${context.raw}`;
-                    }
-                }
-            }
-        },
+                            maintainAspectRatio: false,
 
-        scales: {
+                            interaction: {
+                                mode: 'index',
+                                intersect: false
+                            },
 
-            x: {
-                 stacked: false,
-                grid: {
-                    display: false
-                },
+                            layout: {
+                        padding: {
+                            left: 5,
+                            right: 5
+                        }
+                    },
 
-                ticks: {
-                    color: '#666',
-                    font: {
-                        size: 13
-                    }
-                }
-            },
+                            plugins: {
 
-            y: {
+                                legend: {
+                                    position: 'bottom',
 
-                beginAtZero: true,
+                                    labels: {
+                                        usePointStyle: true,
+                                        pointStyle: 'circle',
+                                        padding: 25,
+                                        font: {
+                                            size: 14
+                                        }
+                                    }
+                                },
 
-                grid: {
-                    borderDash: [5,5],
-                    color: '#e5e7eb'
-                },
+                                tooltip: {
 
-                ticks: {
-                    stepSize: 50,
-                    color: '#666',
-                    font: {
-                        size: 12
-                    }
-                },
+                                    backgroundColor: '#fff',
+                                    titleColor: '#111',
+                                    bodyColor: '#111',
+                                    borderColor: '#ddd',
+                                    borderWidth: 1,
+                                    padding: 14,
 
-                border: {
-                    display: false
-                }
-            }
-        }
-    }
-});
-</script>
+                                    displayColors: true,
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<div class="card shadow-sm border-0 rounded-4 mb-4">
-    <div class="card-body">
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `${context.dataset.label}   ${context.raw}`;
+                                        }
+                                    }
+                                }
+                            },
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0 fw-bold">
-                Total Available Seed Quantity in Gram
-            </h5>
-        </div>
+                            scales: {
 
-        <div style="position: relative; height:350px;">
-            <canvas id="cropQuantityChart"></canvas>
-        </div>
+                                x: {
+                                    stacked: false,
+                                    grid: {
+                                        display: false
+                                    },
 
-    </div>
-</div>
+                                    ticks: {
+                                        color: '#666',
+                                        font: {
+                                            size: 13
+                                        }
+                                    }
+                                },
 
-<script>
+                                y: {
 
-const cropStockData = @json($cropStockChart);
+                                    beginAtZero: true,
 
-const cropLabels = cropStockData.map(item => item.crop_name);
+                                    grid: {
+                                        borderDash: [5,5],
+                                        color: '#e5e7eb'
+                                    },
 
-const cropQuantities = cropStockData.map(item => 
-    parseFloat(item.total_quantity) || 0
-);
+                                    ticks: {
+                                        stepSize: 50,
+                                        color: '#666',
+                                        font: {
+                                            size: 12
+                                        }
+                                    },
+
+                                    border: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    </script>
+
+                    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                    <div class="card shadow-sm border-0 rounded-4 mb-4">
+                        <div class="card-body">
+
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0 fw-bold">
+                                    Total Available Seed Quantity in Gram
+                                </h5>
+                            </div>
+
+                            <div style="position: relative; height:350px;">
+                                <canvas id="cropQuantityChart"></canvas>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <script>
+
+                        const cropStockData = @json($cropStockChart);
+
+                        const cropLabels = cropStockData.map(item => item.crop_name);
+
+                        const cropQuantities = cropStockData.map(item => 
+                            parseFloat(item.total_quantity) || 0
+                        );
 
 
-new Chart(document.getElementById('cropQuantityChart'), {
+                        new Chart(document.getElementById('cropQuantityChart'), {
 
-    type: 'bar',
+                            type: 'bar',
 
-    data: {
-        labels: cropLabels,
+                            data: {
+                                labels: cropLabels,
 
-        datasets: [{
-            label: 'Available Quantity',
+                                datasets: [{
+                                    label: 'Available Quantity',
 
-            data: cropQuantities,
+                                    data: cropQuantities,
 
-            backgroundColor: [
-                '#4F8EF7',
-                '#57C271',
-                '#F28C4B',
-                '#F2C94C',
-                '#9B51E0',
-                '#EB5757'
-            ],
+                                    backgroundColor: [
+                                        '#4F8EF7',
+                                        '#57C271',
+                                        '#F28C4B',
+                                        '#F2C94C',
+                                        '#9B51E0',
+                                        '#EB5757'
+                                    ],
 
-            borderRadius: 10,
-            borderSkipped: false,
+                                    borderRadius: 10,
+                                    borderSkipped: false,
 
-            categoryPercentage: 0.6,
-            barPercentage: 0.7,
+                                    categoryPercentage: 0.6,
+                                    barPercentage: 0.7,
 
-            maxBarThickness: 32
-        }]
-    },
+                                    maxBarThickness: 32
+                                }]
+                            },
 
-    options: {
+                            options: {
 
-        responsive: true,
+                                responsive: true,
 
-        maintainAspectRatio: false,
+                                maintainAspectRatio: false,
 
-        plugins: {
+                                plugins: {
 
-            legend: {
-                display: false
-            }
-        }
-    }
-});
-</script>
+                                    legend: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        });
+                        </script>
 
                         @if($user->hasRole(['super-admin','admin','manager']))
                         <!-- Data Table Section -->
@@ -1142,7 +1145,7 @@ new Chart(document.getElementById('cropQuantityChart'), {
 
                         </div>
                     </div>
-
+                    @if (auth()->user()->hasRole(['super-admin', 'admin', 'manager']))
                     <div class="card shadow-sm border-0 rounded-4 ">
                         <div class="card-body">
 
@@ -1226,7 +1229,7 @@ new Chart(document.getElementById('cropQuantityChart'), {
 
                         </div>
                     </div>
-
+                    @endif
                     </div>
 
                 </div>

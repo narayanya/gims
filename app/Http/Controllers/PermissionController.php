@@ -21,7 +21,7 @@ class PermissionController extends Controller
             ],
             'lot' => [
                 'core'    => ['view', 'create', 'edit', 'delete'],
-                'data'    => ['import', 'export', 'transfer'],
+                'data'    => ['import', 'export', 'transfer', 'quality_update', 'regeneration'],
                 'workflow'=> ['transfer', 'quality_update'],
             ],
             'crop' => [

@@ -271,7 +271,7 @@ Regeneration
         </div>
         @endif
         
-
+        @if (auth()->user()->hasRole(['super-admin', 'admin', 'manager']))
         <div class="card">
             <div class="card-header">
                 TAT (Turnaround Time) Report
@@ -394,6 +394,7 @@ Regeneration
                     </div>
              </div>
         </div>
+        @endif
     </div>
 </div>
 
