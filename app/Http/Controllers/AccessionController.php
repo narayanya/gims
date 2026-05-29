@@ -190,36 +190,156 @@ class AccessionController extends Controller
         ));
     }
 
-    public function update(Request $request,$id)
+    public function update(Request $request, $id)
     {
         if (!auth()->user()->hasPermission('accession.edit')) {
             abort(403, 'You do not have permission to edit accessions.');
         }
+
         $accession = Accession::findOrFail($id);
 
-        $request->validate([
-            'crop_id' => 'required|exists:core_crop,id',
-            'sample_id' => 'nullable|string|max:100',
+        $validated = $request->validate([
+
+            // Basic Information
+            'acc_source'      => 'required|in:internal,external',
+            'ext_source'      => 'nullable|string|max:255',
+            'sample_id'       => 'required|string|max:100',
+            'year_of_arrival' => 'nullable',
+            'requester_show'  => 'required|in:yes,no',
+
+            'accession_name'  => 'required|string|max:255',
+            'crop_id'         => 'required|exists:core_crop,id',
+
+            // Collection
+            'collection_number' => 'nullable|string|max:100',
+            'collection_date'   => 'nullable|date',
+            'collector_name'    => 'nullable|string|max:255',
+            'donor_name'        => 'nullable|string|max:255',
+            'collection_site'   => 'nullable|string|max:255',
+
+            'country_id'  => 'nullable|exists:core_country,id',
+            'state_id'    => 'nullable|exists:core_state,id',
+            'district_id' => 'nullable|exists:core_district,id',
+            'city_id'     => 'nullable|exists:core_city_village,id',
+
+            // Storage
+            'warehouse_id'         => 'nullable|exists:warehouses,id',
+            'storage_location_id'  => 'nullable|exists:storage_locations,id',
+            'storage_time_id'      => 'nullable|exists:storage_times,id',
+            'storage_condition_id' => 'nullable|exists:storage_conditions,id',
+
+            // Biological
+            'biological_status' => 'nullable',
+            'sample_type'       => 'nullable',
+            'reproductive_type' => 'nullable',
+
+            // Files
+            'source_document' => 'nullable|mimes:pdf,doc,docx,csv|max:5120',
+            'passport_file'   => 'nullable|mimes:pdf,doc,docx,csv|max:5120',
+
+            // Other
+            'notes'  => 'nullable|string',
+            'status' => 'required',
         ]);
 
-        //$accession->update($request->all());
-        $accession->update(
-            $request->except(['passport', '_token', '_method', 'images', 'passport_file'])
-        );
-        $accession->passports()->delete(); // clear old
-        // ❗ DELETE OLD SEED DATA
-        $accession->seedQualities()->delete();
+        DB::beginTransaction();
 
-        if ($request->has('passport')) {
-            foreach ($request->passport as $row) {
-                if (!empty($row['sample_name']) || !empty($row['passport_no'])) {
-                    $accession->passports()->create($row);
+        try {
+
+            // remove file fields before update
+            unset(
+                $validated['source_document'],
+                $validated['passport_file']
+            );
+
+            // update accession
+            $accession->update($validated);
+
+            // update accession number again if needed
+            $crop = \App\Models\Crop::find($request->crop_id);
+
+            $accessionNumber =
+                $crop->crop_code . '-' .
+                ($request->year_of_arrival ?? date('Y')) .
+                '-ACC-' .
+                $request->sample_id . '-' .
+                str_pad($accession->id, 5, '0', STR_PAD_LEFT);
+
+            $accession->update([
+                'accession_number' => $accessionNumber
+            ]);
+
+            // source document upload
+            if ($request->hasFile('source_document')) {
+
+                $docName = 'src_' .
+                    str_pad($accession->id, 3, '0', STR_PAD_LEFT) .
+                    '_' .
+                    now()->format('dmY') .
+                    '.' .
+                    $request->file('source_document')->getClientOriginalExtension();
+
+                $request->file('source_document')
+                    ->storeAs('accessions/source_docs', $docName, 'public');
+
+                $accession->update([
+                    'source_document_path' => $docName
+                ]);
+            }
+
+            // passport file upload
+            if ($request->hasFile('passport_file')) {
+
+                $pfName = 'pf_' .
+                    str_pad($accession->id, 3, '0', STR_PAD_LEFT) .
+                    '_' .
+                    now()->format('dmY') .
+                    '.' .
+                    $request->file('passport_file')->getClientOriginalExtension();
+
+                $request->file('passport_file')
+                    ->storeAs('accessions/passports', $pfName, 'public');
+
+                $accession->update([
+                    'passport_file_path' => $pfName
+                ]);
+            }
+
+            // passports update
+            $accession->passports()->delete();
+
+            if ($request->has('passport')) {
+
+                foreach ($request->passport as $row) {
+
+                    if (!empty($row['sample_name']) || !empty($row['passport_no'])) {
+
+                        $accession->passports()->create([
+                            'sample_name'   => $row['sample_name'] ?? null,
+                            'sample_name_o' => $row['sample_name_o'] ?? null,
+                            'passport_no'   => $row['passport_no'] ?? null,
+                            'remarks'       => $row['remarks'] ?? null,
+                        ]);
+                    }
                 }
             }
-        }
 
-        return redirect()->route('accession.accession-list')
-            ->with('success','Accession updated successfully');
+            DB::commit();
+
+            return redirect()
+                ->route('accession.accession-list')
+                ->with('success', 'Accession updated successfully');
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'error' => $e->getMessage()
+                ]);
+        }
     }
     public function create()
     {
@@ -452,6 +572,24 @@ class AccessionController extends Controller
                 ->orderBy('district_name')
                 ->get(['id', 'district_name'])
         );
+    }
+
+    public function deactivate($id)
+    {
+        if (!auth()->user()->hasPermission('accession.delete')) {
+            abort(403, 'You do not have permission.');
+        }
+
+        $accession = Accession::findOrFail($id);
+
+        $accession->update([
+            'status' => 0,
+            'updated_by' => auth()->id()
+        ]);
+
+        return redirect()
+            ->back()
+            ->with('success', 'Accession deactivated successfully.');
     }
 
   

@@ -1,4 +1,1 @@
-Source(Internal/External),Accession Show to Requester(Yes/No),Year Of Arrival,Sample ID,Storage Time,Accession Name,Crop Name,Collection Number,Collector Name,Collection Date,Donor Name / Source,Collection Site Name,Country,State,District,City/Village,Latitude,Longitude,Pincode,Biological Status,Sample Type,Reproductive Type,Barcode Type,Barcode Number,Image Upload,Notes / Remarks,Passport Data File,Regeneration Cut of Year,Status,Expiry Date,Next Regeneration Date
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Source(Internal/External),Accession Show to Requester(Yes/No),Year Of Arrival,Sample ID,Storage Time,Accession Name,Crop Name,Collection Number,Collector Name,Collection Date,Donor Name / Source,Collection Site Name,Country,State,District,City/Village,Latitude,Longitude,Pincode,Biological Status,Sample Type,Reproductive Type,Barcode Type,Barcode Number,Image Upload,Notes / Remarks,Passport Data File,Status

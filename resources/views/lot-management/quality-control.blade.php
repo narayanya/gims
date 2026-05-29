@@ -110,6 +110,8 @@
                         <div class="col-md-3"><span class="text-muted">Bin:</span> <span id="info_bin">—</span></div>
                         <div class="col-md-3"><span class="text-muted">Container:</span> <span id="info_container">—</span></div>
                         <div class="col-md-3"><span class="text-muted">Expiry Date:</span> <span id="info_expiry">—</span></div>
+                        <div class="col-md-3"><span class="text-muted">Regeneration Date:</span> <span id="info_regeneration_program">—</span></div>
+                        <div class="col-md-3"><span class="text-muted">Regeneration Year:</span> <span id="info_regen_year">—</span></div>
                     </div>
                 </div>
             </div>
@@ -313,6 +315,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('info_bin').textContent            = lot.bin             || '—';
                 document.getElementById('info_container').textContent      = lot.container       || '—';
                 document.getElementById('info_expiry').textContent         = formatDate(lot.expiry_date) || '—';
+                document.getElementById('info_regeneration_program').textContent = lot.regeneration_program || '—';
+                document.getElementById('info_regen_year').textContent     = lot.regen_year || '—';
 
                 document.getElementById('form_lot_id').value = lot.id;
 

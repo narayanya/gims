@@ -60,7 +60,7 @@
                     <p class="text-sage-600 dark:text-sage-400 text-sm mb-1" style="color: #777777">Create a new germplasm
                         accession record</p>                  
                 </div>
-                <a href="{{ route('accession.accession-list') }}" class="btn btn-outline-secondary">
+                <a href="{{ route('accession.accession-list') }}" class="btn btn-sm btn-outline-secondary">
                     <i class="ri-arrow-left-line me-1"></i>Back to List
                 </a>
             </div>
@@ -123,7 +123,7 @@
                                             <div class="form-check form-check-inline">
                                                 <input class="form-check-input" type="radio" name="acc_source"
                                                     value="external" id="sourceExternal"
-                                                    {{ old('ext_source', $accession->ext_source ?? '') == 'external' ? 'checked' : '' }}>
+                                                    {{ old('acc_source', $accession->acc_source ?? '') == 'external' ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="sourceExternal">External</label>
                                             </div>
                                         </div>
@@ -175,10 +175,9 @@
                                         <label class="form-label">Year Of Arrival <span class="text-danger">*</span></label>
                                         <select name="year_of_arrival" class="form-select" required>
                                             <option value="">Select Year</option>
-
-    @for($year = 1985; $year <= date('Y'); $year++)
-        <option value="{{ $year }}">{{ $year }}</option>
-    @endfor
+                                            @for($year = 1985; $year <= date('Y'); $year++)
+                                                <option value="{{ $year }}">{{ $year }}</option>
+                                            @endfor
                                         </select>
                                     </div>
                                     <div class="col-md-6">
@@ -254,7 +253,7 @@
 
                                             <li class="w-50 float-start">
                                                 <strong>Genus:</strong>
-                                                <span id="genus">{{ old('genus', $accession->genus ?? '') }}
+                                                <span id="genus">{{ old('genus', $accession->genus ?? '') }}</span>
                                             </li>
                                             <li class="w-50 float-start">
                                                 <strong>Category:</strong>
@@ -310,9 +309,13 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Collection Date</label>
-                                        <input type="date" name="collection_date"
+
+                                        <input type="date"
+                                            name="collection_date"
                                             class="form-control @error('collection_date') is-invalid @enderror"
-                                            value="{{ old('collection_date', $accession->collection_date ?? '') }}" max="{{ date('Y-m-d') }}">
+                                            value="{{ old('collection_date', isset($accession->collection_date) ? \Carbon\Carbon::parse($accession->collection_date)->format('Y-m-d') : '') }}"
+                                            max="{{ date('Y-m-d') }}">
+
                                         @error('collection_date')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -498,7 +501,6 @@
                                     <table class="table table-bordered" id="passportTable">
                                         <thead>
                                             <tr>
-                                               
                                                 <th>Passport No.</th>
                                                  <th>In</th>
                                                 <th>Out</th>
@@ -1245,24 +1247,7 @@
 */
     
 
-            // =========================
-            // EDIT MODE FIX 🔥
-            // =========================
-            document.querySelectorAll('.researcher-select').forEach(select => {
-
-                let td = select.closest('td');
-                let otherInput = td.querySelector('.other-input');
-
-                if (!otherInput) return;
-
-                // IMPORTANT FIX
-                if (select.value === 'other' || otherInput.value !== '') {
-                    select.value = 'other';
-                    otherInput.style.display = 'block';
-                } else {
-                    otherInput.style.display = 'none';
-                }
-            });
+            
 
             const addBtn = document.getElementById('addRow');
             const tableBody = document.getElementById('passportTable');
@@ -1333,56 +1318,68 @@
 @endsection
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function() {
+$(document).ready(function () {
 
-        $('#crop_id').on('change', function() {
+    function loadCropDetails(crop_id) {
 
-            let crop_id = $(this).val();
+        if (crop_id) {
 
-            if (crop_id) {
+            $.ajax({
+                url: '/get-crop-details/' + crop_id,
+                type: 'GET',
 
-                /* ----------------------------
-                   LOAD CROP DETAILS
-                -----------------------------*/
+                success: function (data) {
 
-                $.ajax({
-                    url: '/get-crop-details/' + crop_id,
-                    type: 'GET',
-                    success: function(data) {
-                        $('#scientificName').text(data.scientific_name ?? '-');
-                        $('#family').text(data.family_name ?? '-');
-                        $('#genus').text(data.genus ?? '-');
-                        $('#category').text(data.category ? data.category.name : '-');
-                        $('#cropCategory').text(data.crop_category ? data.crop_category.name : '-');
-                        $('#type').text(data.crop_type ? data.crop_type.name : '-');
-                        $('#season').text(data.season ? data.season.name : '-');
-                       
+                    $('#scientificName').text(data.scientific_name ?? '-');
+                    $('#family').text(data.family_name ?? '-');
+                    $('#genus').text(data.genus ?? '-');
 
-                        // ✅ Update season for date calculation
-                     
+                    $('#category').text(
+                        data.category ? data.category.name : '-'
+                    );
 
-                                          },
-                    error: function() {
-                        $('#scientificName').text('-');
-                        $('#family').text('-');
-                        $('#genus').text('-');
-                        $('#category').text('-');
-                        $('#cropCategory').text('-');
-                        $('#type').text('-');
-                        $('#season').text('-');
-                    }
-                });
+                    $('#cropCategory').text(
+                        data.crop_category ? data.crop_category.name : '-'
+                    );
 
-            } else {
-                $('#scientificName').text('-');
-                $('#family').text('-');
-                $('#genus').text('-');
-                $('#category').text('-');
-                $('#cropCategory').text('-');
-                $('#type').text('-');
-            }
+                    $('#type').text(
+                        data.crop_type ? data.crop_type.name : '-'
+                    );
 
-        });
+                    $('#season').text(
+                        data.season ? data.season.name : '-'
+                    );
+                },
 
+                error: function () {
+
+                    $('#scientificName').text('-');
+                    $('#family').text('-');
+                    $('#genus').text('-');
+                    $('#category').text('-');
+                    $('#cropCategory').text('-');
+                    $('#type').text('-');
+                    $('#season').text('-');
+                }
+            });
+
+        }
+    }
+
+    // on change
+    $('#crop_id').on('change', function () {
+
+        let crop_id = $(this).val();
+
+        loadCropDetails(crop_id);
     });
+
+    // ✅ edit time auto load
+    let selectedCrop = $('#crop_id').val();
+
+    if (selectedCrop) {
+        loadCropDetails(selectedCrop);
+    }
+
+});
 </script>

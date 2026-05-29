@@ -4,62 +4,115 @@
     <div class="row justify-content-center">
         <div class="col-12">
             <!-- Header Section -->
-            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-sage-muted/20 pb-2">
-                <div class="items-center gap-3">
-                    <h3 class="text-sage-900 dark:text-white text-xl font-bold leading-tight flex items-center gap-2 w-100">
-                        Accession List
-                    </h3>
-                    <p class="text-sage-600 dark:text-sage-400 text-sm mb-1" style="color: #777777">Manage and track all
-                        germplasm accessions in the inventory</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <div class="col-md-2 pt-4">
-                        <select class="form-select form-select-sm" id="cropFilter">
-                            <option value="">All Crops</option>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3 border-bottom border-sage-muted/20 pb-3">
 
-                            @foreach ($crops as $crop)
-                                <option value="{{ strtolower($crop->crop_name) }}">{{ $crop->crop_name }}</option>
-                            @endforeach
+    <!-- Left Section -->
+    <div>
+        <h3 class="text-sage-900 dark:text-white text-xl font-bold leading-tight d-flex align-items-center gap-2 mb-1">
+            Accession List
+        </h3>
 
-                        </select>
-                    </div>
-                    <div class="col-md-2 pt-4">
-                        <select class="form-select form-select-sm" id="statusFilter">
-                            <option value="">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                            <option value="quarantine">Quarantine</option>
-                            <option value="depleted">Depleted</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2 pt-4">
-                        <select class="form-select form-select-sm" id="warehouseFilter">
-                            <option value="">All Warehouses</option>
+        <p class="text-sage-600 dark:text-sage-400 text-sm mb-0" style="color:#777777;">
+            Manage and track all germplasm accessions in the inventory
+        </p>
+    </div>
 
-                            @foreach ($warehouses as $warehouse)
-                                <option value="{{ strtolower($warehouse->name) }}">{{ $warehouse->name }}</option>
-                            @endforeach
+    <!-- Right Section -->
+    <div class="d-flex flex-wrap align-items-end gap-2">
 
-                        </select>
-                    </div>
-                    <div class="col-md-6 d-flex align-items-end gap-2">
-                        <button class="" id="resetFilters">
-                            <i class="ri-refresh-line"></i>
-                        </button>
-                        @if(auth()->user()->hasPermission('accession.create'))
-                        <a href="{{ route('accessionform') }}" class="btn btn-sm btn-primary">
-                            <i class="ri-add-line me-1"></i>Add Accession
-                        </a>
-                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#importModal">
-                            <i class="ri-upload-line me-1"></i>Import
-                        </button>
-                        <a href="{{ route('accessions.export') }}" class="btn btn-sm btn-success">
-                            <i class="ri-download-line me-1"></i>Export
-                        </a>
-                        @endif
-                    </div>
-                </div>
+        <!-- Search -->
+        <div style="min-width:240px;">
+            <label class="form-label small mb-1">Search</label>
+
+            <input type="text"
+                class="form-control form-control-sm"
+                id="accessionSearch"
+                placeholder="Accession No, Name, Crop...">
+        </div>
+
+        <!-- Crop Filter -->
+        <div style="min-width:180px;">
+            <label class="form-label small mb-1">Crop</label>
+
+            <select class="form-select form-select-sm" id="cropFilter">
+
+                <option value="">All Crops</option>
+
+                @foreach ($crops as $crop)
+
+                    <option value="{{ strtolower($crop->crop_name) }}">
+                        {{ $crop->crop_name }}
+                    </option>
+
+                @endforeach
+
+            </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div style="min-width:180px;">
+            <label class="form-label small mb-1">Status</label>
+
+            <select class="form-select form-select-sm" id="statusFilter">
+
+                <option value="">All Status</option>
+
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="quarantine">Quarantine</option>
+                <option value="depleted">Depleted</option>
+
+            </select>
+        </div>
+
+        <!-- Reset -->
+        <div>
+            <button class="btn btn-sm btn-light border"
+                id="resetFilters"
+                title="Reset Filters">
+
+                <i class="ri-refresh-line"></i>
+            </button>
+        </div>
+
+        @if(auth()->user()->hasPermission('accession.create'))
+
+            <!-- Add -->
+            <div>
+                <a href="{{ route('accessionform') }}"
+                    class="btn btn-sm btn-primary">
+
+                    <i class="ri-add-line me-1"></i>
+                    Add Accession
+                </a>
             </div>
+
+            <!-- Import -->
+            <div>
+                <button class="btn btn-sm btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#importModal">
+
+                    <i class="ri-upload-line me-1"></i>
+                    Import
+                </button>
+            </div>
+
+            <!-- Export -->
+            <div>
+                <a href="{{ route('accessions.export') }}"
+                    class="btn btn-sm btn-success">
+
+                    <i class="ri-download-line me-1"></i>
+                    Export
+                </a>
+            </div>
+
+        @endif
+
+    </div>
+
+</div>
 
             <!-- Success/Error Messages -->
             @if (session('success'))
@@ -86,20 +139,22 @@
                                     <!--<th><input type="checkbox" class="form-check-input" id="selectAll"></th>-->
                                     <th>Accession ID</th>
                                     <th>Accession Name</th>
+                                    <th>Source</th>
+                                    <th>Storage Time </th>
+                                    <th>Sample Id</th>
                                     <th>Accession photo</th>
                                     <th>Crop</th>
                                     <th>Accession Request</th>
                                    
                                     <th>Status</th>
                                     <th>Collection Date</th>
-                                   <!-- <th>Expiry Date</th>
-                                    <th>Recheck Date</th>-->
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($accessions as $accession)
-                                    <tr>
+                                    <tr class="accessionRow"
+    >
                                         {{--<td><input type="checkbox" class="form-check-input row-checkbox"
                                                 value="{{ $accession->id }}"></td>--}}
 
@@ -107,6 +162,18 @@
                                                 class="text-decoration-none fw-bold">{{ $accession->accession_number }}</a>
                                         </td>
                                         <td>{{ $accession->accession_name ?? '-' }}</td>
+                                        <td>
+                                            {{ ucfirst($accession->acc_source ?? '-') }}
+
+                                            @if($accession->acc_source == 'external' && $accession->ext_source)
+                                                <br>
+                                                <small class="text-muted">
+                                                    {{ $accession->ext_source }}
+                                                </small>
+                                            @endif
+                                        </td>
+                                        <td>{{ $accession->storageTime?->code ?? '-' }}</td>
+                                        <td>{{ $accession->sample_id ?? '-' }}</td>
                                         <td>
                                             @if($accession->image_path)
                                                 <img src="{{ $accession->photo_url }}"
@@ -162,12 +229,23 @@
                                                         </a>
                                                     </li>
                                                     @endif
+                                                    @if(auth()->user()->hasPermission('accession.delete'))
                                                     <li><a class="dropdown-item" href="#"><i
                                                                 class="ri-qr-code-line me-2"></i>Print Barcode</a></li>
-                                                    @if(auth()->user()->hasPermission('accession.delete'))
+                                                    
                                                     <li><hr class="dropdown-divider"></li>
-                                                    <li><a class="dropdown-item text-danger" href="#"><i
-                                                                class="ri-delete-bin-line me-2"></i>Delete</a></li>
+                                                    <li>  <form action="{{ route('accession.deactivate', $accession->id) }}"
+                                                            method="POST"
+                                                            onsubmit="return confirm('Are you sure you want to deactivate this accession?')">
+
+                                                            @csrf
+
+                                                            <button type="submit" class="dropdown-item text-danger">
+                                                                <i class="ri-close-circle-line me-2"></i>
+                                                                Deactivate
+                                                            </button>
+
+                                                        </form></li>
                                                     @endif
                                                 </ul>
                                             </div>
@@ -222,57 +300,88 @@
         document.addEventListener('DOMContentLoaded', function() {
 
             const cropFilter = document.getElementById('cropFilter');
-            const statusFilter = document.getElementById('statusFilter');
-            const warehouseFilter = document.getElementById('warehouseFilter');
-            const resetFilters = document.getElementById('resetFilters');
+    const statusFilter = document.getElementById('statusFilter');
+    const accessionSearch = document.getElementById('accessionSearch');
+    const resetFilters = document.getElementById('resetFilters');
 
-            const rows = document.querySelectorAll('#accessionTable tbody tr');
+    const rows = document.querySelectorAll('#accessionTable tbody tr');
 
-            function applyFilters() {
+    function applyFilters() {
 
-                const cropValue = cropFilter.value.toLowerCase();
-                const statusValue = statusFilter.value.toLowerCase();
-                const warehouseValue = warehouseFilter.value.toLowerCase();
+        const cropValue =
+            cropFilter.value.toLowerCase().trim();
 
-                rows.forEach(row => {
+        const statusValue =
+            statusFilter.value.toLowerCase().trim();
 
-                    const cells = row.querySelectorAll('td');
+        const searchValue =
+            accessionSearch.value.toLowerCase().trim();
 
-                    if (cells.length < 9) return;
+        rows.forEach(row => {
 
-                    const crop = cells[2].innerText.toLowerCase();
-                    const warehouse = cells[6].innerText.toLowerCase();
-                    const status = cells[8].innerText.toLowerCase();
+            const cells = row.querySelectorAll('td');
 
-                    const cropMatch = !cropValue || crop.includes(cropValue);
-                    const warehouseMatch = !warehouseValue || warehouse.includes(warehouseValue);
-                    const statusMatch = !statusValue || status.includes(statusValue);
+            if (cells.length < 10) return;
 
-                    if (cropMatch && warehouseMatch && statusMatch) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
+            // correct indexes
+            const accessionId =
+                cells[0].innerText.toLowerCase();
 
-                });
+            const accessionName =
+                cells[1].innerText.toLowerCase();
+
+            const crop =
+                cells[6].innerText.toLowerCase();
+
+            const status =
+                cells[8].innerText.toLowerCase();
+
+            const sampleId =
+                cells[4].innerText.toLowerCase();
+
+            // filters
+            const cropMatch =
+                !cropValue || crop.includes(cropValue);
+
+            const statusMatch =
+                !statusValue || status.includes(statusValue);
+
+            const searchMatch =
+                !searchValue ||
+                accessionId.includes(searchValue) ||
+                accessionName.includes(searchValue) ||
+                crop.includes(searchValue) ||
+                sampleId.includes(searchValue);
+
+            if (
+                cropMatch &&
+                statusMatch &&
+                searchMatch
+            ) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
             }
 
-            cropFilter.addEventListener('change', applyFilters);
-            statusFilter.addEventListener('change', applyFilters);
-            warehouseFilter.addEventListener('change', applyFilters);
+        });
+    }
 
-            resetFilters.addEventListener('click', function() {
+    cropFilter.addEventListener('change', applyFilters);
 
-                cropFilter.value = '';
-                statusFilter.value = '';
-                warehouseFilter.value = '';
+    statusFilter.addEventListener('change', applyFilters);
 
-                rows.forEach(row => row.style.display = '');
+    accessionSearch.addEventListener('keyup', applyFilters);
 
-            });
+    resetFilters.addEventListener('click', function () {
+
+        cropFilter.value = '';
+        statusFilter.value = '';
+        accessionSearch.value = '';
+
+        applyFilters();
+    });
 
         });
-
 
 
         function formatDate(date) {

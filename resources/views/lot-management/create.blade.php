@@ -576,7 +576,7 @@ value="{{ old('sample_id', $accession->sample_id ?? '') }}">
                                                     <!-- Other Input -->
 
                                                     <input type="text" name="researcher_other[]"
-                                                        class="form-control mt-1 other-input"
+                                                        class="form-control form-control-sm mt-1 other-input"
                                                         placeholder="Enter researcher name"
                                                         value="{{ $row->researcher_other ?? '' }}"
                                                         style="{{ ($row->researcher_id ?? '') == 'Other' ? '' : 'display:none;' }}">
@@ -1366,7 +1366,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (!otherInput) return;
 
-            if (select.value === 'other') {
+            if (select.value === 'Other') {
                 otherInput.style.display = 'block';
             } else {
                 otherInput.style.display = 'none';
@@ -1386,8 +1386,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!otherInput) return;
 
         // IMPORTANT FIX
-        if (select.value === 'other' || otherInput.value !== '') {
-            select.value = 'other';
+        if (select.value === 'Other' || otherInput.value !== '') {
+            select.value = 'Other';
             otherInput.style.display = 'block';
         } else {
             otherInput.style.display = 'none';

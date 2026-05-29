@@ -10,6 +10,37 @@
                 <p class="text-muted mb-0" style="font-size:13px">Create and manage germplasm lots</p>
             </div>
             <div>
+                <div class="d-flex flex-wrap align-items-end gap-2">
+
+        <!-- Search -->
+        <div style="min-width:240px;">
+            <label class="form-label small mb-1">Search</label>
+
+            <input type="text"
+                class="form-control form-control-sm"
+                id="accessionSearch"
+                placeholder="Lot No, Name, Crop...">
+        </div>
+
+        <!-- Crop Filter -->
+        <div style="min-width:180px;">
+            <label class="form-label small mb-1">Crop</label>
+
+            <select class="form-select form-select-sm" id="cropFilter">
+
+                <option value="">All Crops</option>
+
+                @foreach ($crops as $crop)
+
+                    <option value="{{ strtolower($crop->crop_name) }}">
+                        {{ $crop->crop_name }}
+                    </option>
+
+                @endforeach
+
+            </select>
+        </div>
+                
                 <a href="{{ route('lot-management.create') }}" class="btn btn-primary btn-sm">
                     <i class="ri-add-line me-1"></i> Add New Arrival(Lot)
                 </a>
@@ -19,6 +50,7 @@
                 <a href="{{ route('lot.export') }}" class="btn btn-sm btn-success">
                             <i class="ri-download-line me-1"></i>Export
                         </a>
+                    </div>
             </div>
             <!--<a href="{{ route('lot-management.create') }}" class="btn btn-primary btn-sm">
                 <i class="ri-add-line me-1"></i> Add New Lot
@@ -127,6 +159,10 @@
                                         data-lot_number="{{ $lot->lot_number }}"
                                         data-lot_master="{{ $lot->lotMaster?->name }}"
                                         data-lot_type="{{ $lot->lotType?->name }}"
+                                        data-regeneration_program="{{ $lot->rejuvenation_program }}"
+                                        data-regen_year="{{ $lot->regen_year }}"
+                                        data-prefix="{{ $lot->prefix }}"
+                                        data-sample_id="{{ $lot->sample_id }}"
                                         data-accession="{{ $lot->accession?->accession_number }}"
                                         data-accession_name="{{ $lot->accession?->accession_name }}"
                                         data-storage="{{ $lot->storage?->name }}"
@@ -230,6 +266,9 @@
                             <div class="col-md-3"><span class="text-muted d-block">Expiry Date</span><strong id="vl_expiry"></strong></div>
                             <div class="col-md-3"><span class="text-muted d-block">Regeneration Date</span><strong id="vl_regeneration"></strong></div>
                             <div class="col-md-3"><span class="text-muted d-block">Regeneration Year</span><strong id="vl_regen_year"></strong></div>
+                            <div class="col-md-3"><span class="text-muted d-block">Regeneration Program</span><strong id="vl_regeneration_program"></strong></div>
+                            <div class="col-md-3"><span class="text-muted d-block">Prefix</span><strong id="vl_prefix"></strong></div>
+                            <div class="col-md-3"><span class="text-muted d-block">Sample Id</span><strong id="vl_sample_id"></strong></div>
                             <div class="col-md-12"><span class="text-muted d-block">Description</span><strong id="vl_description"></strong></div>
                         </div>
                     </div>
@@ -247,7 +286,6 @@
                             <div class="col-md-3"><span class="text-muted d-block">Quantity</span><strong id="vl_acc_qty"></strong></div>
                             <div class="col-md-3"><span class="text-muted d-block">Status</span><strong id="vl_acc_status"></strong></div>
                             <div class="col-md-3"><span class="text-muted d-block">Barcode</span><strong id="vl_acc_barcode"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Expiry Date</span><strong id="vl_acc_expiry"></strong></div>
                         </div>
                     </div>
                 </div>
@@ -482,6 +520,9 @@ document.addEventListener('DOMContentLoaded', function () {
         set('vl_expiry',      d.expiry);
         set('vl_regeneration', d.germination);
         set('vl_regen_year', d.regen_year);
+        set('vl_regeneration_program', d.regeneration_program);
+        set('vl_prefix', d.prefix);
+        set('vl_sample_id', d.sample_id);
         set('vl_status',      d.status);
         set('vl_description', d.description);
         set('vl_st_rack',     d.rack);
@@ -501,7 +542,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     set('vl_acc_warehouse', a.warehouse);
                     set('vl_acc_status', a.status);
                     set('vl_acc_barcode', a.barcode);
-                    set('vl_acc_expiry', a.expiry_date);
                 });
         }
 
@@ -595,6 +635,43 @@ document.addEventListener('DOMContentLoaded', function () {
             balEl.className   = 'ms-1';
         }
     }
+
+
+    const searchInput = document.getElementById('accessionSearch');
+    const cropFilter  = document.getElementById('cropFilter');
+
+    const tableRows = document.querySelectorAll('table tbody tr');
+
+    function filterTable() {
+
+        let search = searchInput.value.toLowerCase().trim();
+        let crop   = cropFilter.value.toLowerCase().trim();
+
+        tableRows.forEach(row => {
+
+            let rowText = row.innerText.toLowerCase();
+
+            // Crop column text
+            let cropText = row.children[1]?.innerText.toLowerCase() || '';
+
+            let matchSearch = search === '' || rowText.includes(search);
+
+            let matchCrop = crop === '' || cropText.includes(crop);
+
+            if (matchSearch && matchCrop) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+
+        });
+    }
+
+    // Search typing
+    searchInput.addEventListener('keyup', filterTable);
+
+    // Crop change
+    cropFilter.addEventListener('change', filterTable);
 
 
 });

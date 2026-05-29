@@ -31,6 +31,17 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
+            @php
+    $selectedAccessionId = request('accession_id');
+
+    $selectedAccession = null;
+
+    if($selectedAccessionId){
+        $selectedAccession = \App\Models\Accession::with('crop')
+            ->find($selectedAccessionId);
+    }
+@endphp
+
             <form action="{{ isset($seedRequest) && $seedRequest->id ? route('requests.update', $seedRequest->id) : route('requests.store') }}" method="POST">
     @csrf
 
@@ -177,7 +188,7 @@ $role = optional(auth()->user()->role)->slug;
             <select name="crop_id[]" class="form-select cropSelect" required>
                 <option value="">Select Crop</option>
                 @foreach($crops as $crop)
-                    <option value="{{ $crop->id }}">{{ $crop->crop_name }}</option>
+                    <option value="{{ $crop->id }}" {{ $selectedAccession && $selectedAccession->crop_id == $crop->id ? 'selected' : '' }}>{{ $crop->crop_name }}</option>
                 @endforeach
             </select>
         </div>
@@ -185,6 +196,11 @@ $role = optional(auth()->user()->role)->slug;
         <div class="col-md-3">
             <select name="accession_id[]" class="form-select accessionSelect" required>
                 <option value="">Select Accession</option>
+                @if($selectedAccession)
+                    <option value="{{ $selectedAccession->id }}" selected>
+                        {{ $selectedAccession->accession_number }}
+                    </option>
+                @endif
             </select>
         </div>
 
@@ -224,11 +240,9 @@ $role = optional(auth()->user()->role)->slug;
                         <div class="row g-2 small">
                             <div class="col-md-3"><span class="text-muted">Accession Name:</span><br><strong id="acc_name">—</strong></div>
                             <div class="col-md-3"><span class="text-muted">Crop:</span><br><strong id="acc_crop">—</strong></div>
-                            <div class="col-md-3"><span class="text-muted">Scientific Name:</span><br><strong id="acc_scientific">—</strong></div>
                             <div class="col-md-3"><span class="text-muted">Total Quantity:</span><br><strong id="acc_total_qty" class="text-info">—</strong></div>
                             <div class="col-md-3"><span class="text-muted">Available Qty (User):</span><br><strong id="acc_qty" class="text-success">—</strong></div>
                             <div class="col-md-3"><span class="text-muted">Unit:</span><br><strong id="acc_unit">—</strong></div>
-                            <div class="col-md-3"><span class="text-muted">Expiry Date:</span><br><strong id="acc_expiry">—</strong></div>
                             <div class="col-md-3"><span class="text-muted">Barcode:</span><br><strong id="acc_barcode">—</strong></div>
                         </div>
                         {{-- Lots breakdown --}}
@@ -239,6 +253,8 @@ $role = optional(auth()->user()->role)->slug;
                                     <tr>
                                         <th>Lot No.</th>
                                         <th>Storage</th>
+                                        <th>Expiry Date</th>
+                                        <th>Regeneration Date</th>
                                         <th class="text-end">Available Qty</th>
                                         <th>Unit</th>
                                     </tr>
@@ -246,7 +262,7 @@ $role = optional(auth()->user()->role)->slug;
                                 <tbody id="accLotsBody"></tbody>
                                 <tfoot class="table-light">
                                     <tr>
-                                        <th colspan="2" class="text-end">Total</th>
+                                        <th colspan="4" class="text-end">Total</th>
                                         <th class="text-end" id="accLotsTotal">—</th>
                                         <th id="accLotsTotalUnit">—</th>
                                     </tr>
@@ -340,6 +356,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 .catch(() => card.classList.add('d-none'));
         });
     }
+
+    // Auto load after request
+
+    const preselectedAccession =
+        "{{ request('accession_id') }}";
+
+        if(preselectedAccession){
+
+            const accessionSelect =
+                document.querySelector('.accessionSelect');
+
+            if(accessionSelect){
+
+                accessionSelect.dispatchEvent(
+                    new Event('change')
+                );
+            }
+        }
 
     // =========================
     // ➕ Add New Row
@@ -452,16 +486,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 document.getElementById('acc_name').textContent = d.accession_name || '—';
                 document.getElementById('acc_crop').textContent = d.crop || '—';
-                document.getElementById('acc_scientific').textContent = d.scientific_name || '—';
                 document.getElementById('acc_total_qty').textContent =
                     d.total_quantity ? d.total_quantity + ' ' + (d.unit || '') : '—';
                 document.getElementById('acc_qty').textContent =
                     (d.quantity_show ?? d.quantity) ? (d.quantity_show ?? d.quantity) + ' ' + (d.unit || '') : '—';
                 document.getElementById('acc_unit').textContent = d.unit || '—';
-                document.getElementById('acc_expiry').textContent = d.expiry_date || '—';
-                document.getElementById('acc_barcode').textContent = d.barcode || '—';
-
-                document.getElementById('acc_expiry').textContent = d.expiry_date || '—';
                 document.getElementById('acc_barcode').textContent = d.barcode || '—';
 
                 document.getElementById('accessionDetailsBox').classList.remove('d-none');
@@ -479,6 +508,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         <tr>
                             <td>${lot.lot_number}</td>
                             <td>${lot.storage}</td>
+                            <td>${lot.expiry_date || '—'}</td>
+                            <td>${lot.regeneration_date || '—'}</td>
                             <td class="text-end">${lot.quantity}</td>
                             <td>${lot.unit}</td>
                         </tr>

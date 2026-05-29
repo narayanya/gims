@@ -233,9 +233,9 @@
                                 <button class="btn btn-primary">
                                     Update
                                 </button>
-                                <button type="reset" class="btn btn-light">
-                                    Reset
-                                </button>
+                                <button type="reset" class="btn btn-warning">
+                                <i class="ri-refresh-line me-1"></i>Reset
+                            </button>
                             </div>
             </form>
 

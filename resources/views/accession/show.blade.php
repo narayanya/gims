@@ -49,7 +49,27 @@
             <tbody>
 
                 <!-- BASIC -->
+                <tr><th style="width: 30%;">Accession No</th><td>{{ $accession->accession_number ?? '-' }}</td></tr>
+                <tr><th>Accession Name</th><td>{{ $accession->accession_name ?? '-' }}</td></tr>
+                <tr><th>Source</th><td>
+                    {{ ucfirst($accession->acc_source ?? '-') }}
+
+                    @if($accession->acc_source == 'external' && $accession->ext_source)
+                        <br>
+                        <small class="text-muted">
+                            {{ $accession->ext_source }}
+                        </small>
+                    @endif    
+                </td></tr>
+                <tr><th>Storage Time</th><td>{{ $accession->storageTime?->name ?? '-' }}</td></tr>
+                <tr><th>Sample Id</th><td>{{ $accession->sample_id ?? '-' }}</td></tr>
+                <tr><th>Requester Show</th><td>{{ $accession->requester_show == 'yes' ? 'Yes' : 'No' }}</td></tr>
+                <tr><th> Year Of Arrival</th><td>{{ $accession->year_of_arrival ?? '-' }}</td></tr>
+
                 <tr><th style="width: 30%;">Crop</th><td>{{ $accession->crop->crop_name ?? '-' }}</td></tr>
+
+
+                <tr><th>Common Name</th><td>{{ $accession->crop->common_name ?? '-' }}</td></tr>
                 <tr><th>Scientific Name</th><td>{{ $accession->crop->scientific_name ?? '-' }}</td></tr>
                 <tr><th>Family</th><td>{{ $accession->crop->family_name ?? '-' }}</td></tr>
                 <tr><th>Genus</th><td>{{ $accession->crop->genus ?? '-' }}</td></tr>
@@ -104,24 +124,17 @@
                 <div class="card-header bg-light p-2"><strong>4. Passport Data</strong></div>
                 <div class="card-body p-1">
                     <table class="table table-bordered table-striped p-0">
-
             <tbody>
                 <tr>
-                    <th>Passport No</th>
-                    <th>In</th>
-                    <th>Out</th>
-                    <th>Date</th>
-                    <th>Remarks</th>
+                    <td style="width: 30%;"><strong>Passport Data</strong></td>
+                    <td>
+                        {{ $accession->passport_file_path ?? '-' }}
+                    </td>
+                                
                 </tr>
-                    @foreach($accession->passports as $passport)
-                        <tr>
-                            <td>{{ $passport->passport_no ?? '-' }}</td>
-                            <td>{{ $passport->sample_name ?? '-' }}</td>
-                            <td>{{ $passport->remarks ?? '-' }}</td>
-                        </tr>
-                    @endforeach
-                    </tbody>
+            </tbody>
                     </table>
+            <tbody>
                 </div>
             </div>
 
@@ -129,8 +142,13 @@
             <div class="card mb-3">
                 <div class="card-header bg-light p-2"><strong>5. Documentation</strong></div>
                 <div class="card-body">
+                    <p><strong>Barcode Type:</strong> {{ $accession->barcode_type ?? '-' }}</p>
                     <p><strong>Barcode:</strong> {{ $accession->barcode ?? '-' }}</p>
                     <p><strong>Notes:</strong> {{ $accession->notes ?? '-' }}</p>   
+                    <p> Created At: {{ $accession->created_at ? $accession->created_at->format('d M Y, h:i A') : '-' }}</p>
+                    <p> Updated At: {{ $accession->updated_at ? $accession->updated_at->format('d M Y, h:i A') : '-' }}</p>
+                    <p>Created By: {{ $accession->createdBy->name ?? '-' }}</p>
+                    <p>Updated By: {{ $accession->updatedBy->name ?? '-' }}</p>
                 </div>
             </div>
 

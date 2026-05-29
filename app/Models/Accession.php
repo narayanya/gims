@@ -279,6 +279,20 @@ class Accession extends Model
         return $this->hasOne(SeedQuantity::class, 'lot_id')
             ->whereColumn('accession_id', 'lots.accession_id');
     }
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function enteredBy()
+    {
+        return $this->belongsTo(User::class, 'entered_by');
+    }
    /* public static function generateAccessionNumber(string $cropCode)
     {
         do {
