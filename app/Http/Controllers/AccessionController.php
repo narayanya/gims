@@ -54,6 +54,24 @@ class AccessionController extends Controller
         
         return view('accession.accession-list', compact('accessions','crops','warehouses', 'storageTime', 'storageCondition'));
     }
+    public function lowStockReport(Request $request)
+    {
+        $lowStockThreshold = 10;
+
+        $query = Accession::with(['crop'])
+            ->withSum('seedQuantities as total_available', 'quantity_show')
+            ->having('total_available', '<=', $lowStockThreshold)
+            ->having('total_available', '>', 0)
+            ->orderBy('total_available');
+
+        if ($request->has('crop_id') && !empty($request->crop_id)) {
+            $query->where('crop_id', $request->crop_id);
+        }
+
+        $lowStockAccessions = $query->get();
+
+        return view('report.low-stock-report', compact('lowStockAccessions'));
+    }
     public function showJson($id)
     {
         $accession = Accession::with([

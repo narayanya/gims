@@ -141,7 +141,7 @@
                                 <div class="">
                                     <h5 class="card-title mb-2 ms-3">Accession Tracking</h5>
                                     <div class="d-flex gap-2 ms-3">
-                                        <a class="fs-15" href="{{ route('accession.accession-list') }}" title="View Report">
+                                        <a class="fs-15" href="{{ route('report.summary') }}" title="View Report">
                                             <i class="ri-eye-line text-info"></i>
                                         </a>
                                         <div class="vr"></div>
@@ -169,7 +169,7 @@
                                 <div class="">
                                     <h5 class="card-title mb-2 ms-3">Low Stock Alerts</h5>
                                     <div class="d-flex gap-2 ms-3">
-                                        <a class="fs-15" href="" title="View Report">
+                                        <a class="fs-15" href="{{ route('accession.lowStockReport') }}" title="View Report">
                                             <i class="ri-eye-line text-info"></i>
                                         </a>
                                         <div class="vr"></div>

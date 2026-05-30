@@ -8,7 +8,7 @@
         <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-sage-muted/20 pb-2">
             <div class="items-center gap-3">
                 <h3 class="text-sage-900 dark:text-white text-xl font-bold leading-tight flex items-center gap-2 w-100">
-                    Expire Report
+                    Expiry Report
                 </h3>
 
                 <p class="text-sage-600 dark:text-sage-400 text-sm mb-1" style="color: #777777">
@@ -116,6 +116,7 @@
                 <table class="table table-bordered table-striped align-middle">
                     <thead class="table-light">
                         <tr>
+                            <th>Lot Number</th>
                             <th>Accession ID</th>
                             <th>Accession</th>
                             <th>Crop</th>
@@ -129,11 +130,11 @@
 
                     <tbody>
 
-                    @forelse($accessions as $key => $accession)
+                    @forelse($lots as $lot)
 
                         @php
-                            $expiry = $accession->expiry_date
-                                ? \Carbon\Carbon::parse($accession->expiry_date)
+                            $expiry = $lot->expiry_date
+                                ? \Carbon\Carbon::parse($lot->expiry_date)
                                 : null;
 
                             $daysLeft = $expiry
@@ -154,30 +155,27 @@
                         @endphp
 
                         <tr>
-
-                        
-
                             <td>
-                                {{ $accession->accession_number }}
+                                {{ $lot->lot_number }}
                             </td>
 
                             <td>
-                                {{ $accession->accession_name ?? $accession->accession_number }}
+                                {{ $lot->accession->accession_name ?? $lot->accession->accession_number }}
                             </td>
 
                             <td>
-                                {{ $accession->crop->crop_name ?? '-' }}
+                                {{ $lot->accession->crop->crop_name ?? '-' }}
                             </td>
 
                             <td>
                                 <span class="badge bg-info">
-                                    {{ $accession->storageTime->code ?? '-' }}
+                                    {{ $lot->accession->storageTime->code ?? '-' }}
                                 </span>
                             </td>
 
                             <td>
-                                {{ $accession->recheck_date
-                                    ? \Carbon\Carbon::parse($accession->recheck_date)->format('d M Y')
+                                {{ $lot->accession->recheck_date
+                                    ? \Carbon\Carbon::parse($lot->accession->recheck_date)->format('d M Y')
                                     : '-'
                                 }}
                             </td>

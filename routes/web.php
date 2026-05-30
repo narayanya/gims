@@ -87,6 +87,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/accessions/{id}/edit',      [AccessionController::class, 'edit'])->name('accessions.edit')->middleware('permission:accession.edit');
     Route::put('/accessions/{id}',           [AccessionController::class, 'update'])->name('accessions.update')->middleware('permission:accession.edit');
     Route::post('/accession/{id}/deactivate',    [AccessionController::class, 'deactivate'])->name('accession.deactivate');
+    Route::get('/reports/low-stock-report',    [AccessionController::class, 'lowStockReport'])->name('accession.lowStockReport');
 
 Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
 

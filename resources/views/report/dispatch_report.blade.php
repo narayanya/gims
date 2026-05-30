@@ -42,6 +42,8 @@
         </div>
 
         {{-- Table --}}
+        <div class="card border-0 shadow-sm">
+        <div class="card-body">
         <div class="table-responsive">
             <table class="table table-bordered table-hover align-middle">
                 <thead class="table-light">
@@ -64,45 +66,35 @@
                     @forelse($dispatches as $dispatch)
                         <tr>
                             <td>{{ $loop->iteration }}</td>
-
                             <td>
                                 <span class="fw-semibold text-primary">
                                     {{ $dispatch->dispatch_number }}
                                 </span>
                             </td>
-
                             <td>
                                 {{ $dispatch->request->request_number ?? '-' }}
                             </td>
-
                             <td>
                                 {{ $dispatch->mrn_number ?? '-' }}
                             </td>
-
                             <td>
                                 {{ $dispatch->accession->accession_number ?? '-' }}
                             </td>
-
                             <td>
                                 {{ $dispatch->lot->lot_number ?? '-' }}
                             </td>
-
                             <td>
                                 {{ $dispatch->quantity ?? 0 }}
                             </td>
-
                             <td>
                                 {{ $dispatch->courier_name ?? '-' }}
                             </td>
-
                             <td>
                                 {{ $dispatch->tracking_number ?? '-' }}
                             </td>
-
                             <td>
                                 {{ $dispatch->dispatched_at ? \Carbon\Carbon::parse($dispatch->dispatched_at)->format('d M Y') : '-' }}
                             </td>
-
                             <td>
                                 {{ $dispatch->created_at->format('d M Y h:i A') }}
                             </td>
@@ -117,20 +109,20 @@
                 </tbody>
             </table>
         </div>
-
+   
         {{-- Pagination --}}
 
         <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
-                    <div>
-                        Showing {{ $dispatches->firstItem() }} to {{ $dispatches->lastItem() }}
-                        of {{ $dispatches->total() }} results
-                    </div>
-
-                    <div>
-                        {{ $dispatches->links() }}
-                    </div>
-                </div>
-
+            <div>
+                Showing {{ $dispatches->firstItem() }} to {{ $dispatches->lastItem() }}
+                of {{ $dispatches->total() }} results
+            </div>
+            <div>
+                {{ $dispatches->links() }}
+            </div>
+        </div>
+        </div>
+        </div>
     </div>
 </div>
 @endsection

@@ -459,6 +459,8 @@ h-full rounded-full"
                         </div>
                         @endif
                         @if (auth()->user()->hasRole(['super-admin', 'admin', 'manager']))
+                        <div class="row">
+                            <div class="col-md-8">
                         <div class="card shadow-sm border-0 rounded-4 mb-4">
                             <div class="card-body">
 
@@ -470,6 +472,19 @@ h-full rounded-full"
                                     <canvas id="monthlyTransactionChart"></canvas>
                                 </div>
 
+                            </div>
+                        </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card shadow-sm border-0 rounded-4 mb-4">
+                                     <div class="card-header">
+                                        <h5>Accessions by Crop</h5>
+                                    </div>
+
+                                    <div class="card-body">
+                                        <div id="cropDonutChart"></div>
+                                    </div>
+                                </div>   
                             </div>
                         </div>
                         @endif
@@ -630,6 +645,10 @@ h-full rounded-full"
                         }
                     });
                     </script>
+
+                    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+
 
                     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
                     <div class="card shadow-sm border-0 rounded-4 mb-4">
@@ -1237,4 +1256,30 @@ h-full rounded-full"
 
                 <!-- end col -->
             </div>
-        @endsection
+      
+        <script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    var cropLabels = @json($cropData->pluck('crop_name'));
+    var cropCounts = @json($cropData->pluck('total'));
+
+    var options = {
+        series: cropCounts,
+        chart: {
+            type: 'donut',
+            height: 350
+        },
+        labels: cropLabels
+    };
+
+    var chart = new ApexCharts(
+        document.querySelector("#cropDonutChart"),
+        options
+    );
+
+    chart.render();
+});
+</script>
+            
+  @endsection

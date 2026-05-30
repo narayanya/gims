@@ -420,80 +420,62 @@ class ReportController extends Controller
     }
 public function expiryReport(Request $request)
 {
-    $accessions = Accession::with([
-            'crop',
-            'storageTime',
-            'lots'
-        ])
+    $lots = Lot::with([
+        'accession.crop',
+        'accession.storageTime'
+    ])
 
-        // Expiry Date Filters from lots table
-        ->whereHas('lots', function ($q) use ($request) {
+    ->when(!$request->date_from && !$request->date_to, function ($q) {
+        $q->whereBetween('expiry_date', [
+            now()->subMonths(3),
+            now()->addMonths(3)
+        ]);
+    })
 
-            // Default = next 3 months data
-            if (!$request->date_from && !$request->date_to) {
+    ->when($request->date_from, function ($q) use ($request) {
+        $q->whereDate('expiry_date', '>=', $request->date_from);
+    })
 
-                $q->whereBetween('expiry_date', [
-                    now()->subMonths(3),
-                    now()->addMonths(3)
-                ]);
-            }
+    ->when($request->date_to, function ($q) use ($request) {
+        $q->whereDate('expiry_date', '<=', $request->date_to);
+    })
 
-            // From Date
-            if ($request->date_from) {
+    ->when($request->status == 'expired', function ($q) {
+        $q->whereDate('expiry_date', '<', now());
+    })
 
-                $q->whereDate('expiry_date', '>=', $request->date_from);
-            }
+    ->when($request->status == 'critical', function ($q) {
+        $q->whereBetween('expiry_date', [
+            now(),
+            now()->addDays(3)
+        ]);
+    })
 
-            // To Date
-            if ($request->date_to) {
+    ->when($request->status == 'soon', function ($q) {
+        $q->whereBetween('expiry_date', [
+            now()->addDays(4),
+            now()->addDays(10)
+        ]);
+    })
 
-                $q->whereDate('expiry_date', '<=', $request->date_to);
-            }
+    ->when($request->status == 'safe', function ($q) {
+        $q->whereDate('expiry_date', '>', now()->addDays(10));
+    })
 
-            // Status Filter
-            if ($request->status == 'expired') {
+    ->orderByRaw("
+        CASE
+            WHEN expiry_date < CURDATE() THEN 0
+            WHEN expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) THEN 1
+            WHEN expiry_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 4 DAY) AND DATE_ADD(CURDATE(), INTERVAL 10 DAY) THEN 2
+            ELSE 3
+        END
+    ")
 
-                $q->whereDate('expiry_date', '<', now());
+    ->orderBy('expiry_date', 'asc')
 
-            } elseif ($request->status == 'critical') {
+    ->paginate(15);
 
-                $q->whereBetween('expiry_date', [
-                    now(),
-                    now()->addDays(3)
-                ]);
-
-            } elseif ($request->status == 'soon') {
-
-                $q->whereBetween('expiry_date', [
-                    now()->addDays(4),
-                    now()->addDays(10)
-                ]);
-
-            } elseif ($request->status == 'safe') {
-
-                $q->whereDate('expiry_date', '>', now()->addDays(10));
-            }
-        })
-
-        // Sorting by lots expiry_date
-        ->join('lots', 'accessions.id', '=', 'lots.accession_id')
-
-        ->orderByRaw("
-            CASE
-                WHEN lots.expiry_date < CURDATE() THEN 0
-                WHEN lots.expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) THEN 1
-                WHEN lots.expiry_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 4 DAY) AND DATE_ADD(CURDATE(), INTERVAL 10 DAY) THEN 2
-                ELSE 3
-            END
-        ")
-
-        ->orderBy('lots.expiry_date', 'asc')
-
-        ->select('accessions.*')
-
-        ->paginate(15);
-
-    return view('report.expiry-report', compact('accessions'));
+    return view('report.expiry-report', compact('lots'));
 }
     
     public function downloadExpiryReport()

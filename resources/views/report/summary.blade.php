@@ -109,7 +109,7 @@
                     </div>
                 </div>
             </div>
-
+            <div class="card">
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -164,56 +164,7 @@
 
                 </tbody>
             </table>
-            
-
-            <div class="card mt-3 d-none">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Accession/Lot Reports</h5>
-                    <form class="d-flex gap-2 align-items-center" method="GET" id="txnFilterForm">
-                        <select name="accession_id" class="form-select form-select-sm" onchange="document.getElementById('txnFilterForm').submit()">
-                            <option value="">All Accessions</option>
-                            @foreach($accessions as $accession)
-                                <option value="{{ $accession->id }}" {{ request('accession_id') == $accession->id ? 'selected' : '' }}>
-                                    {{ $accession->accession_number }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <select name="lot_id" class="form-select form-select-sm" onchange="document.getElementById('txnFilterForm').submit()">
-                            <option value="">All Lot</option>
-                            @foreach($lots as $lot)
-                                <option value="{{ $lot->id }}" {{ request('lot_id') == $lot->id ? 'selected' : '' }}>
-                                    {{ $lot->lot_number }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <input type="date" name="date_from" class="form-control form-control-sm" placeholder="From" value="{{ request('date_from') }}" style="width:140px">
-                        <input type="date" name="date_to"   class="form-control form-control-sm" placeholder="To"   value="{{ request('date_to') }}"   style="width:140px">
-                        <button type="submit" class="btn btn-sm btn-primary">Filter</button>
-                    </form>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Accession Name</th>
-                                    <th>Accessions Number</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($accessions as $accession)
-                                <tr>
-                                    <td>{{ $accession->accession_name }}</td>
-                                    <td>{{ $accession->accession_number }}</td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
-             
-            
         </div>
  </div>
 <script>

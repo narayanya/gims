@@ -233,6 +233,14 @@ $monthlyData = [];
 
 $activeRegenerationCount = $activeRegenerationCycles->count();
 
+     $cropData = Accession::select(
+            'core_crop.crop_name',
+            DB::raw('COUNT(accessions.id) as total')
+        )
+        ->join('core_crop', 'core_crop.id', '=', 'accessions.crop_id')
+        ->groupBy('core_crop.id', 'core_crop.crop_name')
+        ->get();
+
         return view('home', compact(
             'totalAccessions',
             'totalCrops',
@@ -261,7 +269,8 @@ $activeRegenerationCount = $activeRegenerationCycles->count();
             'pendingQCSamples',
             'pendingQCCount',
             'activeRegenerationCount',
-            'activeRegenerationCycles'
+            'activeRegenerationCycles',
+            'cropData'
         ));
     }
 
