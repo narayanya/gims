@@ -475,16 +475,119 @@ h-full rounded-full"
                             </div>
                         </div>
                             </div>
+                            
                             <div class="col-md-4">
-                                <div class="card shadow-sm border-0 rounded-4 mb-4">
-                                     <div class="card-header">
-                                        <h5>Accessions by Crop</h5>
-                                    </div>
+                                
 
-                                    <div class="card-body">
-                                        <div id="cropDonutChart"></div>
-                                    </div>
-                                </div>   
+                                <div class="card shadow-sm border-0 rounded-4 mb-4">
+    <div class="card-header bg-white border-bottom">
+        <h5 class="mb-0 fw-semibold">Accessions by Crop</h5>
+    </div>
+
+    <div class="card-body">
+        <div style="position: relative; height:350px;">
+            <canvas id="cropDonutChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const labels = @json($cropData->pluck('crop_name')->values());
+    const data = @json($cropData->pluck('total')->map(fn($v)=>(int)$v)->values());
+
+    const total = data.reduce((sum, value) => sum + value, 0);
+
+    // Plugin for center text
+    const centerTextPlugin = {
+        id: 'centerText',
+        beforeDraw(chart) {
+
+            const {ctx} = chart;
+            const meta = chart.getDatasetMeta(0);
+
+            if (!meta.data.length) return;
+
+            const x = meta.data[0].x;
+            const y = meta.data[0].y;
+
+            ctx.save();
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            ctx.font = 'bold 28px Inter, sans-serif';
+            ctx.fillStyle = '#111827';
+            ctx.fillText(total, x, y - 10);
+
+            ctx.font = '14px Inter, sans-serif';
+            ctx.fillStyle = '#6B7280';
+            ctx.fillText('Total', x, y + 18);
+
+            ctx.restore();
+        }
+    };
+
+    new Chart(document.getElementById('cropDonutChart'), {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: [
+                    '#4F46E5',
+                    '#10B981',
+                    '#F59E0B',
+                    '#EF4444',
+                    '#06B6D4',
+                    '#8B5CF6',
+                    '#84CC16',
+                    '#F97316'
+                ],
+                borderWidth: 3,
+                borderColor: '#fff',
+                hoverOffset: 12
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 20,
+                        font: {
+                            size: 13
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+
+                            let value = context.raw;
+
+                            let percentage =
+                                ((value / total) * 100).toFixed(1);
+
+                            return `${context.label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        },
+        plugins: [centerTextPlugin]
+    });
+
+});
+</script>
                             </div>
                         </div>
                         @endif
@@ -646,7 +749,7 @@ h-full rounded-full"
                     });
                     </script>
 
-                    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+                    
 
 
 
@@ -1257,29 +1360,6 @@ h-full rounded-full"
                 <!-- end col -->
             </div>
       
-        <script>
-
-document.addEventListener('DOMContentLoaded', function () {
-
-    var cropLabels = @json($cropData->pluck('crop_name'));
-    var cropCounts = @json($cropData->pluck('total'));
-
-    var options = {
-        series: cropCounts,
-        chart: {
-            type: 'donut',
-            height: 350
-        },
-        labels: cropLabels
-    };
-
-    var chart = new ApexCharts(
-        document.querySelector("#cropDonutChart"),
-        options
-    );
-
-    chart.render();
-});
-</script>
+        
             
   @endsection
