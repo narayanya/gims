@@ -94,9 +94,10 @@
                                         <th>Code</th>
                                         <th>Effective Date</th>
                                         <th>Scientific Name</th>
+                                        <th>Common Name</th>
                                         <th>Crop Category </th>
                                         <th>Crop Type</th>
-                                        <th>Description</th>
+                                        <th>Season</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                         <th>Update Status</th>
@@ -116,9 +117,10 @@
                                             </td>
                                             <td>{{ $crop->effective_date ? \Carbon\Carbon::parse($crop->effective_date)->format('d-m-Y') : '-' }}</td>
                                             <td>{{ $crop->scientific_name ?? '-' }}</td>
+                                            <td>{{ $crop->common_name ?? '-' }}</td>
                                             <td>{{ $crop->cropCategory->name ?? '-' }}</td>
                                             <td>{{ $crop->cropType->name ?? '-' }}</td>
-                                            <td>{{ $crop->description ?? '-' }}</td>
+                                            <td>{{ $crop->season->name ?? '-' }}</td>
                                             <td>
                                                 @if ($crop->is_active == '1')
                                                     <span class="badge bg-success">Active</span>
@@ -157,7 +159,7 @@
                                                     data-seed_quantity="{{ $crop->seed_quantity }}"
                                                     data-seed_weight="{{ $crop->seed_weight }}"
                                                     data-unit_id="{{ $crop->unit_id }}"
-                                                    data-regenaration="{{ $crop->regeneration_cut_year }}"
+                                                    data-regeneration_cut_year="{{ $crop->regeneration_cut_year }}"
                                                     data-start_month="{{ $crop->season_start_month_id ?? '' }}"
                                                     data-end_month="{{ $crop->season_end_month_id ?? '' }}"
                                                     data-pouch_standard_id="{{ $crop->pouch_standard_id ?? '' }}"
@@ -200,7 +202,7 @@
                                                     data-seed_quantity="{{ $crop->seed_quantity }}"
                                                     data-seed_weight="{{ $crop->seed_weight }}"
                                                     data-unit_id="{{ $crop->unit_id }}"
-                                                    data-regenaration="{{ $crop->regeneration_cut_year }}"
+                                                    data-regeneration_cut_year="{{ $crop->regeneration_cut_year }}"
                                                     data-start_month="{{ $crop->season_start_month_id ?? '' }}"
                                                     data-end_month="{{ $crop->season_end_month_id ?? '' }}"
                                                     data-pouch_standard_id="{{ $crop->pouch_standard_id ?? '' }}"
@@ -298,7 +300,7 @@
                     document.getElementsByName('seed_quantity')[0].value = this.dataset.seed_quantity || '';
                     document.getElementsByName('seed_weight')[0].value = this.dataset.seed_weight || '';
                     document.getElementsByName('unit_id')[0].value = this.dataset.unit_id || '';
-                    document.getElementsByName('regeneration_cut_year')[0].value = this.dataset.regenaration || '';
+                    document.getElementsByName('regeneration_cut_year')[0].value = this.dataset.regeneration_cut_year || '';
                     document.getElementsByName('season_start_month_id')[0].value = this.dataset.start_month || '';
                     document.getElementsByName('season_end_month_id')[0].value = this.dataset.end_month || '';
                     document.getElementsByName('pouch_standard_id')[0].value = this.dataset.pouch_standard_id || '';
@@ -394,7 +396,7 @@
                 set('c_climate', this.dataset.climate);
                 set('c_soil', this.dataset.soil);
                 set('c_isolation', this.dataset.isolation);
-                set('c_regeneration_cut_year', this.dataset.regenaration);
+                set('c_regeneration_cut_year', this.dataset.regeneration_cut_year);
                 set('c_season_start_month_id', this.dataset.start_month);
                 set('c_season_end_month_id', this.dataset.end_month);
                 set('c_seed_quantity', this.dataset.seed_quantity);
@@ -512,7 +514,7 @@
                             @enderror
                         </div>
                         <div class="col-md-12 mt-3">
-                            <label class="form-label">Description <span class="text-danger">*</span></label>
+                            <label class="form-label">Description </label>
                             <textarea  name="description" class="form-control" placeholder="Enter your decription" ></textarea>
                         </div>
                     </div>
@@ -705,8 +707,8 @@
 
 
                                     <div class="col-md-12 mb-3">
-                                        <label class="form-label">Description <span class="text-danger">*</span></label>
-                                        <textarea name="description" id="description" class="form-control" rows="3" placeholder="Enter crop description" required>
+                                        <label class="form-label">Description </label>
+                                        <textarea name="description" id="description" class="form-control" rows="3" placeholder="Enter crop description">
                                             {{ old('description') }}
                                         </textarea>
                                     </div>
@@ -779,13 +781,16 @@
 
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Season <span class="text-danger">*</span></label>
-                                        <select name="season_id"
+                                        <select name="season_id" id="season_id"
                                             class="form-select @error('season_id') is-invalid @enderror" required>
 
                                             <option value="">Select Season</option>
 
                                             @foreach ($seasons as $season)
-                                                <option value="{{ $season->id }}"
+                                                <option
+                                                    value="{{ $season->id }}"
+                                                    data-start="{{ $season->start_month }}"
+                                                    data-end="{{ $season->end_month }}"
                                                     {{ old('season_id') == $season->id ? 'selected' : '' }}>
                                                     {{ $season->name }}
                                                 </option>
@@ -796,42 +801,31 @@
 
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">Start Month <span class="text-danger">*</span></label>
-                                        <select name="season_start_month_id"
+                                        <select name="season_start_month_id" id="season_start_month_id"
                                             class="form-select @error('season_start_month_id') is-invalid @enderror" required>
 
                                             <option value="">Select Month</option>
-                                            <option value="1" {{ old('season_start_month_id') == '1' ? 'selected' : '' }}>January</option>
-                                            <option value="2" {{ old('season_start_month_id') == '2' ? 'selected' : '' }}>February</option>
-                                            <option value="3" {{ old('season_start_month_id') == '3' ? 'selected' : '' }}>March</option>
-                                            <option value="4" {{ old('season_start_month_id') == '4' ? 'selected' : '' }}>April</option>
-                                            <option value="5" {{ old('season_start_month_id') == '5' ? 'selected' : '' }}>May</option>
-                                            <option value="6" {{ old('season_start_month_id') == '6' ? 'selected' : '' }}>June</option>
-                                            <option value="7" {{ old('season_start_month_id') == '7' ? 'selected' : '' }}>July</option>
-                                            <option value="8" {{ old('season_start_month_id') == '8' ? 'selected' : '' }}>August</option>
-                                            <option value="9" {{ old('season_start_month_id') == '9' ? 'selected' : '' }}>September</option>
-                                            <option value="10" {{ old('season_start_month_id') == '10' ? 'selected' : '' }}>October</option>
-                                            <option value="11" {{ old('season_start_month_id') == '11' ? 'selected' : '' }}>November</option>
-                                            <option value="12" {{ old('season_start_month_id') == '12' ? 'selected' : '' }}>December</option>
+
+                                            @for ($i = 1; $i <= 12; $i++)
+                                                <option value="{{ $i }}">
+                                                    {{ date('F', mktime(0, 0, 0, $i, 1)) }}
+                                                </option>
+                                            @endfor
+
                                         </select>
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">End Month <span class="text-danger">*</span></label>
-                                        <select name="season_end_month_id"
+                                        <select name="season_end_month_id" id="season_end_month_id"
                                             class="form-select @error('season_end_month_id') is-invalid @enderror" required>
 
                                             <option value="">Select Month</option>
-                                            <option value="1" {{ old('season_end_month_id') == '1' ? 'selected' : '' }}>January</option>
-                                            <option value="2" {{ old('season_end_month_id') == '2' ? 'selected' : '' }}>February</option>
-                                            <option value="3" {{ old('season_end_month_id') == '3' ? 'selected' : '' }}>March</option>
-                                            <option value="4" {{ old('season_end_month_id') == '4' ? 'selected' : '' }}>April</option>
-                                            <option value="5" {{ old('season_end_month_id') == '5' ? 'selected' : '' }}>May</option>
-                                            <option value="6" {{ old('season_end_month_id') == '6' ? 'selected' : '' }}>June</option>
-                                            <option value="7" {{ old('season_end_month_id') == '7' ? 'selected' : '' }}>July</option>
-                                            <option value="8" {{ old('season_end_month_id') == '8' ? 'selected' : '' }}>August</option>
-                                            <option value="9" {{ old('season_end_month_id') == '9' ? 'selected' : '' }}>September</option>
-                                            <option value="10" {{ old('season_end_month_id') == '10' ? 'selected' : '' }}>October</option>
-                                            <option value="11" {{ old('season_end_month_id') == '11' ? 'selected' : '' }}>November</option>
-                                            <option value="12" {{ old('season_end_month_id') == '12' ? 'selected' : '' }}>December</option>
+
+                                            @for ($i = 1; $i <= 12; $i++)
+                                                <option value="{{ $i }}">
+                                                    {{ date('F', mktime(0, 0, 0, $i, 1)) }}
+                                                </option>
+                                            @endfor
 
                                         </select>
                                     </div>
@@ -879,7 +873,7 @@
                                         <select name="soil_type_id"
                                             class="form-select @error('soil_type_id') is-invalid @enderror" required>
 
-                                            <option value="">Select Soil Type</option>
+                                            <option selected value="">Select Soil Type</option>
 
                                             @foreach ($soiltypes as $soil)
                                                 <option value="{{ $soil->id }}"
@@ -956,7 +950,7 @@
                                     </div>
 
                                     <div class="col-md-6 mb-3">
-                                        <label class="form-label">Regenaration Cut of Year</label>
+                                        <label class="form-label">Regeneration Cut of Year</label>
                                         <input type="number" name="regeneration_cut_year" class="form-control"
                                             placeholder="Enter year" value="{{ old('regeneration_cut_year') }}">
                                     </div>
@@ -1202,7 +1196,7 @@
                                         <td><span id="c_yield"></span></td>
                                     </tr>
                                     <tr>
-                                        <th>Regulation:</th>
+                                        <th>Regeneration Cut of Year:</th>
                                         <td><span id="c_regeneration_cut_year"></span></td>
                                     </tr>
                                 </tbody>
@@ -1257,5 +1251,28 @@
 function copyEmail() {
     navigator.clipboard.writeText("corecrop@vspl.com");
 }
+
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    const seasonSelect = document.getElementById('season_id');
+    const startMonth = document.getElementById('season_start_month_id');
+    const endMonth = document.getElementById('season_end_month_id');
+
+    function setSeasonMonths() {
+        const option = seasonSelect.options[seasonSelect.selectedIndex];
+
+        if (option.value) {
+            startMonth.value = option.dataset.start;
+            endMonth.value = option.dataset.end;
+        }
+    }
+
+    seasonSelect.addEventListener('change', setSeasonMonths);
+
+    // Auto select on page load (first time / old value)
+    setSeasonMonths();
+});
+
 </script>
 @endsection

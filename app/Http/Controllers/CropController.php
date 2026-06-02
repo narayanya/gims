@@ -193,20 +193,27 @@ if ($monthDiff < 3) {
             'file' => 'required|mimes:csv,xlsx,xls'
         ]);
 
-        $import = new CropImport;
-        Excel::import($import, $request->file('file'));
+        try {
 
-        $failures = $import->errors();
+            $import = new CropImport();
 
-        if ($failures && count($failures) > 0) {
-            $messages = collect($failures)->map(fn($e) => $e->getMessage())->implode(' | ');
+            Excel::import($import, $request->file('file'));
+
             return redirect()->route('crops.index')
-                ->with('warning', 'Import completed with errors: ' . $messages);
-        }
+                ->with(
+                    'success',
+                    "Import completed. Imported: {$import->imported}, Skipped (already exists): {$import->skipped}"
+                );
 
-        return redirect()->route('crops.index')
-            ->with('success', 'Crops imported successfully!');
+        } catch (\Exception $e) {
+
+            return redirect()->route('crops.index')
+                ->with('error', $e->getMessage());
+        }
     }
+
+   
+
     public function export()
     {
         return Excel::download(new CropExport, 'crop_list.xlsx');
