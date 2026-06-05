@@ -867,11 +867,11 @@
                                     <div class="col-md-6 mb-3">
 
                                         <label class="form-label">
-                                            Soil Type <span class="text-danger">*</span>
+                                            Soil Type
                                         </label>
 
                                         <select name="soil_type_id"
-                                            class="form-select @error('soil_type_id') is-invalid @enderror" required>
+                                            class="form-select @error('soil_type_id') is-invalid @enderror" >
 
                                             <option selected value="">Select Soil Type</option>
 

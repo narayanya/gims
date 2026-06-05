@@ -47,10 +47,8 @@ class Accession extends Model
         
         // Storage Information
         'warehouse_id',
-        'storage_location_id',
         'storage_time_id',
         'storage_time',
-        'storage_condition_id',
         
         // Documentation
         'barcode_type',
@@ -104,7 +102,7 @@ class Accession extends Model
     }
     public function city()
     {
-        return $this->belongsTo(City::class);
+        return $this->belongsTo(CoreCityVillage::class, 'city_id');
     }
 
     /**

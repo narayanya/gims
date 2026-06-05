@@ -170,7 +170,7 @@
                                     <option value="{{ $acc->id }}" data-regen="{{ optional($acc->crop)->regeneration_cut_year }}" data-season-start="{{ optional(optional($acc->crop)->season)->start_month ?? 0 }}"
 
     data-season-end="{{ optional(optional($acc->crop)->season)->end_month ?? 0 }}" {{ $selectedAccession == $acc->id ? 'selected' : '' }}>
-                                        {{ $acc->accession_number }} — {{ $acc->accession_name }}</option>
+                                        {{ $acc->accession_number }}</option>
                                 @endforeach
                             </select>
                             <input hidden type="text" id="sample_id_input" name="sample_id"

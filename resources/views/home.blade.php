@@ -477,19 +477,17 @@ h-full rounded-full"
                             </div>
                             
                             <div class="col-md-4">
-                                
-
                                 <div class="card shadow-sm border-0 rounded-4 mb-4">
-    <div class="card-header bg-white border-bottom">
-        <h5 class="mb-0 fw-semibold">Accessions by Crop</h5>
-    </div>
+                                    <div class="card-header bg-white border-bottom">
+                                        <h5 class="mb-0 fw-semibold">Accessions by Crop</h5>
+                                    </div>
 
-    <div class="card-body">
-        <div style="position: relative; height:350px;">
-            <canvas id="cropDonutChart"></canvas>
-        </div>
-    </div>
-</div>
+                                    <div class="card-body">
+                                        <div style="position: relative; height:350px;">
+                                            <canvas id="cropDonutChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -676,14 +674,15 @@ document.addEventListener('DOMContentLoaded', function () {
                             plugins: {
 
                                 legend: {
-                                    position: 'bottom',
+                                    position: 'Bottom',
+                                    
 
                                     labels: {
                                         usePointStyle: true,
                                         pointStyle: 'circle',
                                         padding: 25,
                                         font: {
-                                            size: 14
+                                            size: 11
                                         }
                                     }
                                 },
@@ -752,7 +751,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     
 
 
-
+                    <div class="row">
+                        <div class="col-md-8">
                     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
                     <div class="card shadow-sm border-0 rounded-4 mb-4">
                         <div class="card-body">
@@ -769,6 +769,125 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         </div>
                     </div>
+                        </div>
+                        <div class="col-md-4">
+                                <div class="card shadow-sm border-0 rounded-4 mb-4">
+                                    <div class="card-header bg-white border-bottom">
+                                        <h5 class="mb-0 fw-semibold">Crop Category</h5>
+                                    </div>
+
+                                    <div class="card-body">
+                                        <div style="position: relative; height:330px;">
+                                            <canvas id="cropcategoryDonutChart"></canvas>
+
+                                            <script>
+                                            const labelscate = @json($categoryData->pluck('name'));
+                                            const counts = @json($categoryData->pluck('total'));
+                                            const centerTextPlugin = {
+                                                id: 'centerText',
+                                                afterDraw(chart) {
+                                                    const { ctx } = chart;
+
+                                                    const data = chart.data.datasets[0].data;
+                                                    const labels = chart.data.labels;
+
+                                                    const total = data.reduce((a, b) => a + b, 0);
+                                                    const maxValue = Math.max(...data);
+                                                    const maxIndex = data.indexOf(maxValue);
+
+                                                    const percentage = ((maxValue / total) * 100).toFixed(1);
+
+                                                    const meta = chart.getDatasetMeta(0);
+
+                                                    if (!meta.data.length) return;
+
+                                                    const x = meta.data[0].x;
+                                                    const y = meta.data[0].y;
+
+                                                    ctx.save();
+
+                                                    ctx.textAlign = 'center';
+
+                                                    // Percentage
+                                                    ctx.font = 'bold 30px Inter, sans-serif';
+                                                    ctx.fillStyle = '#111827';
+                                                    ctx.fillText(percentage + '%', x, y - 5);
+
+                                                    // Category Name
+                                                    ctx.font = '14px Inter, sans-serif';
+                                                    ctx.fillStyle = '#6B7280';
+                                                    ctx.fillText(labels[maxIndex], x, y + 25);
+
+                                                    ctx.restore();
+                                                }
+                                            };
+
+                                            new Chart(document.getElementById('cropcategoryDonutChart'), {
+                                                type: 'doughnut',
+                                                data: {
+                                                    labels: labelscate,
+                                                    datasets: [{
+                                                        data: counts,
+                                                        backgroundColor: [                                                        
+                                                        '#10B981',
+                                                        '#F59E0B',
+                                                        '#EF4444',
+                                                        '#8B5CF6',
+                                                        '#06B6D4',
+                                                        '#84CC16',
+                                                        '#EC4899',
+                                                        '#14B8A6',
+                                                        '#F97316'
+                                                        ]
+                                                    }]
+                                                },
+                                                
+                                                 options: {
+                                                    responsive: true,
+                                                    maintainAspectRatio: false,
+                                                    cutout: '72%',
+                                                     plugins: {
+                                                        legend: {
+                                                            position: 'bottom',
+                                                            labels: {
+                                                                usePointStyle: true,
+                                                                pointStyle: 'circle',
+                                                                boxWidth: 8,
+                                                                boxHeight: 8,
+                                                                padding: 20,
+                                                                font: {
+                                                                    size: 13
+                                                                }
+                                                            }
+                                                        },
+
+                                                        tooltip: {
+                                                            callbacks: {
+                                                                label: function(context) {
+
+                                                                    const total = context.dataset.data.reduce(
+                                                                        (a,b) => Number(a) + Number(b), 0
+                                                                    );
+
+                                                                    const value = context.raw;
+                                                                    const percent = ((value / total) * 100).toFixed(1);
+
+                                                                    return `${context.label}: ${value} (${percent}%)`;
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                plugins: [centerTextPlugin]
+                                            });
+                                            </script>
+                                        </div>
+                                    </div>
+                                </div>
+                        </div>
+                    </div>
+
+
 
                     <script>
 

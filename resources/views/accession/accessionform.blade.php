@@ -208,11 +208,11 @@
                                         
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label required">Accession Id</label>
+                                        <label class="form-label">Accession Id</label>
                                         <input type="text" name="accession_name"
                                             class="form-control @error('accession_name') is-invalid @enderror"
                                             value="{{ old('accession_name', $accession->accession_name ?? '') }}"
-                                            placeholder="e.g., HD-2967 Punjab Collection" required>
+                                            placeholder="e.g., HD-2967 Punjab Collection">
                                             <small class="text-muted">Accession ID: Auto-generated (e.g., AG-2026-ACC-00001)</small>
                                         @error('accession_name')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -966,7 +966,7 @@
 
                     if (type === 'auto') {
                         const year = new Date().getFullYear();
-                        const random = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+                        const random = Math.floor(Math.random() * 100000).toString().padStart(2, '0');
                         value = `ACC-${year}-${random}`;
                         barcodeNumberInput.value = value;
                     } else if (!value) {

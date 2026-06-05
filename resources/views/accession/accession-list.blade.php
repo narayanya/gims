@@ -503,8 +503,8 @@
                         </div>
 
                         <p class="text-muted small">
-                            Columns format:
-                            <b>accession_number, crop, source, origin_country, collection_date, remarks</b>
+                            Required columns: <b>sample_id, crop_name, accession_name</b><br>
+                            Optional: <b>acc_source, ext_source, year_of_arrival, collection_number, collection_date, collector_name, donor_name, collection_site, country_name, state_name, district_name, city_name, latitude, longitude, pincode, biological_status, sample_type, reproductive_type, barcode_type, barcode, status, notes, storage_time_id</b>
                         </p>
 
                     </div>

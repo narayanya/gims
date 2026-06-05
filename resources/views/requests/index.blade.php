@@ -46,6 +46,81 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
+    <div class="card ">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Request Trends</h5>
+            <div class="d-flex justify-content-end mb-3">
+                <select id="chartFilter" class="form-select w-auto">
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                    <option value="year">Year</option>
+                </select>
+            </div>
+        </div>
+        <div class="card-body">
+           <div style="height:350px">
+                <canvas id="requestChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+let requestChart;
+
+function loadChart(type = 'week')
+{
+    fetch(`/request-chart?type=${type}`)
+        .then(res => res.json())
+        .then(data => {
+
+            const labels = data.map(item => item.label);
+            const counts = data.map(item => item.total);
+
+            if(requestChart){
+                requestChart.destroy();
+            }
+
+            requestChart = new Chart(
+                document.getElementById('requestChart'),
+                {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Requests',
+                            data: counts,
+                            borderRadius: 8,
+                            maxBarThickness: 40
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                }
+            );
+        });
+}
+
+loadChart();
+
+document.getElementById('chartFilter')
+    .addEventListener('change', function() {
+        loadChart(this.value);
+    });
+</script>
 
         @if($requests->count())
         <div class="card">

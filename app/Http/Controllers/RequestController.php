@@ -465,5 +465,46 @@ class RequestController extends Controller
     {
         return Excel::download(new RequestExport, 'request.xlsx');
     }
+
+    public function getRequestChart(Request $request)
+    {
+        $type = $request->type ?? 'day';
+
+        if ($type == 'day') {
+
+            $data = SeedRequest::selectRaw("
+                    DATE(created_at) as label,
+                    COUNT(*) as total
+                ")
+                ->whereDate('created_at', today())
+                ->groupBy('label')
+                ->get();
+
+        } elseif ($type == 'month') {
+
+            $data = SeedRequest::selectRaw("
+                    DAY(created_at) as label,
+                    COUNT(*) as total
+                ")
+                ->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->groupBy('label')
+                ->get();
+
+        } else {
+
+            $data = SeedRequest::selectRaw("
+                    MONTHNAME(created_at) as label,
+                    COUNT(*) as total,
+                    MONTH(created_at) as month_no
+                ")
+                ->whereYear('created_at', now()->year)
+                ->groupBy('label','month_no')
+                ->orderBy('month_no')
+                ->get();
+        }
+
+        return response()->json($data);
+    }
     
 }

@@ -4,15 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Accession;
 use App\Models\Crop;
-use App\Models\Warehouse;
-use App\Models\StorageLocation;
-use App\Models\StorageType;
 use App\Models\StorageTime;
-use App\Models\StorageCondition;
 use App\Models\Country;
 use App\Models\State;
 use App\Models\District;
-use App\Models\City;
 use App\Models\CoreCityVillage;
 
 use App\Models\Unit;
@@ -33,7 +28,7 @@ class AccessionController extends Controller
 {
     public function index()
     {
-        $query = Accession::with(['crop', 'warehouse', 'storageLocation', 'storageTime', 'capacityUnit'])
+        $query = Accession::with(['crop', 'storageTime', 'capacityUnit'])
             ->orderBy('created_at', 'desc');
 
         // Apply condition BEFORE paginate
@@ -48,11 +43,9 @@ class AccessionController extends Controller
                 ['update_status', 1]
             ])->select('id', 'crop_name')->get();
 
-        $warehouses = Warehouse::orderBy('name')->get();
         $storageTime = StorageTime::orderBy('name')->get();
-        $storageCondition = StorageCondition::orderBy('name')->get();
         
-        return view('accession.accession-list', compact('accessions','crops','warehouses', 'storageTime', 'storageCondition'));
+        return view('accession.accession-list', compact('accessions','crops', 'storageTime'));
     }
     public function lowStockReport(Request $request)
     {
@@ -122,7 +115,7 @@ class AccessionController extends Controller
     {
         $accession = Accession::with([
             'crop',
-            'warehouse',
+            'storageTime',
             'country',  
             'state',    
             'district',  
@@ -140,36 +133,36 @@ class AccessionController extends Controller
 
         
         if ($request->ajax()) {
-    return response()->json([
-        'id' => $accession->id,
-        'accession_number' => $accession->accession_number,
-        'accession_name' => $accession->accession_name,
-        'collection_number' => $accession->collection_number,
-        'collection_date' => $accession->collection_date,
-        'donor_name' => $accession->donor_name,
-        'collector_name' => $accession->collector_name,
-        'status' => $accession->status,
+            return response()->json([
+                'id' => $accession->id,
+                'accession_number' => $accession->accession_number,
+                'accession_name' => $accession->accession_name,
+                'collection_number' => $accession->collection_number,
+                'collection_date' => $accession->collection_date,
+                'donor_name' => $accession->donor_name,
+                'collector_name' => $accession->collector_name,
+                'status' => $accession->status,
 
-        'photo_url' => $accession->photo 
-            ? asset('storage/' . $accession->photo)
-            : null,
+                'photo_url' => $accession->photo 
+                    ? asset('storage/' . $accession->photo)
+                    : null,
 
-        'crop' => [
-            'crop_name' => $accession->crop?->crop_name,
-            'scientific_name' => $accession->crop?->scientific_name,
-            'family_name' => $accession->crop?->family_name,
-            'genus' => $accession->crop?->genus,
-        ],
+                'crop' => [
+                    'crop_name' => $accession->crop?->crop_name,
+                    'scientific_name' => $accession->crop?->scientific_name,
+                    'family_name' => $accession->crop?->family_name,
+                    'genus' => $accession->crop?->genus,
+                ],
 
-        'country' => [
-            'name' => $accession->country?->country_name
-        ],
+                'country' => [
+                    'name' => $accession->country?->country_name
+                ],
 
-        'warehouse' => [
-            'name' => $accession->warehouse?->name
-        ]
-    ]);
-}
+                'storageTime' => [
+                    'name' => $accession->storageTime?->name
+                ]
+            ]);
+        }
 
         return view('accession.show', compact('accession' ,'countries', 'states', 'districts', 'cities'));
     }
@@ -192,19 +185,16 @@ class AccessionController extends Controller
                     ->orderBy('city_village_name')
                     ->get(['id','city_village_name']);
         $units = Unit::all();
-        $warehouses = Warehouse::all();
-        $storageLocations = StorageLocation::all();
-        $storageTypes = StorageType::all();
+       
         $storageTime = \App\Models\StorageTime::orderBy('name')->get();
-        $storageConditions = StorageCondition::all();
         
         // ✅ Get related requests
         $accessionRequests = SeedRequest::where('accession_id', $id)->get();
 
         return view('accession.accessionform', compact(
             'accession', 'crops', 'countries', 'states',
-            'districts', 'cities', 'units', 'warehouses', 'storageLocations', 'users',
-            'storageTypes', 'storageTime', 'storageConditions', 'accessionRequests'
+            'districts', 'cities', 'units',  'users',
+            'storageTime', 'accessionRequests'
         ));
     }
 
@@ -225,7 +215,7 @@ class AccessionController extends Controller
             'year_of_arrival' => 'nullable',
             'requester_show'  => 'required|in:yes,no',
 
-            'accession_name'  => 'required|string|max:255',
+            'accession_name'  => 'nullable|string|max:255',
             'crop_id'         => 'required|exists:core_crop,id',
 
             // Collection
@@ -242,9 +232,7 @@ class AccessionController extends Controller
 
             // Storage
             'warehouse_id'         => 'nullable|exists:warehouses,id',
-            'storage_location_id'  => 'nullable|exists:storage_locations,id',
             'storage_time_id'      => 'nullable|exists:storage_times,id',
-            'storage_condition_id' => 'nullable|exists:storage_conditions,id',
 
             // Biological
             'biological_status' => 'nullable',
@@ -281,7 +269,7 @@ class AccessionController extends Controller
                 ($request->year_of_arrival ?? date('Y')) .
                 '-ACC-' .
                 $request->sample_id . '-' .
-                str_pad($accession->id, 5, '0', STR_PAD_LEFT);
+                str_pad($accession->id, 2, '0', STR_PAD_LEFT);
 
             $accession->update([
                 'accession_number' => $accessionNumber
@@ -371,7 +359,6 @@ class AccessionController extends Controller
 
         $units = \App\Models\Unit::orderBy('name')->get();
         $users = \App\Models\User::orderBy('name')->get();
-        $warehouses = \App\Models\Warehouse::orderBy('name')->get();
         $storageTime = \App\Models\StorageTime::orderBy('name')->get();
         $countries = \App\Models\Country::orderBy('country_name')->get();
         $states    = collect();
@@ -381,8 +368,8 @@ class AccessionController extends Controller
         $accession = null; // explicit null for view
 
         return view('accession.accessionform', compact(
-            'crops', 'units', 'users', 'warehouses',
-            'storageTime', 'countries', 'states', 'districts', 'cities',
+            'crops', 'units', 'users', 'storageTime',
+     'countries', 'states', 'districts', 'cities',
             'accessionRequests', 'accession'
         ));
     }
@@ -399,7 +386,7 @@ class AccessionController extends Controller
                 'year_of_arrival' => 'nullable',
                 'requester_show' => 'required|in:yes,no',
                 'storage_time' => 'nullable|exists:storage_times,id',
-                'accession_name' => 'required|string|max:255',
+                'accession_name' => 'nullable|string|max:255',
                 'crop_id' => 'required|exists:core_crop,id',
                 'scientific_name' => 'nullable|string|max:255',
                 
@@ -425,11 +412,7 @@ class AccessionController extends Controller
                 
                 // Storage Information
                 'warehouse_id'         => 'nullable|exists:warehouses,id',
-                'storage_location_id'  => 'nullable|exists:storage_locations,id',
-                'storage_time_id'      => 'nullable|exists:storage_times,id',
-                'storage_condition_id' => 'nullable|exists:storage_conditions,id',
-                'altitude'             => 'nullable|integer',
-                
+                'storage_time_id'      => 'nullable|exists:storage_times,id',                
                 
                 // Documentation
                 'barcode_type' => 'required|in:auto,manual,existing,scan,none',
@@ -482,7 +465,7 @@ class AccessionController extends Controller
             $year_of_arrival = $request->year_of_arrival ?? date('Y');
 
             $accessionNumber = $crop->crop_code . '-' . ($request->year_of_arrival ?? date('Y')) . '-ACC-' . $accession->sample_id . '-' .
-    str_pad($accession->id, 5, '0', STR_PAD_LEFT);
+    str_pad($accession->id, 2, '0', STR_PAD_LEFT);
 
             // 👇 Update record
             $accession->update([
@@ -564,11 +547,35 @@ class AccessionController extends Controller
             'file' => 'required|mimes:csv,xlsx,xls'
         ]);
 
-        Excel::import(new AccessionImport, $request->file('file'));
+        try {
+            $importer = new AccessionImport();
+            Excel::import($importer, $request->file('file'));
+
+        } catch (\Throwable $e) {
+            Log::error('Accession import failed: ' . $e->getMessage());
+
+            return redirect()->route('accession.accession-list')
+                ->with('error', 'Import failed: ' . $e->getMessage());
+        }
+
+        $results = \Illuminate\Support\Facades\Cache::get('import_results_' . auth()->id(), []);
+        \Illuminate\Support\Facades\Cache::forget('import_results_' . auth()->id());
+
+        $inserted = $results['inserted'] ?? 0;
+        $skipped  = $results['skipped']  ?? [];
+
+        $msg = "Import complete. {$inserted} row(s) imported.";
+        if (!empty($skipped)) {
+            $msg .= ' Skipped rows: ' . implode(', ', array_map(
+                fn($s) => "Row {$s['row']} ({$s['reason']})",
+                $skipped
+            ));
+        }
 
         return redirect()->route('accession.accession-list')
-            ->with('success', 'Accessions imported successfully!');
+            ->with($inserted > 0 ? 'success' : 'error', $msg);
     }
+
     public function export()
     {
         return Excel::download(new AccessionsExport, 'accessions.xlsx');

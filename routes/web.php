@@ -301,6 +301,8 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::resource('requests', App\Http\Controllers\RequestController::class)->parameters([
         'requests' => 'seedRequest'
     ]);
+
+    Route::get('/request-chart', [RequestController::class, 'getRequestChart']);
     
     Route::put('/requests/{id}/approve', [RequestController::class,'approve'])->name('requests.approve');
     Route::put('/requests/{id}/reject',  [RequestController::class,'reject'])->name('requests.reject');

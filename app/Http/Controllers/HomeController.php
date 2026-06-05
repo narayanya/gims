@@ -240,6 +240,15 @@ $activeRegenerationCount = $activeRegenerationCycles->count();
         ->join('core_crop', 'core_crop.id', '=', 'accessions.crop_id')
         ->groupBy('core_crop.id', 'core_crop.crop_name')
         ->get();
+    $categoryData = DB::table('core_crop')
+    ->join('categories', 'core_crop.category_id', '=', 'categories.id')
+    ->select(
+        'categories.name',
+        DB::raw('COUNT(*) as total')
+    )
+    ->groupBy('categories.name')
+    ->get();
+
 
         return view('home', compact(
             'totalAccessions',
@@ -270,7 +279,8 @@ $activeRegenerationCount = $activeRegenerationCycles->count();
             'pendingQCCount',
             'activeRegenerationCount',
             'activeRegenerationCycles',
-            'cropData'
+            'cropData',
+            'categoryData'
         ));
     }
 
