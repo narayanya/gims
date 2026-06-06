@@ -57,8 +57,6 @@
                                 </select>
                             </div>
                         </div>
-
-
                             <div id="from_warehouseInfo" class="card border bg-light d-none">
                                 <div class="card-body py-2 small">
                                     <div class="row g-1">

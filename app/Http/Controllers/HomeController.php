@@ -116,130 +116,130 @@ class HomeController extends Controller
 
             $todayAccessionCount = Accession::whereDate('created_at', today())->count();
 
-$todayLotCount = Lot::whereDate('created_at', today())->count();
+    $todayLotCount = Lot::whereDate('created_at', today())->count();
 
-$todayRequestCount = SeedRequest::whereDate('created_at', today())->count();
+    $todayRequestCount = SeedRequest::whereDate('created_at', today())->count();
 
-$todayDispatchCount = Dispatch::whereDate('created_at', today())->count();
+    $todayDispatchCount = Dispatch::whereDate('created_at', today())->count();
 
-$todayTransferCount = LotTransfer::whereDate('created_at', today())->count();
+    $todayTransferCount = LotTransfer::whereDate('created_at', today())->count();
 
-$monthlyData = [];
+    $monthlyData = [];
 
-    for ($m = 1; $m <= 12; $m++) {
+        for ($m = 1; $m <= 12; $m++) {
 
-        $monthlyData[] = [
-            'month' => date('M', mktime(0,0,0,$m,1)),
+            $monthlyData[] = [
+                'month' => date('M', mktime(0,0,0,$m,1)),
 
-            'incoming' => Accession::whereMonth('created_at', $m)->count(),
+                'incoming' => Accession::whereMonth('created_at', $m)->count(),
 
-            'dispatch' => Dispatch::whereMonth('created_at', $m)->count(),
+                'dispatch' => Dispatch::whereMonth('created_at', $m)->count(),
 
-            'transfer' => LotTransfer::whereMonth('created_at', $m)->count(),
+                'transfer' => LotTransfer::whereMonth('created_at', $m)->count(),
 
-            'qc' => SeedQuality::whereMonth('created_at', $m)->count(),
-        ];
-    }
+                'qc' => SeedQuality::whereMonth('created_at', $m)->count(),
+            ];
+        }
 
-    $cropStockChart = DB::table('core_crop')
+        $cropStockChart = DB::table('core_crop')
 
-    ->leftJoin('lots', 'core_crop.id', '=', 'lots.crop_id')
+        ->leftJoin('lots', 'core_crop.id', '=', 'lots.crop_id')
 
-    ->leftJoin('seed_quantities', 'lots.id', '=', 'seed_quantities.lot_id')
+        ->leftJoin('seed_quantities', 'lots.id', '=', 'seed_quantities.lot_id')
 
-    ->where('core_crop.update_status', 1)
+        ->where('core_crop.update_status', 1)
 
-    ->select(
-        'core_crop.crop_name',
-        DB::raw('ROUND(COALESCE(SUM(seed_quantities.quantity),0),2) as total_quantity')
-    )
+        ->select(
+            'core_crop.crop_name',
+            DB::raw('ROUND(COALESCE(SUM(seed_quantities.quantity),0),2) as total_quantity')
+        )
 
-    ->groupBy('core_crop.id', 'core_crop.crop_name')
+        ->groupBy('core_crop.id', 'core_crop.crop_name')
 
-    ->orderByDesc('total_quantity')
+        ->orderByDesc('total_quantity')
 
-    ->get();
-// For Most Requested Crop
-    $mostRequestedCrops = DB::table('dispatches')
+        ->get();
+    // For Most Requested Crop
+        $mostRequestedCrops = DB::table('dispatches')
 
-    ->join('lots', 'dispatches.lot_id', '=', 'lots.id')
-
-    ->join('core_crop', 'lots.crop_id', '=', 'core_crop.id')
-
-    ->select(
-        'core_crop.crop_name',
-
-        DB::raw('COUNT(dispatches.id) as total_requests'),
-
-        DB::raw('ROUND(SUM(dispatches.quantity),2) as total_quantity')
-    )
-
-    ->groupBy('core_crop.id', 'core_crop.crop_name')
-
-    ->orderByDesc('total_quantity')
-    ->limit(3)
-    ->get();
-
-    $topCrop = $mostRequestedCrops->first();
-    
-    //For Pending QC Samples
-
-    $pendingQCSamples = DB::table('lots')
-
-        ->leftJoin('seed_qualities', 'lots.id', '=', 'seed_qualities.lot_id')
+        ->join('lots', 'dispatches.lot_id', '=', 'lots.id')
 
         ->join('core_crop', 'lots.crop_id', '=', 'core_crop.id')
 
-        ->whereNull('seed_qualities.id')
-
         ->select(
-            'lots.id',
-            'lots.lot_number',
             'core_crop.crop_name',
-            'lots.created_at'
+
+            DB::raw('COUNT(dispatches.id) as total_requests'),
+
+            DB::raw('ROUND(SUM(dispatches.quantity),2) as total_quantity')
         )
 
-        ->latest('lots.created_at')
+        ->groupBy('core_crop.id', 'core_crop.crop_name')
+
+        ->orderByDesc('total_quantity')
         ->limit(3)
         ->get();
 
-    $pendingQCCount = $pendingQCSamples->count();
+        $topCrop = $mostRequestedCrops->first();
+        
+        //For Pending QC Samples
 
-    //regunation date  dashboard
+        $pendingQCSamples = DB::table('lots')
 
-   $activeRegenerationCycles = DB::table('lots')
-    ->join('accessions', 'lots.accession_id', '=', 'accessions.id')
-    ->join('core_crop', 'accessions.crop_id', '=', 'core_crop.id')
+            ->leftJoin('seed_qualities', 'lots.id', '=', 'seed_qualities.lot_id')
 
-    ->whereNotNull('lots.regeneration_date')
+            ->join('core_crop', 'lots.crop_id', '=', 'core_crop.id')
 
-    ->whereDate(
-        'lots.regeneration_date',
-        '<=',
-        now()->addMonths(12)
-    )
+            ->whereNull('seed_qualities.id')
 
-    ->select(
-        'accessions.id',
-        'accessions.accession_number',
-        'accessions.accession_name',
-        'lots.regeneration_date',
-        'core_crop.crop_name'
-    )
+            ->select(
+                'lots.id',
+                'lots.lot_number',
+                'core_crop.crop_name',
+                'lots.created_at'
+            )
 
-    ->orderBy('lots.regeneration_date')
-    ->limit(3)
-    ->get();
+            ->latest('lots.created_at')
+            ->limit(3)
+            ->get();
 
-$activeRegenerationCount = $activeRegenerationCycles->count();
+        $pendingQCCount = $pendingQCSamples->count();
 
-     $cropData = Accession::select(
-            'core_crop.crop_name',
-            DB::raw('COUNT(accessions.id) as total')
+        //regunation date  dashboard
+
+    $activeRegenerationCycles = DB::table('lots')
+        ->join('accessions', 'lots.accession_id', '=', 'accessions.id')
+        ->join('core_crop', 'accessions.crop_id', '=', 'core_crop.id')
+
+        ->whereNotNull('lots.regeneration_date')
+
+        ->whereDate(
+            'lots.regeneration_date',
+            '<=',
+            now()->addMonths(12)
         )
-        ->join('core_crop', 'core_crop.id', '=', 'accessions.crop_id')
-        ->groupBy('core_crop.id', 'core_crop.crop_name')
+
+        ->select(
+            'accessions.id',
+            'accessions.accession_number',
+            'accessions.accession_name',
+            'lots.regeneration_date',
+            'core_crop.crop_name'
+        )
+
+        ->orderBy('lots.regeneration_date')
+        ->limit(3)
         ->get();
+
+    $activeRegenerationCount = $activeRegenerationCycles->count();
+
+        $cropData = Accession::select(
+                'core_crop.crop_name',
+                DB::raw('COUNT(accessions.id) as total')
+            )
+            ->join('core_crop', 'core_crop.id', '=', 'accessions.crop_id')
+            ->groupBy('core_crop.id', 'core_crop.crop_name')
+            ->get();
     $categoryData = DB::table('core_crop')
     ->join('categories', 'core_crop.category_id', '=', 'categories.id')
     ->select(
@@ -248,6 +248,14 @@ $activeRegenerationCount = $activeRegenerationCycles->count();
     )
     ->groupBy('categories.name')
     ->get();
+
+    $yearWiseEntries = \App\Models\Accession::selectRaw(
+        'year_of_arrival, COUNT(*) as total'
+        )
+        ->whereNotNull('year_of_arrival')
+        ->groupBy('year_of_arrival')
+        ->orderBy('year_of_arrival')
+        ->get();
 
 
         return view('home', compact(
@@ -280,7 +288,8 @@ $activeRegenerationCount = $activeRegenerationCycles->count();
             'activeRegenerationCount',
             'activeRegenerationCycles',
             'cropData',
-            'categoryData'
+            'categoryData',
+            'yearWiseEntries'
         ));
     }
 

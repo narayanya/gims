@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\User;
 use App\Models\SeedRequest;
 use App\Models\Crop;
@@ -19,8 +20,8 @@ use App\Exports\RequestExport;
 
 class RequestController extends Controller
 {
-    
-   public function index(HttpRequest $request)
+
+    public function index(HttpRequest $request)
     {
         $query = SeedRequest::with(['user', 'crop', 'unit', 'approvedBy', 'dispatch']);
 
@@ -57,8 +58,15 @@ class RequestController extends Controller
         if ($request->user && $user->hasRole('super-admin')) {
             $query->where('user_id', $request->user);
         }
+        if ($request->status == 'pending') {
+            $query->where('status', 'pending');
+        }
 
+        if ($request->status == 'dispatch') {
+            $query->whereIn('status', ['approved', 'dispatched']);
+        }
         $requests = $query->latest()->paginate(15)->withQueryString();
+        
 
         $crops = Crop::where([
             ['is_active', 1],
@@ -73,32 +81,36 @@ class RequestController extends Controller
             $dispatchDate = optional($req->dispatch)->dispatched_at;
 
             // Request → Approval
-        $req->req_to_approve_days = $req->approved_at
-            ? $req->request_date->diffInDays($req->approved_at)
-            : now()->diffInDays($req->request_date);
+            $req->req_to_approve_days = $req->approved_at
+                ? $req->request_date->diffInDays($req->approved_at)
+                : now()->diffInDays($req->request_date);
 
-        // Approval → Dispatch
-        $req->approve_to_dispatch_days = ($req->approved_at && $dispatchDate)
-            ? $req->approved_at->diffInDays($dispatchDate)
-            : null;
+            // Approval → Dispatch
+            $req->approve_to_dispatch_days = ($req->approved_at && $dispatchDate)
+                ? $req->approved_at->diffInDays($dispatchDate)
+                : null;
 
-        // Dispatch → Receive
-        $req->dispatch_to_receive_days = ($dispatchDate && $req->receive_date)
-            ? \Carbon\Carbon::parse($dispatchDate)->diffInDays($req->receive_date)
-            : null;
+            // Dispatch → Receive
+            $req->dispatch_to_receive_days = ($dispatchDate && $req->receive_date)
+                ? \Carbon\Carbon::parse($dispatchDate)->diffInDays($req->receive_date)
+                : null;
 
-        // Receive → Return
-        $req->receive_to_return_days = ($req->receive_date && $req->return_date)
-            ? $req->receive_date->diffInDays($req->return_date)
-            : null;
+            // Receive → Return
+            $req->receive_to_return_days = ($req->receive_date && $req->return_date)
+                ? $req->receive_date->diffInDays($req->return_date)
+                : null;
 
-        // Save for blade
-        $req->dispatch_date = $dispatchDate;
+            // Save for blade
+            $req->dispatch_date = $dispatchDate;
 
             return $req;
         });
+        $statusData = SeedRequest::selectRaw('status, COUNT(*) as total')
+            ->whereIn('status', ['pending', 'approved', 'dispatched'])
+            ->groupBy('status')
+            ->pluck('total', 'status');
 
-        return view('requests.index', compact('requests', 'crops', 'units', 'users'));
+        return view('requests.index', compact('requests', 'crops', 'units', 'users', 'statusData'));
     }
 
     public function return(HttpRequest $request, $id)
@@ -156,276 +168,274 @@ class RequestController extends Controller
     }
 
     public function approve(HttpRequest $request, $id)
-        {
-            $req = SeedRequest::findOrFail($id);
-            $user = Auth::user();
-            $req->status = 'approved';
-            $req->remarks = $request->remarks;
-            $req->approved_by = $user->id;
-            $req->approved_at = now();
+    {
+        $req = SeedRequest::findOrFail($id);
+        $user = Auth::user();
+        $req->status = 'approved';
+        $req->remarks = $request->remarks;
+        $req->approved_by = $user->id;
+        $req->approved_at = now();
 
-            $req->save();
-        
-            Notification::create([
-                'user_id' => $req->user_id,
-                'title' => 'Request Approved',
-                'message' => 'Your seed request '.$req->request_number.' has been approved. Dispatch will happen soon.'
-            ]);
+        $req->save();
 
-            return redirect()->back()->with('success','Request Approved Successfully');
-        }
+        Notification::create([
+            'user_id' => $req->user_id,
+            'title' => 'Request Approved',
+            'message' => 'Your seed request ' . $req->request_number . ' has been approved. Dispatch will happen soon.'
+        ]);
+
+        return redirect()->back()->with('success', 'Request Approved Successfully');
+    }
 
     public function create(Request $request)
-        {
-            $crops = Crop::where([
-                ['is_active', 1],
-                ['update_status', 1]
-            ])->select('id', 'crop_name')->get();
-            
-            $units = Unit::all();
-            $users = User::all();
-           $accessions = Accession::where('requester_show', 'yes')->where('status', 1)->get();
-           // ✅ Get accession_id from URL
-            $preselectedAccessionId = $request->accession_id;
+    {
+        $crops = Crop::where([
+            ['is_active', 1],
+            ['update_status', 1]
+        ])->select('id', 'crop_name')->get();
 
-            return view('requests.create', compact('crops', 'units', 'users', 'accessions', 'preselectedAccessionId'))->with('seedRequest', null);;
-        }
+        $units = Unit::all();
+        $users = User::all();
+        $accessions = Accession::where('requester_show', 'yes')->where('status', 1)->get();
+        // ✅ Get accession_id from URL
+        $preselectedAccessionId = $request->accession_id;
+
+        return view('requests.create', compact('crops', 'units', 'users', 'accessions', 'preselectedAccessionId'))->with('seedRequest', null);;
+    }
 
     public function store(HttpRequest $httpRequest)
-        {
-            $validated = $httpRequest->validate([
-                'crop_id'        => 'required|array',
-                'crop_id.*'      => 'required|exists:core_crop,id',
+    {
+        $validated = $httpRequest->validate([
+            'crop_id'        => 'required|array',
+            'crop_id.*'      => 'required|exists:core_crop,id',
 
-                'accession_id'   => 'required|array',
-                'accession_id.*' => 'required|exists:accessions,id',
+            'accession_id'   => 'required|array',
+            'accession_id.*' => 'required|exists:accessions,id',
 
-                'quantity'       => 'required|array',
-                'quantity.*'     => 'required|numeric|min:0.01',
+            'quantity'       => 'required|array',
+            'quantity.*'     => 'required|numeric|min:0.01',
 
-                'unit_id'        => 'required|array',
-                'unit_id.*'      => 'required|exists:units,id',
+            'unit_id'        => 'required|array',
+            'unit_id.*'      => 'required|exists:units,id',
 
-                'request_date'   => 'required|date',
-                'required_date'  => 'nullable|date|after_or_equal:request_date',
+            'request_date'   => 'required|date',
+            'required_date'  => 'nullable|date|after_or_equal:request_date',
 
-                'user_id'        => 'nullable|exists:users,id',
-                'purpose' => 'nullable|string',
-                'purpose_details' => 'nullable|string',
-                'request_through' => 'nullable|string',
-                'required_date' => 'nullable|date|after_or_equal:request_date',
-                'notes' => 'nullable|string',
-            ]);
+            'user_id'        => 'nullable|exists:users,id',
+            'purpose' => 'nullable|string',
+            'purpose_details' => 'nullable|string',
+            'request_through' => 'nullable|string',
+            'required_date' => 'nullable|date|after_or_equal:request_date',
+            'notes' => 'nullable|string',
+        ]);
 
-            // Per-row quantity check is done inside the foreach loop below
+        // Per-row quantity check is done inside the foreach loop below
 
-            // If admin selected user
-            $user = Auth::user();
+        // If admin selected user
+        $user = Auth::user();
 
-            if ($httpRequest->user_id) {
-                $user = User::find($httpRequest->user_id);
-            }
-
-            $requestNumber = SeedRequest::generateRequestNumber();
-            $createdRequests = [];
-            foreach ($httpRequest->accession_id as $i => $accessionId) {
-
-                $accession = Accession::find($accessionId);
-
-                // ✅ Quantity check — sum across ALL seed_quantities for this accession
-                if ($accession) {
-                    $availableQty = \App\Models\SeedQuantity::where('accession_id', $accessionId)
-                        ->sum('quantity_show');
-
-                    // fallback to accession.quantity_show if no seed_quantities rows
-                    if ($availableQty == 0) {
-                        $availableQty = $accession->quantity_show ?? 0;
-                    }
-
-                    if ((float)$httpRequest->quantity[$i] > (float)$availableQty) {
-                        return back()->withInput()->withErrors([
-                            'quantity.' . $i => 'Row '.($i+1).': Request qty ('.$httpRequest->quantity[$i].') exceeds total available qty ('.$availableQty.').'
-                        ]);
-                    }
-                }
-
-                SeedRequest::create([
-                    'crop_id'          => $httpRequest->crop_id[$i],
-                    'accession_id'     => $accessionId,
-                    'quantity'         => $httpRequest->quantity[$i],
-                    'unit_id'          => $httpRequest->unit_id[$i],
-                    'request_date'     => $httpRequest->request_date,
-                    'required_date'    => $httpRequest->required_date,
-                    'user_id'          => $user->id,
-                    'requester_name'   => $user->name,
-                    'requester_email'  => $user->email,
-                    'request_number'   => $requestNumber,
-                    'status'           => 'pending',
-                    'purpose'          => $httpRequest->purpose,
-                    'purpose_details'  => $httpRequest->purpose_details,
-                    'notes'            => $httpRequest->notes,
-                    'request_through'  => $httpRequest->request_through ?? '3',
-                ]);
-            }
-
-            /*******mail fuction to  requesters****** */
-           
-
-            // Prepare email data
-            $emailRows = [];
-
-            foreach ($createdRequests as $req) {
-                $emailRows[] = [
-                    'crop' => $req->crop->name ?? '',
-                    'quantity' => $req->quantity,
-                    'unit' => $req->unit->name ?? '',
-                ];
-            }
-
-            $emailData = [
-                'requester_name' => $user->name,
-                'reporting_user' => $user->reportingTo ? $user->reportingTo->name : 'N/A',
-
-                'rows' => $emailRows,
-                'purpose' => $httpRequest->purpose,
-                'purpose_details' => $httpRequest->purpose_details,
-            ];
-
-
-            // Normal user
-            if (!$httpRequest->user_id) {
-
-                $reporting = Auth::user()->reportingTo;
-
-                if ($reporting && $reporting->email) {
-                    Mail::to($reporting->email)->send(new SeedRequestMail($emailData));
-                }
-
-            } else {
-
-                $selectedUser = User::find($httpRequest->user_id);
-
-                if ($selectedUser && $selectedUser->email) {
-                    Mail::to($selectedUser->email)->send(new SeedRequestMail($emailData));
-                }
-
-                if ($selectedUser && $selectedUser->reportingTo && $selectedUser->reportingTo->email) {
-                    Mail::to($selectedUser->reportingTo->email)->send(new SeedRequestMail($emailData));
-                }
-            }
-            /*****end*/
-
-            $admins = User::whereHas('role', function ($q) {
-            $q->whereIn('slug',['admin']);
-            })->get();
-
-            foreach ($admins as $admin) {
-                $user = Auth::user();
-                Notification::create([
-                    'user_id' => $admin->id,
-                    'title' => 'New Seed Request',
-                    'message' => $user->name.' submitted a new seed request.'
-                ]);
-
-            }
-
-
-            return redirect()->route('requests.index')
-                ->with('success', 'Request created successfully.');
+        if ($httpRequest->user_id) {
+            $user = User::find($httpRequest->user_id);
         }
 
-        
+        $requestNumber = SeedRequest::generateRequestNumber();
+        $createdRequests = [];
+        foreach ($httpRequest->accession_id as $i => $accessionId) {
+
+            $accession = Accession::find($accessionId);
+
+            // ✅ Quantity check — sum across ALL seed_quantities for this accession
+            if ($accession) {
+                $availableQty = \App\Models\SeedQuantity::where('accession_id', $accessionId)
+                    ->sum('quantity_show');
+
+                // fallback to accession.quantity_show if no seed_quantities rows
+                if ($availableQty == 0) {
+                    $availableQty = $accession->quantity_show ?? 0;
+                }
+
+                if ((float)$httpRequest->quantity[$i] > (float)$availableQty) {
+                    return back()->withInput()->withErrors([
+                        'quantity.' . $i => 'Row ' . ($i + 1) . ': Request qty (' . $httpRequest->quantity[$i] . ') exceeds total available qty (' . $availableQty . ').'
+                    ]);
+                }
+            }
+
+            SeedRequest::create([
+                'crop_id'          => $httpRequest->crop_id[$i],
+                'accession_id'     => $accessionId,
+                'quantity'         => $httpRequest->quantity[$i],
+                'unit_id'          => $httpRequest->unit_id[$i],
+                'request_date'     => $httpRequest->request_date,
+                'required_date'    => $httpRequest->required_date,
+                'user_id'          => $user->id,
+                'requester_name'   => $user->name,
+                'requester_email'  => $user->email,
+                'request_number'   => $requestNumber,
+                'status'           => 'pending',
+                'purpose'          => $httpRequest->purpose,
+                'purpose_details'  => $httpRequest->purpose_details,
+                'notes'            => $httpRequest->notes,
+                'request_through'  => $httpRequest->request_through ?? '3',
+            ]);
+        }
+
+        /*******mail fuction to  requesters****** */
+
+
+        // Prepare email data
+        $emailRows = [];
+
+        foreach ($createdRequests as $req) {
+            $emailRows[] = [
+                'crop' => $req->crop->name ?? '',
+                'quantity' => $req->quantity,
+                'unit' => $req->unit->name ?? '',
+            ];
+        }
+
+        $emailData = [
+            'requester_name' => $user->name,
+            'reporting_user' => $user->reportingTo ? $user->reportingTo->name : 'N/A',
+
+            'rows' => $emailRows,
+            'purpose' => $httpRequest->purpose,
+            'purpose_details' => $httpRequest->purpose_details,
+        ];
+
+
+        // Normal user
+        if (!$httpRequest->user_id) {
+
+            $reporting = Auth::user()->reportingTo;
+
+            if ($reporting && $reporting->email) {
+                Mail::to($reporting->email)->send(new SeedRequestMail($emailData));
+            }
+        } else {
+
+            $selectedUser = User::find($httpRequest->user_id);
+
+            if ($selectedUser && $selectedUser->email) {
+                Mail::to($selectedUser->email)->send(new SeedRequestMail($emailData));
+            }
+
+            if ($selectedUser && $selectedUser->reportingTo && $selectedUser->reportingTo->email) {
+                Mail::to($selectedUser->reportingTo->email)->send(new SeedRequestMail($emailData));
+            }
+        }
+        /*****end*/
+
+        $admins = User::whereHas('role', function ($q) {
+            $q->whereIn('slug', ['admin']);
+        })->get();
+
+        foreach ($admins as $admin) {
+            $user = Auth::user();
+            Notification::create([
+                'user_id' => $admin->id,
+                'title' => 'New Seed Request',
+                'message' => $user->name . ' submitted a new seed request.'
+            ]);
+        }
+
+
+        return redirect()->route('requests.index')
+            ->with('success', 'Request created successfully.');
+    }
+
+
 
     public function show(SeedRequest $seedRequest)
-        {
-            
+    {
+
         $seedRequest->load(['crop', 'unit', 'approvedBy', 'accession.unit']);
-            return view('requests.show', compact('seedRequest'));
-        }
+        return view('requests.show', compact('seedRequest'));
+    }
 
     public function edit(SeedRequest $seedRequest)
-        {
-            $crops = Crop::where([
-                ['is_active', 1],
-                ['update_status', 1]
-            ])->select('id', 'crop_name')->get();
-            $accessions = Accession::all();
-            $units = Unit::all();
-            $users = User::all();
+    {
+        $crops = Crop::where([
+            ['is_active', 1],
+            ['update_status', 1]
+        ])->select('id', 'crop_name')->get();
+        $accessions = Accession::all();
+        $units = Unit::all();
+        $users = User::all();
 
-            return view('requests.create', compact(
-                'seedRequest',
-                'crops',
-                'accessions',
-                'units',
-                'users'
-            ))->with('preselectedAccessionId', $seedRequest->accession_id);
-        }
+        return view('requests.create', compact(
+            'seedRequest',
+            'crops',
+            'accessions',
+            'units',
+            'users'
+        ))->with('preselectedAccessionId', $seedRequest->accession_id);
+    }
 
     public function update(HttpRequest $httpRequest, SeedRequest $seedRequest)
-        {
-            $validated = $httpRequest->validate([
-                'crop_id'        => 'required|exists:core_crop,id',
-                'quantity'       => 'required|numeric|min:0.01',
-                'unit_id'        => 'required|exists:units,id',
-                'user_id'        => 'nullable|exists:users,id',
-                'purpose'        => 'nullable|string',
-                'purpose_details'=> 'nullable|string',
-                'request_through'=> 'nullable|string',
-                'request_date'   => 'nullable|date',
-                'required_date'  => 'nullable|date',
-                'notes'          => 'nullable|string',
-                'status'         => 'nullable|in:pending,approved,rejected,completed',
-            ]);
+    {
+        $validated = $httpRequest->validate([
+            'crop_id'        => 'required|exists:core_crop,id',
+            'quantity'       => 'required|numeric|min:0.01',
+            'unit_id'        => 'required|exists:units,id',
+            'user_id'        => 'nullable|exists:users,id',
+            'purpose'        => 'nullable|string',
+            'purpose_details' => 'nullable|string',
+            'request_through' => 'nullable|string',
+            'request_date'   => 'nullable|date',
+            'required_date'  => 'nullable|date',
+            'notes'          => 'nullable|string',
+            'status'         => 'nullable|in:pending,approved,rejected,completed',
+        ]);
 
-            // Resolve requester info from user_id if provided
-            if (!empty($validated['user_id'])) {
-                $user = User::find($validated['user_id']);
-                $validated['requester_name']  = $user->name;
-                $validated['requester_email'] = $user->email;
-            }
-
-            // Keep existing status if not submitted
-            if (empty($validated['status'])) {
-                unset($validated['status']);
-            }
-
-            // Keep existing request_date if not submitted
-            if (empty($validated['request_date'])) {
-                unset($validated['request_date']);
-            }
-
-            // Auto-set approval info if status changed to approved
-            if (isset($validated['status']) && $validated['status'] === 'approved' && $seedRequest->status !== 'approved') {
-                $validated['approved_by'] = Auth::id();
-                $validated['approved_at'] = now();
-            }
-
-            $seedRequest->update($validated);
-
-            return redirect()->route('requests.index')
-                ->with('success', 'Request updated successfully.');
+        // Resolve requester info from user_id if provided
+        if (!empty($validated['user_id'])) {
+            $user = User::find($validated['user_id']);
+            $validated['requester_name']  = $user->name;
+            $validated['requester_email'] = $user->email;
         }
 
+        // Keep existing status if not submitted
+        if (empty($validated['status'])) {
+            unset($validated['status']);
+        }
 
-    
+        // Keep existing request_date if not submitted
+        if (empty($validated['request_date'])) {
+            unset($validated['request_date']);
+        }
+
+        // Auto-set approval info if status changed to approved
+        if (isset($validated['status']) && $validated['status'] === 'approved' && $seedRequest->status !== 'approved') {
+            $validated['approved_by'] = Auth::id();
+            $validated['approved_at'] = now();
+        }
+
+        $seedRequest->update($validated);
+
+        return redirect()->route('requests.index')
+            ->with('success', 'Request updated successfully.');
+    }
+
+
+
     public function destroy(SeedRequest $seedRequest)
-        {
-            $seedRequest->delete();
+    {
+        $seedRequest->delete();
 
-            return redirect()->route('requests.index')
-                ->with('success', 'Request deleted successfully');
-        }
+        return redirect()->route('requests.index')
+            ->with('success', 'Request deleted successfully');
+    }
 
 
     public function getAccessions($crop_id)
-        {
-            $accessions = Accession::where('crop_id', $crop_id)
-                ->where('requester_show', 'yes')     
-                ->get(['id', 'accession_number']);
-            return response()->json($accessions);
-        }
-    
+    {
+        $accessions = Accession::where('crop_id', $crop_id)
+            ->where('requester_show', 'yes')
+            ->get(['id', 'accession_number']);
+        return response()->json($accessions);
+    }
+
     public function getAccessionDetails($id)
     {
         $acc = Accession::findOrFail($id);
@@ -473,13 +483,27 @@ class RequestController extends Controller
         if ($type == 'day') {
 
             $data = SeedRequest::selectRaw("
-                    DATE(created_at) as label,
+                    HOUR(created_at) as label,
                     COUNT(*) as total
                 ")
                 ->whereDate('created_at', today())
                 ->groupBy('label')
+                ->orderBy('label')
                 ->get();
+        } elseif ($type == 'week') {
 
+            $data = SeedRequest::selectRaw("
+                    DAYNAME(created_at) as label,
+                    DAYOFWEEK(created_at) as day_no,
+                    COUNT(*) as total
+                ")
+                ->whereBetween('created_at', [
+                    now()->startOfWeek(),
+                    now()->endOfWeek()
+                ])
+                ->groupBy('label', 'day_no')
+                ->orderBy('day_no')
+                ->get();
         } elseif ($type == 'month') {
 
             $data = SeedRequest::selectRaw("
@@ -489,22 +513,21 @@ class RequestController extends Controller
                 ->whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year)
                 ->groupBy('label')
+                ->orderBy('label')
                 ->get();
-
         } else {
 
             $data = SeedRequest::selectRaw("
                     MONTHNAME(created_at) as label,
-                    COUNT(*) as total,
-                    MONTH(created_at) as month_no
+                    MONTH(created_at) as month_no,
+                    COUNT(*) as total
                 ")
                 ->whereYear('created_at', now()->year)
-                ->groupBy('label','month_no')
+                ->groupBy('label', 'month_no')
                 ->orderBy('month_no')
                 ->get();
         }
 
         return response()->json($data);
     }
-    
 }

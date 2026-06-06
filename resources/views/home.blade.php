@@ -885,6 +885,81 @@ document.addEventListener('DOMContentLoaded', function () {
                                     </div>
                                 </div>
                         </div>
+
+                        <div class="col-md-12">
+                            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                                <div class="card-body">
+
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="mb-0 fw-bold">
+                                            Year wise Entry (Arrival)
+                                        </h5>
+                                    </div>
+
+                                    <div style="position: relative; height:400px;">
+                                        <canvas id="yearWiseEntryChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function () {
+
+                                    const labelsYear = @json($yearWiseEntries->pluck('year_of_arrival'));
+                                    const counts = @json($yearWiseEntries->pluck('total'));
+
+                                    new Chart(document.getElementById('yearWiseEntryChart'), {
+                                        type: 'bar',
+                                        data: {
+                                            labels: labelsYear,
+                                            datasets: [{
+                                                label: 'Arrivals',
+                                                data: counts,
+                                                borderRadius: 8,
+                                                maxBarThickness: 50,
+                                                backgroundColor: '#3b82f6'
+                                            }]
+                                        },
+                                        options: {
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+
+                                            plugins: {
+                                                legend: {
+                                                    display: false
+                                                },
+                                                tooltip: {
+                                                    callbacks: {
+                                                        label: function(context) {
+                                                            return context.raw + ' Entries';
+                                                        }
+                                                    }
+                                                }
+                                            },
+
+                                            scales: {
+                                                x: {
+                                                    title: {
+                                                        display: true,
+                                                        text: 'Year of Arrival'
+                                                    }
+                                                },
+                                                y: {
+                                                    beginAtZero: true,
+                                                    ticks: {
+                                                        precision: 0
+                                                    },
+                                                    title: {
+                                                        display: true,
+                                                        text: 'No. of Entries'
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    });
+
+                                });
+                                </script>
+                        </div>
                     </div>
 
 
