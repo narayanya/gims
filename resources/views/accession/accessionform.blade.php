@@ -584,7 +584,7 @@
                                         <select name="barcode_type" id="barcodeType"
                                             class="form-select @error('barcode_type') is-invalid @enderror" required>
                                             <option value="">Select Barcode Type</option>
-                                            <option value="auto" {{ old('barcode_type', optional($accession)->barcode_type) == 'auto' ? 'selected' : '' }}>
+                                            <option selected value="auto" {{ old('barcode_type', optional($accession)->barcode_type) == 'auto' ? 'selected' : '' }}>
                                                 Auto Generate</option>
                                             <option value="manual"
                                                 {{ old('barcode_type', optional($accession)->barcode_type) == 'manual' ? 'selected' : '' }}>Manual Entry

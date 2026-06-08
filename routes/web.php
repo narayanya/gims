@@ -37,8 +37,9 @@ Route::get('/gims_login', [App\Http\Controllers\Auth\LoginController::class, 'ha
     ->name('token.login');
 
 Auth::routes();
-
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('report.reports')->middleware('permission:report.view');
@@ -375,7 +376,8 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::get('/dispatch-print/{id}', [DispatchController::class, 'print'])->name('dispatch.print');
     Route::get('/dispatch-report', [DispatchController::class, 'dispatchReport'])
     ->name('dispatch.report');
-    
+    Route::get('/storage-report', [StorageController::class, 'storageReport'])
+    ->name('storage.report');
 
     Route::post('/requests/{id}/return', [SeedReturnController::class, 'store'])->name('requests.return');
 

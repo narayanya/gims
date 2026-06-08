@@ -242,4 +242,24 @@ class StorageController extends Controller
             return back()->with('error', 'Failed to delete storage location.');
         }
     }
+
+    public function storageReport()
+    {
+         $storages = Storage::with([
+        'storageWarehouse',
+        'storageTime',
+        'lots.rack',
+        'lots.bin',
+        'lots.container',
+        'lots.seedQuantities'
+    ])->get();
+
+        foreach ($storages as $storage) {
+            $storage->filled_quantity = $storage->lots->sum(function ($lot) {
+                return optional($lot->seedQuantity)->quantity ?? 0;
+            });
+        }
+
+        return view('report.storage_report', compact('storages'));
+    }
 }

@@ -255,11 +255,11 @@
                     {{-- Reports --}}
                     @if (auth()->user()->hasRole('super-admin') || auth()->user()->hasPermission('menu.reports'))
                         <li class="nav-item">
-                            <a class="nav-link menu-link {{ request()->routeIs('report.*', 'report.summary', 'expiry.*', 'dispatch.*') ? 'active' : '' }}"
+                            <a class="nav-link menu-link {{ request()->routeIs('report.*', 'report.summary', 'expiry.*', 'dispatch.*', 'storage.*') ? 'active' : '' }}"
                                 href="{{ route('report.reports') }}">
                                 <i class="ri-file-chart-line"></i> <span>Reports</span>
                             </a>
-                            <div class="collapse menu-visible menu-dropdown {{ request()->routeIs('report.*', 'report.summary', 'expiry.*', 'dispatch.*') ? 'show' : '' }}"
+                            <div class="collapse menu-visible menu-dropdown {{ request()->routeIs('report.*', 'report.summary', 'expiry.*', 'dispatch.*', 'storage.*') ? 'show' : '' }}"
                                 id="sidebarReport">
                                 <ul class="nav nav-sm flex-column">
                                     @if (auth()->user()->hasPermission('report.request'))
@@ -284,6 +284,11 @@
                                         <li class="nav-item"><a
                                                 class="nav-link {{ request()->routeIs('dispatch.report') ? 'active' : '' }}"
                                                 href="{{ route('dispatch.report') }}">Dispatch Report</a></li>
+                                    @endif
+                                    @if (auth()->user()->hasPermission('report.expiry'))
+                                    <li class="nav-item"><a
+                                                class="nav-link {{ request()->routeIs('storage.report') ? 'active' : '' }}"
+                                                href="{{ route('storage.report') }}">Storage Report</a></li>
                                     @endif
                                 </ul>
                             </div>

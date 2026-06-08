@@ -169,6 +169,7 @@ class AccessionController extends Controller
 
     public function edit($id)
     {
+    $user = Auth::user();    
         if (!auth()->user()->hasPermission('accession.edit')) {
             abort(403, 'You do not have permission to edit accessions.');
         }

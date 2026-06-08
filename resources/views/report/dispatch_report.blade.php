@@ -49,14 +49,15 @@
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
-                        <th>Dispatch No</th>
-                        <th>Request No</th>
-                        <th>MRN No</th>
+                        <th>Dispatch No.</th>
+                        <th>Request No.</th>
+                        <th>Requester Name</th>
+                        <th>MRN No.</th>
                         <th>Accession</th>
-                        <th>Lot No</th>
+                        <th>Lot No.</th>
                         <th>Quantity</th>
                         <th>Courier</th>
-                        <th>Tracking No</th>
+                        <th>Tracking No.</th>
                         <th>Dispatch Date</th>
                         <th>Created</th>
                     </tr>
@@ -73,6 +74,12 @@
                             </td>
                             <td>
                                 {{ $dispatch->request->request_number ?? '-' }}
+                            </td>
+                            <td>
+                                {{ $dispatch->request->requester_name ?? '-' }}<br>
+                                <span class="text-muted" style="font-size:12px;">
+                                    {{ $dispatch->request->request_date ? $dispatch->request->request_date->format('d M Y') : '-' }}
+                                </span>
                             </td>
                             <td>
                                 {{ $dispatch->mrn_number ?? '-' }}
