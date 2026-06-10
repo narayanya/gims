@@ -10,43 +10,21 @@
                     </h3>
                     <p class="text-sage-600 dark:text-sage-400 text-sm mb-1" style="color: #777777">View accession full details data</p>
                 </div>
-                <a href="{{ route('accession.accession-list') }}" class="btn btn-sm btn-primary">
-                    <i class="ri-arrow-left-line me-1"></i>Accession List
-                </a>
             </div>
 
     <!-- HEADER -->
     <div class="card mb-3">
         <div class="card-body d-flex justify-content-between align-items-center">
             <div>
-                <h4 class="mb-1">Accession ID: <br>{{ $accession->accession_number }}</h4>
+                <h4 class="">Crop: {{ $accession->crop->crop_name ?? '-' }}</h4>
+                <h5 class="card-title mb-1">Accession ID: <br>{{ $accession->accession_number }}</h5>
                 <span class="badge bg-success">{{ $accession->status == 1 ? 'Active' : 'Inactive' }}</span></p>
             </div>
             <div class="">
                 {{--<img style="width: 100px;" src="{{ $accession->photo_url ?? '/placeholder.png' }}" >--}}
                 <img style="width:100px;float:left;"
      src="{{ $accession->image_path ? asset('storage/accessions/images/'.$accession->image_path) : asset('assets/images/no-image.png') }}">
-                <div id="qrcode" style="float: left; margin-left: 10px;margin-right:10px;"></div>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-                <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-                <script>
-                new QRCode(document.getElementById("qrcode"), {
-                    text: "{{ route('accessions.public.show', $accession->id) }}",
-                    width: 100,
-                    height: 100
-                });
-                </script>
-
-         
-                <svg id="barcodeSvg"></svg>
-                <script>
-                JsBarcode("#barcodeSvg", "{{ $accession->barcode }}");
-                </script>
-            </div>
-            <div>
-                <small class="text-success ">
-                <b>Entry: {{ $accession->created_at ? $accession->created_at->format('d F Y') : '-' }}</b>
-                </small><br>
+                
             </div>
         </div>
     </div>

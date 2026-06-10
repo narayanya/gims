@@ -36,6 +36,9 @@ Route::get('/', function () {
 Route::get('/gims_login', [App\Http\Controllers\Auth\LoginController::class, 'handleTokenLogin'])
     ->name('token.login');
 
+Route::get('/accessions/public/{id}', [AccessionController::class, 'publicShow'])
+    ->name('accessions.public.show');
+
 Auth::routes();
 Route::middleware(['auth'])->group(function () {
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

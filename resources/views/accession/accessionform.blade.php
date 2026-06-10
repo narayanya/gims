@@ -176,7 +176,7 @@
                                         <select name="year_of_arrival" class="form-select" required>
                                             <option value="">Select Year</option>
                                             @for($year = 1985; $year <= date('Y'); $year++)
-                                                <option value="{{ $year }}">{{ $year }}</option>
+                                                <option value="{{ $year }}" {{ old('year_of_arrival', $accession->year_of_arrival ?? '') == $year ? 'selected' : '' }}>{{ $year }}</option>
                                             @endfor
                                         </select>
                                     </div>
@@ -202,31 +202,40 @@
                                     <div class="col-md-6 d-none">
                                         <label class="form-label required">Accession Number</label>
                                         <input type="text" name="accession_number"
-                                            class="form-control"
+                                            class="form-control" 
                                             value="{{ $accession->accession_number ?? 'Auto Generate' }}"
                                             readonly>
                                         
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Accession Id</label>
+                                    <div class="col-md-6 d-none">
+                                        <label class="form-label">Accession Name</label>
                                         <input type="text" name="accession_name"
                                             class="form-control @error('accession_name') is-invalid @enderror"
                                             value="{{ old('accession_name', $accession->accession_name ?? '') }}"
                                             placeholder="e.g., HD-2967 Punjab Collection">
-                                            <small class="text-muted">Accession ID: Auto-generated (e.g., AG-2026-ACC-00001)</small>
                                         @error('accession_name')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
 
                                     </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Accession ID</label>
+                                        <input type="text" name="accession_id"
+                                            class="form-control" id="accessionPreview"
+                                            value="{{ old('accession_number', $accession->accession_number ?? '') }}"
+                                            placeholder="Accession ID Preview" readonly>
+                                            <small class="text-muted">Accession ID: Auto-generated (e.g., AG-2026-ACC-1483-001)</small>
+                                    </div>
+                                    
                                     <div class="col-md-6">
                                         <label class="form-label required">Crop Name</label>
                                         <select name="crop_id" id="crop_id"
                                             class="form-select @error('crop_id') is-invalid @enderror" required>
                                             <option value="">Select Crop</option>
                                             @foreach ($crops as $crop)
-                                                <option value="{{ $crop->id }}" 
-                                                    {{ old('crop_id', $accession->crop_id ?? '') == $crop->id ? 'selected' : '' }}>
+                                                <option value="{{ $crop->id }}" data-code="{{ $crop->crop_code }}" 
+                                                    {{ old('crop_id', $accession->crop_id ?? '') == $crop->id ? 'selected' : '' }} >
                                                     {{ $crop->crop_name }}</option>
                                             @endforeach
                                         </select>
@@ -615,7 +624,7 @@
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
-                                        <small class="text-muted">Format: ACC-YYYY-XXXXX</small>
+                                        <small class="text-muted">Format: AG-YYYY-ACC-SID-XXXXX</small>
                                     </div>
 
                                     <!-- Barcode/QR Code Preview and Print Section -->
@@ -933,6 +942,35 @@
                 });
             }
 
+            // accession preview auto-fill based on crop, country, and year
+
+            const cropSelect = document.getElementById('crop_id');
+            const sampleInput = document.querySelector('[name="sample_id"]');
+            const yearInput = document.querySelector('[name="year_of_arrival"]');
+            const previewInput = document.getElementById('accessionPreview');
+
+            function updateAccessionPreview() {
+                // Edit mode -> keep existing accession number
+                if ("{{ isset($accession) && $accession->accession_number ? 'true' : 'false' }}" === 'true') {
+                    return;
+                }
+                let cropCode = cropSelect.options[cropSelect.selectedIndex]?.dataset.code || '';
+
+                let year = yearInput.value || new Date().getFullYear();
+
+                let sample = sampleInput.value || 'XXX';
+
+                document.getElementById('accessionPreview').value =
+                    `${cropCode}-${year}-ACC-${sample}-000`;
+            }
+
+            cropSelect.addEventListener('change', updateAccessionPreview);
+            sampleInput.addEventListener('keyup', updateAccessionPreview);
+            yearInput.addEventListener('change', updateAccessionPreview);
+
+            updateAccessionPreview();
+            
+
             // =========================
             // BARCODE SECTION
             // =========================
@@ -960,21 +998,27 @@
                     }
                 });
 
-                generateBtn.addEventListener('click', function() {
-                    let type = barcodeTypeSelect.value;
-                    let value = barcodeNumberInput.value.trim();
+                generateBtn.addEventListener('click', function () {
 
-                    if (type === 'auto') {
-                        const year = new Date().getFullYear();
-                        const random = Math.floor(Math.random() * 100000).toString().padStart(2, '0');
-                        value = `ACC-${year}-${random}`;
-                        barcodeNumberInput.value = value;
-                    } else if (!value) {
-                        return alert('Enter barcode');
+                    let type = barcodeTypeSelect.value;
+
+                    if (type === 'none') {
+                        return;
                     }
 
-                    generateBarcode(value);
+                    let accessionNo = document.getElementById('accessionPreview').value;
+
+                    if (!accessionNo) {
+                        alert('Accession preview not found');
+                        return;
+                    }
+
+                    barcodeNumberInput.value = accessionNo;
+
+                    generateBarcode(accessionNo);
                 });
+
+                
 
                 function generateBarcode(value) {
                     if (!$('barcodeDisplay') || !$('qrcodeDisplay')) return;
@@ -983,7 +1027,7 @@
                     $('qrcodeDisplay').innerHTML = '';
 
                     JsBarcode("#barcodeSvg", value, {
-                        height: 80
+                        height: 480
                     });
 
                     new QRCode($('qrcodeDisplay'), {
@@ -995,6 +1039,18 @@
                     if (previewSection) previewSection.style.display = 'block';
                 }
             }
+
+            function generateBarcodePreview() {
+
+                    let accessionNo =
+                        document.getElementById('accessionPreview').value;
+
+                    document.getElementById('barcodeNumber').value =
+                        accessionNo;
+
+                    generateBarcode(accessionNo);
+                }
+            generateBarcodePreview();
 
             // =========================
             // SOURCE TOGGLE

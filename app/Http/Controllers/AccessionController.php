@@ -41,7 +41,7 @@ class AccessionController extends Controller
         $crops = Crop::where([
                 ['is_active', 1],
                 ['update_status', 1]
-            ])->select('id', 'crop_name')->get();
+            ])->select('id', 'crop_name', 'crop_code')->get();
 
         $storageTime = StorageTime::orderBy('name')->get();
         
@@ -121,7 +121,7 @@ class AccessionController extends Controller
             'district',  
             'city',     
             'passports',
-            'seedQualities.researcher'
+            'seedQualities.researcher',
 
         ])->findOrFail($id);
         $countries = Country::orderBy('country_name')->get();
@@ -273,7 +273,8 @@ class AccessionController extends Controller
                 str_pad($accession->id, 2, '0', STR_PAD_LEFT);
 
             $accession->update([
-                'accession_number' => $accessionNumber
+                'accession_number' => $accessionNumber,
+                'barcode'          => $accessionNumber,
             ]);
 
             // source document upload
@@ -356,7 +357,7 @@ class AccessionController extends Controller
         $crops = Crop::where([
                 ['is_active', 1],
                 ['update_status', 1]
-            ])->select('id', 'crop_name')->get();
+            ])->select('id', 'crop_name', 'crop_code')->get();
 
         $units = \App\Models\Unit::orderBy('name')->get();
         $users = \App\Models\User::orderBy('name')->get();
@@ -470,7 +471,8 @@ class AccessionController extends Controller
 
             // 👇 Update record
             $accession->update([
-                'accession_number' => $accessionNumber
+                'accession_number' => $accessionNumber,
+                'barcode'          => $accessionNumber,
             ]);
 
             // Image upload (after create to use ID in filename) — max 5
@@ -616,6 +618,19 @@ class AccessionController extends Controller
         return redirect()
             ->back()
             ->with('success', 'Accession deactivated successfully.');
+    }
+
+    public function publicShow($id)
+    {
+        $accession = Accession::with([
+            'crop',
+            'country',
+            'state',
+            'district',
+            'city'
+        ])->findOrFail($id);
+
+        return view('accession.public_show', compact('accession'));
     }
 
   

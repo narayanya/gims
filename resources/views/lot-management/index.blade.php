@@ -270,6 +270,17 @@
                             <div class="col-md-3"><span class="text-muted d-block">Prefix</span><strong id="vl_prefix"></strong></div>
                             <div class="col-md-3"><span class="text-muted d-block">Sample Id</span><strong id="vl_sample_id"></strong></div>
                             <div class="col-md-12"><span class="text-muted d-block">Description</span><strong id="vl_description"></strong></div>
+                            <div class="col-md-12">
+                                <div id="qrcode"></div>
+                                <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+                                <script>
+                                new QRCode(document.getElementById("qrcode"), {
+                                    text: "{{ route('accessions.public.show', $lots->id) }}",
+                                    width: 100,
+                                    height: 100
+                                });
+                                </script>
+                            </div>
                         </div>
                     </div>
                 </div>
