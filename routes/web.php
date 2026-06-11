@@ -38,6 +38,8 @@ Route::get('/gims_login', [App\Http\Controllers\Auth\LoginController::class, 'ha
 
 Route::get('/accessions/public/{id}', [AccessionController::class, 'publicShow'])
     ->name('accessions.public.show');
+Route::get('/lots/public/{id}', [LotController::class, 'publicShow'])
+    ->name('lots.public.show');
 
 Auth::routes();
 Route::middleware(['auth'])->group(function () {
@@ -147,6 +149,9 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::get('/get-lot-by-number', [LotController::class, 'getLotByNumber']);
     Route::get('/lot/export',         [LotController::class, 'export'])->name('lot.export')->middleware('permission:lot.export');
     Route::get('/get-lot-details', [LotController::class, 'getLotDetails']);
+    Route::get('/lot-management/qrprint-all', [LotController::class, 'qrprintAll'])
+    ->name('lot.qrprint.all');
+
 
     Route::get('/lot-transfer-export', [LotTransferController::class, 'export'])
     ->name('lot-transfer.export');

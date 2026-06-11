@@ -801,5 +801,34 @@ class LotController extends Controller
             'Lot disposed successfully.'
         );
     }
+    public function publicShow($id)
+    {
+        $lot = Lot::with([
+            'accession.crop',
+            'storage',
+            'section',
+            'rack',
+            'bin',
+            'container',
+            'seedQuantities.unit',
+        ])->findOrFail($id);
+
+        return view('lot-management.public_show', compact('lot'));
+    }
+
+    public function qrprintAll()
+    {
+        $lots = Lot::with([
+            'accession.crop',
+            'storage',
+            'lotType'
+        ])
+        ->whereNotNull('lot_number')
+        ->orderBy('lot_number')
+        ->get();
+
+        return view('lot-management.qrprint-all', compact('lots'));
+    }
+
 
 }

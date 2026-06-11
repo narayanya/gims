@@ -50,6 +50,12 @@
                 <a href="{{ route('lot.export') }}" class="btn btn-sm btn-success">
                             <i class="ri-download-line me-1"></i>Export
                         </a>
+               <a href="{{ route('lot.qrprint.all') }}"
+   target="_blank"
+   class="btn btn-success btn-sm">
+    <i class="ri-printer-line me-1"></i>
+    Print All QR Codes
+</a>
                     </div>
             </div>
             <!--<a href="{{ route('lot-management.create') }}" class="btn btn-primary btn-sm">
@@ -253,6 +259,8 @@
                     <small id="vl_lot_number" class="opacity-75"></small>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                
+                
             </div>
             <div class="modal-body">
 
@@ -260,27 +268,33 @@
                 <div class="card mb-3">
                     <div class="card-header bg-light py-2"><strong class="small"><i class="ri-stack-line me-1"></i>Lot Information</strong></div>
                     <div class="card-body">
-                        <div class="row g-3 small">
-                            <div class="col-md-3"><span class="text-muted d-block">Number</span><strong id="vl_lot_number2"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Status</span><strong id="vl_status"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Expiry Date</span><strong id="vl_expiry"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Regeneration Date</span><strong id="vl_regeneration"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Regeneration Year</span><strong id="vl_regen_year"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Regeneration Program</span><strong id="vl_regeneration_program"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Prefix</span><strong id="vl_prefix"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Sample Id</span><strong id="vl_sample_id"></strong></div>
+                        <div class="row ">
+                            <div class="col-md-9">
+                                <div class="row g-3 small" >
+                            <div class="col-md-4"><span class="text-muted d-block">Number</span><strong id="vl_lot_number2"></strong></div>
+                            <div class="col-md-4"><span class="text-muted d-block">Status</span><strong id="vl_status"></strong></div>
+                            <div class="col-md-4"><span class="text-muted d-block">Expiry Date</span><strong id="vl_expiry"></strong></div>
+                            <div class="col-md-4"><span class="text-muted d-block">Regeneration Date</span><strong id="vl_regeneration"></strong></div>
+                            <div class="col-md-4"><span class="text-muted d-block">Regeneration Year</span><strong id="vl_regen_year"></strong></div>
+                            <div class="col-md-4"><span class="text-muted d-block">Regeneration Program</span><strong id="vl_regeneration_program"></strong></div>
+                            <div class="col-md-4"><span class="text-muted d-block">Prefix</span><strong id="vl_prefix"></strong></div>
+                            <div class="col-md-4"><span class="text-muted d-block">Sample Id</span><strong id="vl_sample_id"></strong></div>
                             <div class="col-md-12"><span class="text-muted d-block">Description</span><strong id="vl_description"></strong></div>
-                            <div class="col-md-12">
-                                <div id="qrcode"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                            <div id="qrcode"></div>
                                 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
                                 <script>
                                 new QRCode(document.getElementById("qrcode"), {
-                                    text: "{{ route('accessions.public.show', $lots->id) }}",
-                                    width: 100,
-                                    height: 100
+                                    text: "{{ url('lots/public/' . $lot->id) }}",
+                                    title: "Lot {{ $lot->lot_number }}",
+                                    width: 120,
+                                    height: 120
                                 });
                                 </script>
-                            </div>
+                        </div>
                         </div>
                     </div>
                 </div>
