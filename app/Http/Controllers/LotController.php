@@ -829,6 +829,16 @@ class LotController extends Controller
 
         return view('lot-management.qrprint-all', compact('lots'));
     }
+    public function qrprint($id)
+    {
+        $lot = Lot::with([
+            'accession.crop',
+            'storage',
+            'lotType'
+        ])->findOrFail($id);
+
+        return view('lot-management.qrprint', compact('lot'));
+    }
 
 
 }

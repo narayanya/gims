@@ -151,6 +151,8 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::get('/get-lot-details', [LotController::class, 'getLotDetails']);
     Route::get('/lot-management/qrprint-all', [LotController::class, 'qrprintAll'])
     ->name('lot.qrprint.all');
+    Route::get('/lot-management/{id}/qrprint', [LotController::class, 'qrprint'])
+    ->name('lot.qrprint');
 
 
     Route::get('/lot-transfer-export', [LotTransferController::class, 'export'])

@@ -51,11 +51,11 @@
                             <i class="ri-download-line me-1"></i>Export
                         </a>
                <a href="{{ route('lot.qrprint.all') }}"
-   target="_blank"
-   class="btn btn-success btn-sm">
-    <i class="ri-printer-line me-1"></i>
-    Print All QR Codes
-</a>
+                target="_blank"
+                class="btn btn-success btn-sm">
+                    <i class="ri-printer-line me-1"></i>
+                    Print All QR Codes
+                </a>
                     </div>
             </div>
             <!--<a href="{{ route('lot-management.create') }}" class="btn btn-primary btn-sm">
@@ -283,17 +283,9 @@
                                 </div>
                             </div>
                             <div class="col-md-3 text-center">
-                            <div id="qrcode"></div>
-                                <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-                <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-                                <script>
-                                new QRCode(document.getElementById("qrcode"), {
-                                    text: "{{ url('lots/public/' . $lot->id) }}",
-                                    title: "Lot {{ $lot->lot_number }}",
-                                    width: 120,
-                                    height: 120
-                                });
-                                </script>
+                                <div style="margin-left:25%;" id="qrcode"></div>
+                                <buttton class="btn btn-sm btn-outline-secondary mt-2" id="generateQrcodeBtn" >
+                                    <i class="ri-printer-line me-1"></i> Print QR</buttton>
                         </div>
                         </div>
                     </div>
@@ -310,7 +302,6 @@
                             <div class="col-md-3"><span class="text-muted d-block">Scientific Name</span><strong id="vl_acc_scientific"></strong></div>
                             <div class="col-md-3"><span class="text-muted d-block">Quantity</span><strong id="vl_acc_qty"></strong></div>
                             <div class="col-md-3"><span class="text-muted d-block">Status</span><strong id="vl_acc_status"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Barcode</span><strong id="vl_acc_barcode"></strong></div>
                         </div>
                     </div>
                 </div>
@@ -516,7 +507,8 @@
     </div>
 
 </div>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+                                <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -637,6 +629,46 @@ document.addEventListener('DOMContentLoaded', function () {
                     `).join('');
                 });
         }
+        // Generate QR Code singale
+        const qrContainer = document.getElementById('qrcode');
+
+        if (qrContainer) {
+            qrContainer.innerHTML = '';
+
+            new QRCode(qrContainer, {
+                text: `${window.location.origin}/lots/public/${d.id}`,
+                width: 120,
+                height: 120
+            });
+        }
+
+        const printBtn = document.getElementById('generateQrcodeBtn');
+
+        printBtn.dataset.id = d.id;
+        printBtn.dataset.lot_number = d.lot_number;
+        printBtn.dataset.accession = d.accession_number || '';
+        printBtn.dataset.crop = d.crop || '';
+        printBtn.dataset.sample_id = d.sample_id || '';
+        printBtn.dataset.reference = d.reference || '';
+        printBtn.dataset.storage = d.storage || '';
+        printBtn.dataset.expiry = d.expiry || '';
+        printBtn.dataset.seedquantity = d.quantity || '';
+        printBtn.dataset.seedquantity = d.capacity_unit_id || '';
+
+        document.getElementById('generateQrcodeBtn').addEventListener('click', function () {
+
+            let lotId = this.dataset.id;
+
+            if (!lotId) {
+                alert('Lot ID not found');
+                return;
+            }
+
+            window.open(
+                `/lot-management/${lotId}/qrprint`,
+                '_blank'
+            );
+        });
 
         // ✅ SHOW MODAL
         new bootstrap.Modal(document.getElementById('viewLotModal')).show();
@@ -728,5 +760,6 @@ document.querySelectorAll('.disposeBtn').forEach(btn => {
 
 });
 </script>
+
 @endsection
 

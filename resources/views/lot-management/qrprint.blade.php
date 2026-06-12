@@ -29,13 +29,11 @@
     </style>
 </head>
 <body>
-<div class="no-print" style="text-align: right;margin-right: 28px;margin-top: 5px;">
-    <h4 style="display: inline-block;margin-right: 20px;text-align:left;float:left;margin-left: 8px;">GIMS - QR Labels</h4>
-    <h4 style="display: inline-block;margin-right: 20px;">Total Lots: {{ count($lots) }}</h4>
+<div class="no-print" style="text-align: left;margin-right: 28px;margin-top: 5px;">
+    <h4 style="display: inline-block;text-align:left;float:left;margin:7px 20px;">GIMS - QR Labels</h4>
     <button style="background-color: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer;border-radius: 4px;" onclick="window.print()">Print</button>
 </div>
 
-@foreach($lots as $lot)
 
 <div class="label">
     <div id="qr{{ $lot->id }}"></div>
@@ -58,8 +56,6 @@
         Reference No: {{ $lot->reference_number }}
     </p>
 
-    
-
     <script>
         new QRCode(document.getElementById("qr{{ $lot->id }}"), {
             text: "{{ url('/lots/public/'.$lot->id) }}",
@@ -68,8 +64,6 @@
         });
     </script>
 </div>
-
-@endforeach
 
 </body>
 </html>
