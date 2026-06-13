@@ -9,6 +9,16 @@
                 <h3 class="text-xl font-bold">Employee Master</h3>
                 <p class="text-muted mb-0" style="font-size:13px"></p>
             </div>
+              <form method="GET" action="{{ route('master.employees.index') }}" class="d-flex">
+                <input
+                    type="text"
+                    name="search"
+                    class="form-control me-2"
+                    placeholder="Search Employee..."
+                    value="{{ request('search') }}"
+                >
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
         </div>
 
         <div class="card">

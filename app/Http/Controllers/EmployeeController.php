@@ -9,12 +9,35 @@ use Illuminate\Support\Facades\DB;
 class EmployeeController extends Controller
 {
 
-    public function index()
+    public function index(Request $request)
     {
-         $employees = DB::table('core_employee')
-        ->select('id','emp_name','employee_id','emp_code','emp_email','emp_status', 'emp_department', 'emp_reporting')
-        ->orderBy('id','desc')
-        ->paginate(20);
+        $query = DB::table('core_employee')
+            ->select(
+                'id',
+                'emp_name',
+                'employee_id',
+                'emp_code',
+                'emp_email',
+                'emp_status',
+                'emp_department',
+                'emp_reporting'
+            );
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('emp_name', 'like', "%{$search}%")
+                ->orWhere('employee_id', 'like', "%{$search}%")
+                ->orWhere('emp_code', 'like', "%{$search}%")
+                ->orWhere('emp_email', 'like', "%{$search}%")
+                ->orWhere('emp_department', 'like', "%{$search}%");
+            });
+        }
+
+        $employees = $query->orderBy('id', 'desc')
+            ->paginate(30)
+            ->withQueryString();
 
         return view('master.employees.index', compact('employees'));
     }
