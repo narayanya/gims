@@ -430,7 +430,6 @@ h-full rounded-full"
                                         <tr>
                                             <th class="px-3 py-2">Accession No.</th>
                                             <th class="px-3 py-2">Crop</th>
-                                            <th class="px-3 py-2">Accession Name</th>
                                             <th class="px-3 py-2 text-end">Available Qty</th>
                                             <th class="px-3 py-2">Action</th>
                                         </tr>
@@ -440,7 +439,6 @@ h-full rounded-full"
                                         <tr class="hover:bg-rose-50 transition-colors">
                                             <td class="px-3 py-2 font-mono font-semibold text-slate-800">{{ $ls->accession_number }}</td>
                                             <td class="px-3 py-2 text-slate-600">{{ $ls->crop->crop_name ?? '—' }}</td>
-                                            <td class="px-3 py-2 text-slate-600">{{ $ls->accession_name ?? '—' }}</td>
                                             <td class="px-3 py-2 text-end">
                                                 <span class="font-bold {{ ($ls->total_available ?? 0) <= 5 ? 'text-red-600' : 'text-amber-600' }}">
                                                     {{ number_format($ls->total_available ?? 0, 2) }}

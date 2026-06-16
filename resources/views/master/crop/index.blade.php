@@ -902,13 +902,13 @@
 
                                 <div class="row">
 
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-6 mb-3 d-none">
                                         <label class="form-label">Isolation Distance (meters)</label>
                                         <input type="number" name="isolation_distance" class="form-control"
                                             placeholder="e.g. 200" value="{{ old('isolation_distance') }}">
                                     </div>
 
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-6 mb-3 d-none">
                                         <label class="form-label">Expected Yield (qtl/acre)</label>
                                         <input type="number" step="0.01" name="expected_yield" class="form-control"
                                             placeholder="e.g. 18" value="{{ old('expected_yield') }}">
@@ -928,15 +928,9 @@
                                     </div>
 
                                     <div class="col-md-6 mb-3">
-                                        <label class="form-label">Number of Seed /Quantity</label>
-                                        <input type="number" step="0.01" name="seed_quantity" class="form-control" placeholder="min-1 to max-1000 seeds"
-                                            value="{{ old('seed_quantity') }}" >
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label w-100">Average Seed Weight (g)</label>
-                                        <input type="number" step="0.01" name="seed_weight" class="form-control float-start" placeholder="e.g. 0.05"
-                                            value="{{ old('seed_weight') }}" style="width: 245px;">
+                                        <label class="form-label w-100">Number of Seed /Quantity</label>
+                                        <input type="number" step="0.01" name="seed_quantity" class="form-control float-start" placeholder="min-1 to max-1000 seeds"
+                                            value="{{ old('seed_quantity') }}" style="width: 245px;" >
                                         <select name="unit_id" class="form-select" style="width: 120px;">
                                             <option value="">Unit</option>
                                             @foreach ($units as $unit)
@@ -946,6 +940,13 @@
                                                 </option>
                                             @endforeach
                                         </select>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3 d-none">
+                                        <label class="form-label w-100">Average Seed Weight (g)</label>
+                                        <input type="number" step="0.01" name="seed_weight" class="form-control float-start" placeholder="e.g. 0.05"
+                                            value="{{ old('seed_weight') }}" style="width: 245px;">
+                                        
                                         
                                     </div>
 

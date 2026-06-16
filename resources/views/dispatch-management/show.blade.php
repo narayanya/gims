@@ -127,10 +127,6 @@
                                 <strong>{{ $request->crop?->crop_name ?? 'N/A' }}</strong>
                             </div>
                             <div class="col-md-4">
-                                <small class="text-muted d-block">Accession Name</small>
-                                <strong>{{ $request->accession?->accession_name ?? 'N/A' }}</strong>
-                            </div>
-                            <div class="col-md-4">
                                 <small class="text-muted d-block">Accession No.</small>
                                 <strong>{{ $request->accession?->accession_number ?? 'N/A' }}</strong>
                             </div>

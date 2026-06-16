@@ -138,7 +138,6 @@
                                 <tr>
                                     <!--<th><input type="checkbox" class="form-check-input" id="selectAll"></th>-->
                                     <th>Accession ID</th>
-                                    <th>Accession Name</th>
                                     <th>Source</th>
                                     <th>Storage Time </th>
                                     <th>Sample Id</th>
@@ -161,7 +160,6 @@
                                         <td><a href="#"
                                                 class="text-decoration-none fw-bold">{{ $accession->accession_number }}</a>
                                         </td>
-                                        <td>{{ $accession->accession_name ?? '-' }}</td>
                                         <td>
                                             {{ ucfirst($accession->acc_source ?? '-') }}
 
@@ -423,7 +421,6 @@
                     }
 
                     set('v_number',            data.accession_number);
-                    set('v_name',              data.accession_name);
                     set('v_crop',              data.crop_name);
                     set('v_scientific_name',   data.scientific_name);
                     set('v_family',            data.family_name);
@@ -503,7 +500,7 @@
                         </div>
 
                         <p class="text-muted small">
-                            Required columns: <b>sample_id, crop_name, accession_name</b><br>
+                            Required columns: <b>sample_id, crop_name</b><br>
                             Optional: <b>acc_source, ext_source, year_of_arrival, collection_number, collection_date, collector_name, donor_name, collection_site, country_name, state_name, district_name, city_name, latitude, longitude, pincode, biological_status, sample_type, reproductive_type, barcode_type, barcode, status, notes, storage_time_id</b>
                         </p>
 
@@ -535,7 +532,6 @@
                     <h6 class="text-muted border-bottom pb-1 mb-2">Basic Information</h6>
                     <table class="table table-sm table-bordered mb-3">
                         <tr><th style="width:35%">Accession Number</th><td id="v_number"></td></tr>
-                        <tr><th>Accession Name</th><td id="v_name"></td></tr>
                         <tr><th>Crop</th><td id="v_crop"></td></tr>
                         <tr><th>Scientific Name</th><td id="v_scientific_name"></td></tr>
                         <tr><th>Family</th><td id="v_family"></td></tr>

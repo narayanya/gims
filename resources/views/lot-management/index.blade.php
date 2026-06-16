@@ -115,7 +115,6 @@
                                 <td>
                                     @if($lot->accession)
                                         <div>{{ $lot->accession->accession_number }}</div>
-                                        <small class="text-muted">{{ $lot->accession->accession_name }}</small>
                                     @else —
                                     @endif
                                 </td>
@@ -170,7 +169,6 @@
                                         data-prefix="{{ $lot->prefix }}"
                                         data-sample_id="{{ $lot->sample_id }}"
                                         data-accession="{{ $lot->accession?->accession_number }}"
-                                        data-accession_name="{{ $lot->accession?->accession_name }}"
                                         data-storage="{{ $lot->storage?->name }}"
                                         data-expiry="{{ $lot->expiry_date ? \Carbon\Carbon::parse($lot->expiry_date)->format('d M Y') : '' }}"
                                         data-germination="{{ $lot->germination_percent }}"
@@ -297,7 +295,6 @@
                     <div class="card-body">
                         <div class="row g-3 small" id="vl_accession_section">
                             <div class="col-md-3"><span class="text-muted d-block">Accession No.</span><strong id="vl_acc_number"></strong></div>
-                            <div class="col-md-3"><span class="text-muted d-block">Accession Name</span><strong id="vl_acc_name"></strong></div>
                             <div class="col-md-3"><span class="text-muted d-block">Crop</span><strong id="vl_acc_crop"></strong></div>
                             <div class="col-md-3"><span class="text-muted d-block">Scientific Name</span><strong id="vl_acc_scientific"></strong></div>
                             <div class="col-md-3"><span class="text-muted d-block">Quantity</span><strong id="vl_acc_qty"></strong></div>
@@ -552,7 +549,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(r => r.json())
                 .then(a => {
                     set('vl_acc_number', a.accession_number);
-                    set('vl_acc_name', a.accession_name);
                     set('vl_acc_crop', a.crop);
                     set('vl_acc_scientific', a.scientific_name);
                     set('vl_acc_qty', a.quantity_show);
