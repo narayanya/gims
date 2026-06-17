@@ -3,7 +3,7 @@
 @section('content')
 <div class="col-12">
 
-    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 border-bottom pb-2 gap-1">
         <div>
             <h3 class="text-xl font-bold">Activity Log Report</h3>
             <p class="text-muted mb-0" style="font-size:13px">Track user actions and page navigation</p>
@@ -216,7 +216,7 @@
             <h6 class="mb-0"><i class="ri-history-line me-2"></i>Recent Activity</h6>
             <a href="{{ route('logs.index', ['tab' => 'actions']) }}" class="btn btn-sm btn-outline-primary">View All</a>
         </div>
-        <div class="card-body p-0">
+        <div class="card-body p-0 table-responsive">
             <table class="table table-sm table-hover mb-0">
                 <thead class="table-light">
                     <tr>

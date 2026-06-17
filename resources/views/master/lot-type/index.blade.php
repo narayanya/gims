@@ -5,7 +5,7 @@
     <div class="col-12">
 
         {{-- Page Header --}}
-        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 border-bottom pb-2 gap-1 border-bottom">
             <div>
                 <h3 class="text-sage-900 dark:text-white text-xl font-bold leading-tight flex items-center gap-2 w-100">Lot Type</h3>
                 <p class="text-muted mb-0" style="font-size:13px">Manage lot / batch management type categories</p>

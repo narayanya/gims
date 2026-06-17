@@ -4,7 +4,7 @@
 <div class="row justify-content-center">
     <div class="col-12">
 
-        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 border-bottom pb-2 gap-1">
             <div>
                 <h3 class="text-xl font-bold">Dispatch Management</h3>
                 <p class="text-muted mb-0" style="font-size:13px">Create and manage dispatch requests</p>

@@ -3,7 +3,7 @@
 @section('content')
 <div class="row justify-content-center">
     <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 border-bottom pb-2 gap-1">
             <div>
                 <h3 class="text-xl font-bold">Lot Regeneration</h3>
                 <p class="text-muted mb-0" style="font-size:13px">Update and manage Lot Regeneration</p>
@@ -27,9 +27,9 @@
             </div>
         @endif
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-6 ">
             <div class="card">
-            <div class="card-body">
+            <div class="card-body table-responsive">
                 <table class="table table-bordered">
                 <thead>
                     <tr>

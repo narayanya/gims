@@ -15,29 +15,45 @@
                     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
                     rel="stylesheet" />
 
-                <div class="flex items-center justify-between mb-3 border-bottom border-sage-muted/20 pb-2">
-                    <div class="items-center gap-3">
-                        <h2 class="text-sage-900 dark:text-white text-xl font-bold leading-tight flex items-center gap-2 w-100"
-                            style="font-size:18px;">
-                            Inventory Dashboard
-                        </h2>
-                        <p class="text-sage-600 dark:text-sage-400 text-sm" style="color: #777777">Monitoring global
-                            germplasm distribution and local storage health.</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        @if (auth()->user()->hasRole(['super-admin', 'admin', 'manager']))
-                            <a href="{{ route('report.reports') }}"
-                                class="btn btn-sm btn-outline-primary font-bold">Report</a>
-                            <a href="{{ route('lot-management.create') }}" class="btn btn-sm btn-primary box-radius"><i
-                                    class="ri-add-line me-1"></i> New Arrival(Lot)</a>
-                        
-                            <a href="{{ route('accessionform') }}" class="btn btn-sm btn-primary"><i
-                                class="ri-add-line me-1"></i> New Accession</a>
-                        @endif
-                        <a href="{{ route('requests.create') }}" class="btn btn-sm btn-primary"><i
-                                class="ri-add-line me-1"></i> New Request</a>
-                    </div>
-                </div>
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 border-bottom pb-2 gap-3">
+
+    <!-- Left Section -->
+    <div>
+        <h2 class="text-sage-900 dark:text-white text-xl font-bold leading-tight mb-1"
+            style="font-size:18px;">
+            Inventory Dashboard
+        </h2>
+        <p class="text-sage-600 dark:text-sage-400 text-sm mb-0" style="color:#777777;">
+            Monitoring global germplasm distribution and local storage health.
+        </p>
+    </div>
+
+    <!-- Right Section -->
+    <div class="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-start justify-content-md-end">
+        @if (auth()->user()->hasRole(['super-admin', 'admin', 'manager']))
+            <a href="{{ route('report.reports') }}"
+                class="btn btn-sm btn-outline-primary">
+                Report
+            </a>
+
+            <a href="{{ route('lot-management.create') }}"
+                class="btn btn-sm btn-primary">
+                <i class="ri-add-line me-1"></i> New Arrival (Lot)
+            </a>
+
+            <a href="{{ route('accessionform') }}"
+                class="btn btn-sm btn-primary">
+                <i class="ri-add-line me-1"></i> New Accession
+            </a>
+        @endif
+
+        <a href="{{ route('requests.create') }}"
+            class="btn btn-sm btn-primary">
+            <i class="ri-add-line me-1"></i> New Request
+        </a>
+    </div>
+
+</div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     <!-- Card 1 -->

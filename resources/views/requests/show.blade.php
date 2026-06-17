@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <div class="row mb-3">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 border-bottom pb-2 gap-1">
                 <h2 class="mb-0">Request Details - {{ $seedRequest->request_number }}</h2>
                 <div>
                     <a href="{{ route('requests.edit', $seedRequest) }}" class="btn btn-warning">

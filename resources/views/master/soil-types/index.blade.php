@@ -4,10 +4,10 @@
     <div class="row">
         <div class="col-12">
 
-            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-sage-muted/20 pb-2">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-1 border-bottom pb-2 gap-1">
                 <div>
                     <h3 class="text-xl font-bold">Soil Types Master</h3>
-                    <p class="text-muted">View and manage soil types master data</p>
+                    <p class="text-muted mb-1">View and manage soil types master data</p>
                 </div>
 
                 <button class="btn btn-sm btn-primary" id="addSoilTypeBtn">

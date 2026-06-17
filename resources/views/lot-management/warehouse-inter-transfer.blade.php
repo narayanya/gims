@@ -4,7 +4,7 @@
 <div class="row justify-content-center">
     <div class="col-12">
 
-        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 border-bottom pb-2 gap-1">
             <div>
                 <h3 class="text-xl font-bold">Warehouse Inter-Transfer</h3>
                 <p class="text-muted mb-0" style="font-size:13px">Move a Warehouse from one location to another location</p>
@@ -180,7 +180,7 @@
 </div>
 <div class="col-md-12">
         <div class="card mt-4">
-            <div class="card-header d-flex justify-content-between">
+            <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 border-bottom pb-2 gap-1">
                 <h5 class="mb-0">Last 10 Transfers</h5>
                 <div class="d-flex gap-2 align-items-center">
 

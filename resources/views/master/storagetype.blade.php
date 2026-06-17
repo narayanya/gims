@@ -6,7 +6,7 @@
     <div class="row justify-content-center">
         <div class="col-12">
             <!-- Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 border-bottom pb-2 gap-1">
                 <div>
                     <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Storage Types</h1>
                     <p class="text-slate-600 dark:text-slate-400">Define and manage storage type master data</p>

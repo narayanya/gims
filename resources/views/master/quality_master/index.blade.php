@@ -5,7 +5,7 @@
     <div class="col-12">
 
         <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 border-bottom pb-2 gap-1">
             <div>
                 <h3 class="text-xl mb-1">
                     Quality Master
