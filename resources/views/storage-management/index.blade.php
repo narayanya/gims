@@ -9,7 +9,7 @@
                     <h3 class="text-sage-900 dark:text-white text-xl font-bold leading-tight flex items-center gap-2 w-100">
                         Storage Management
                     </h3>
-                    <p class="text-sage-600 dark:text-sage-400 text-sm mb-1" style="color: #777777">Manage storage locations and inventory</p>
+                    <p class="text-sage-600 dark:text-sage-400 text-sm mb-1" style="color: #777777">Manage storage locations & inventory</p>
                 </div>
                 <div class="d-flex gap-2">
                     <a href="{{ route('storage-management.create') }}" class="btn btn-sm btn-primary">

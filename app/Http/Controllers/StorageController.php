@@ -233,13 +233,49 @@ class StorageController extends Controller
     public function destroy(Storage $storage)
     {
         try {
+            // Check for linked lots
+            $lotCount = \App\Models\Lot::where('storage_id', $storage->id)->count();
+
+            // Check for linked transfers (FK constrained)
+            $transferCount = \Illuminate\Support\Facades\DB::table('lot_transfers')
+                ->where('from_storage_id', $storage->id)
+                ->orWhere('to_storage_id', $storage->id)
+                ->count();
+
+            $warehouseTransferCount = \Illuminate\Support\Facades\DB::table('warehouse_transfers')
+                ->where('from_storage_id', $storage->id)
+                ->orWhere('to_storage_id', $storage->id)
+                ->count();
+
+            $blockers = [];
+            if ($lotCount > 0) {
+                $blockers[] = "{$lotCount} lot(s)";
+            }
+            if ($transferCount > 0) {
+                $blockers[] = "{$transferCount} lot transfer(s)";
+            }
+            if ($warehouseTransferCount > 0) {
+                $blockers[] = "{$warehouseTransferCount} warehouse transfer(s)";
+            }
+
+            if (!empty($blockers)) {
+                return back()->with('error',
+                    "Cannot delete \"{$storage->name}\" — it is linked to: " . implode(', ', $blockers) . '. Remove those records first.'
+                );
+            }
+
             $storage->delete();
 
             return redirect()->route('storage-management.index')
-                ->with('success', 'Storage location deleted successfully!');
+                ->with('success', 'Storage location "' . $storage->name . '" deleted successfully!');
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            return back()->with('error',
+                'Cannot delete this storage — it is still referenced by other records. Remove those records first.'
+            );
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to delete storage location.');
+            return back()->with('error', 'Failed to delete storage location: ' . $e->getMessage());
         }
     }
 
