@@ -244,6 +244,18 @@
                                                             </button>
 
                                                         </form></li>
+                                                        <li>
+                                                            <form action="{{ route('accession.delete', $accession->id) }}"
+                                                                    method="POST"
+                                                                    onsubmit="return confirm('Are you sure you want to delete this accession?')">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="dropdown-item text-danger">
+                                                                    <i class="ri-delete-bin-line me-2"></i>
+                                                                    Delete
+                                                                </button>
+                                                            </form>
+                                                        </li>
                                                     @endif
                                                 </ul>
                                             </div>

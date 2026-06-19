@@ -93,6 +93,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/accessions/{id}/edit',      [AccessionController::class, 'edit'])->name('accessions.edit')->middleware('permission:accession.edit');
     Route::put('/accessions/{id}',           [AccessionController::class, 'update'])->name('accessions.update')->middleware('permission:accession.edit');
     Route::post('/accession/{id}/deactivate',    [AccessionController::class, 'deactivate'])->name('accession.deactivate');
+    Route::delete('/accession/{id}/delete',      [AccessionController::class, 'delete'])->name('accession.delete');
     Route::get('/reports/low-stock-report',    [AccessionController::class, 'lowStockReport'])->name('accession.lowStockReport');
 
 Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
@@ -121,6 +122,7 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::get('/lot-management/{id}/edit', [App\Http\Controllers\LotController::class, 'managementEdit'])->name('lot-management.edit')->middleware('permission:lot.edit');
     Route::post('/lot-management', [App\Http\Controllers\LotController::class, 'managementStore'])->name('lot-management.store')->middleware('permission:lot.create');
     Route::put('/lot-management/{id}', [App\Http\Controllers\LotController::class, 'managementUpdate'])->name('lot-management.update')->middleware('permission:lot.edit');
+    Route::delete('/lot-management/{id}/delete', [App\Http\Controllers\LotController::class, 'managementDelete'])->name('lot-management.delete')->middleware('permission:lot.delete');
     Route::get('/lot-management/storage/{id}', [App\Http\Controllers\LotController::class, 'getStorageDetails'])->name('lot-management.storage');
     Route::get('/lot-management/accession/{id}', [App\Http\Controllers\LotController::class, 'getAccessionDetails'])->name('lot-management.accession');
     Route::get('/lot-management/{id}/quality', [App\Http\Controllers\LotController::class, 'getLotQualityDetails'])->name('lot-management.quality');
@@ -193,12 +195,15 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     Route::post('/racks',                 [App\Http\Controllers\StorageLocationMasterController::class, 'rackStore'])->name('racks.store');
     Route::put('/racks/{rack}',           [App\Http\Controllers\StorageLocationMasterController::class, 'rackUpdate'])->name('racks.update');
     Route::delete('/racks/{rack}',        [App\Http\Controllers\StorageLocationMasterController::class, 'rackDestroy'])->name('racks.destroy');
+    Route::delete('/racks/{rack}/delete', [App\Http\Controllers\StorageLocationMasterController::class, 'rackDelete'])->name('racks.delete');
     Route::post('/bins',                  [App\Http\Controllers\StorageLocationMasterController::class, 'binStore'])->name('bins.store');
     Route::put('/bins/{bin}',             [App\Http\Controllers\StorageLocationMasterController::class, 'binUpdate'])->name('bins.update');
     Route::delete('/bins/{bin}',          [App\Http\Controllers\StorageLocationMasterController::class, 'binDestroy'])->name('bins.destroy');
+    Route::delete('/bins/{bin}/delete',   [App\Http\Controllers\StorageLocationMasterController::class, 'binDelete'])->name('bins.delete');
     Route::post('/containers',            [App\Http\Controllers\StorageLocationMasterController::class, 'containerStore'])->name('containers.store');
     Route::put('/containers/{container}', [App\Http\Controllers\StorageLocationMasterController::class, 'containerUpdate'])->name('containers.update');
-    Route::delete('/containers/{container}', [App\Http\Controllers\StorageLocationMasterController::class, 'containerDestroy'])->name('containers.destroy');
+    Route::delete('/containers/{container}',        [App\Http\Controllers\StorageLocationMasterController::class, 'containerDestroy'])->name('containers.destroy');
+    Route::delete('/containers/{container}/delete', [App\Http\Controllers\StorageLocationMasterController::class, 'containerDelete'])->name('containers.delete');
     Route::get('/storage/storage-template', function () {
         return response()->download(public_path('templates/storage-template.csv'));
     })->name('storage.storage-template');
@@ -209,6 +214,7 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     // Lot Inter-Transfer
     Route::get('/lot-transfer', [App\Http\Controllers\LotTransferController::class, 'index'])->name('lot-transfer.index');
     Route::post('/lot-transfer', [App\Http\Controllers\LotTransferController::class, 'transfer'])->name('lot-transfer.store');
+    Route::delete('/lot-transfer/{id}', [App\Http\Controllers\LotTransferController::class, 'destroy'])->name('lot-transfer.destroy');
     Route::get('/get-storage-lots/{id}', [App\Http\Controllers\LotTransferController::class, 'getStorageLots'])->name('lot-transfer.storage-lots');
     Route::get('/get-storage-hierarchy/{id}', [App\Http\Controllers\LotTransferController::class, 'getStorageHierarchy'])->name('lot-transfer.hierarchy');
     Route::get('/get-accessions/{cropId}', [App\Http\Controllers\LotTransferController::class, 'getAccessions']);

@@ -620,6 +620,79 @@ class AccessionController extends Controller
             ->with('success', 'Accession deactivated successfully.');
     }
 
+    public function delete($id)
+    {
+        if (!auth()->user()->hasPermission('accession.delete')) {
+            abort(403, 'You do not have permission to delete accessions.');
+        }
+
+        $accession = Accession::findOrFail($id);
+
+        // Check FK-constrained blockers before attempting delete
+        $blockers = [];
+
+        $lotCount = \App\Models\Lot::where('accession_id', $id)->count();
+        if ($lotCount > 0) {
+            $blockers[] = "{$lotCount} lot(s)";
+        }
+
+        $dispatchCount = DB::table('dispatches')->where('accession_id', $id)->count();
+        if ($dispatchCount > 0) {
+            $blockers[] = "{$dispatchCount} dispatch(es)";
+        }
+
+        $requestCount = DB::table('request_transactions')->where('accession_id', $id)->count();
+        if ($requestCount > 0) {
+            $blockers[] = "{$requestCount} request transaction(s)";
+        }
+
+        $seedQtyCount = DB::table('seed_quantities')->where('accession_id', $id)->count();
+        if ($seedQtyCount > 0) {
+            $blockers[] = "{$seedQtyCount} seed quantity record(s)";
+        }
+
+        $seedQualityCount = DB::table('seed_qualities')->where('accession_id', $id)->count();
+        if ($seedQualityCount > 0) {
+            $blockers[] = "{$seedQualityCount} seed quality record(s)";
+        }
+
+        if (!empty($blockers)) {
+            return redirect()->back()->with('error',
+                "Cannot delete accession \"{$accession->accession_number}\" — it is linked to: "
+                . implode(', ', $blockers) . '. Remove those records first.'
+            );
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Delete passport rows (no FK constraint, just cascade manually)
+            $accession->passports()->delete();
+
+            // Delete images
+            $accession->images()->delete();
+
+            $accession->delete();
+
+            DB::commit();
+
+            return redirect()->route('accession.accession-list')
+                ->with('success', "Accession \"{$accession->accession_number}\" deleted successfully.");
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error',
+                'Cannot delete this accession — it is still referenced by other records.'
+            );
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Accession delete failed: ' . $e->getMessage());
+            return redirect()->back()->with('error',
+                'Failed to delete accession: ' . $e->getMessage()
+            );
+        }
+    }
+
     public function publicShow($id)
     {
         $accession = Accession::with([

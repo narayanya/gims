@@ -279,6 +279,38 @@ public function transfer(Request $request)
         return response()->json($storages);
     }
 
+    public function destroy($id)
+    {
+        $transfer = \App\Models\LotTransfer::findOrFail($id);
+
+        try {
+            DB::beginTransaction();
+
+            // Reverse the storage usage adjustments
+            $fromStorage = Storage::find($transfer->from_storage_id);
+            $toStorage   = Storage::find($transfer->to_storage_id);
+            $qty         = (float) $transfer->quantity;
+
+            if ($fromStorage && $qty > 0) {
+                $fromStorage->increment('current_usage', $qty); // lot came back
+            }
+            if ($toStorage && $qty > 0) {
+                $toStorage->decrement('current_usage', $qty);   // lot left
+            }
+
+            $transfer->delete();
+
+            DB::commit();
+
+            return redirect()->route('lot-transfer.index')
+                ->with('success', 'Transfer record deleted and storage usage reversed.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to delete transfer: ' . $e->getMessage());
+        }
+    }
+
     public function export(Request $request)
     {
         $query = \App\Models\LotTransfer::with(['fromStorage', 'toStorage', 'lot']);

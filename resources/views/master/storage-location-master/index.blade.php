@@ -49,48 +49,6 @@
             <li class="nav-item"><a class="nav-link {{ $tab=='container' ? 'active' : '' }}" href="?tab=container">Container</a></li>
         </ul>
 
-        {{-- ── SECTION ── --}}
-        {{-- @if($tab === 'section')
-        <div class="card">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <strong>Sections</strong>
-                <button class="btn btn-primary btn-sm" id="addSectionBtn"><i class="ri-add-line me-1"></i>New Section</button>
-            </div>
-            <div class="card-body p-0">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light"><tr><th>Name</th><th>Unit</th><th>Warehouse</th><th>Storage</th><th>Code</th><th>Description</th><th>Status</th><th width="100">Actions</th></tr></thead>
-                    <tbody>
-                        @forelse($sections as $row)
-                        <tr>
-                            <td>{{ $row->name }}</td>
-                            <td>{{ $row->unit->name ?? '—' }}</td>
-                            <td>{{ $row->storage->warehouse->name ?? '—' }}</td>
-                            <td>{{ $row->storage->name ?? '—' }}</td>
-                            <td><span class="badge bg-info">{{ $row->code ? $row->code : '—' }}</span></td>
-                            <td>{{ $row->description ?? '—' }}</td>
-                            <td><span class="badge {{ $row->status ? 'bg-success' : 'bg-danger' }}">{{ $row->status ? 'Active' : 'Inactive' }}</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-warning editBtn"
-                                    data-type="section" data-id="{{ $row->id }}" data-name="{{ $row->name }}" data-unit_id="{{ $row->unit_id }}"
-                                    data-storage_id="{{ $row->storage_id }}" data-warehouse_id="{{ $row->storage->warehouse_id ?? '' }}"
-                                    data-code="{{ $row->code }}" data-description="{{ $row->description }}" data-status="{{ $row->status }}">
-                                    <i class="ri-edit-line"></i>
-                                </button>
-                                <form action="{{ route('sections.destroy',$row->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Deactivate?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="ri-forbid-line"></i></button>
-                                </form>
-                            </td>
-                        </tr>
-                        @empty<tr><td colspan="8" class="text-center text-muted py-4">No sections found.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            @if($sections->hasPages())<div class="card-footer">{{ $sections->appends(['tab'=>'section'])->links() }}</div>@endif
-        </div>
-        @endif--}}
-
         {{-- ── RACK ── --}}
         @if($tab === 'rack')
         <div class="card">
@@ -123,7 +81,11 @@
                                 </button>
                                 <form action="{{ route('racks.destroy',$row->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Deactivate?')">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="ri-forbid-line"></i></button>
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Deactivate"><i class="ri-forbid-line"></i></button>
+                                </form>
+                                <form action="{{ route('racks.delete',$row->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Permanently delete rack \"{{ addslashes($row->name) }}\"? This cannot be undone.')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="ri-delete-bin-line"></i></button>
                                 </form>
                             </td>
                         </tr>
@@ -173,7 +135,11 @@
                                 </button>
                                 <form action="{{ route('bins.destroy',$row->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Deactivate?')">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="ri-forbid-line"></i></button>
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Deactivate"><i class="ri-forbid-line"></i></button>
+                                </form>
+                                <form action="{{ route('bins.delete',$row->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Permanently delete bin \"{{ addslashes($row->name) }}\"? This cannot be undone.')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="ri-delete-bin-line"></i></button>
                                 </form>
                             </td>
                         </tr>
@@ -205,11 +171,12 @@
             </div>
             <div class="card-body p-0">
                 <table class="table table-hover mb-0">
-                    <thead class="table-light"><tr><th>Name</th><th>Dimensions</th><th>Code</th><th>Type</th><th>Capacity(No of pouches)</th><th>Unit</th><th>Status</th><th width="100">Actions</th></tr></thead>
+                    <thead class="table-light"><tr><th>Name</th><th>Bin</th><th>Dimensions</th><th>Code</th><th>Type</th><th>Capacity(No of pouches)</th><th>Unit</th><th>Status</th><th width="120">Actions</th></tr></thead>
                     <tbody>
                         @forelse($containers as $row)
                         <tr>
                             <td>{{ $row->name }}</td>
+                            <td>{{ $row->bin?->name ?? '—' }}</td>
                             <td>{!! $row->length ? $row->length.' x '.$row->width.' x '.$row->height.' '.$row->dimension_unit : '—' !!}</td>
                             <td>{!! $row->code ? '<span class="badge bg-info">'.$row->code.'</span>' : '—' !!}</td>
                             <td>{{ $row->container_type ?? '—' }}</td>
@@ -220,16 +187,26 @@
                                 <button class="btn btn-sm btn-outline-warning editBtn"
                                     data-type="container" data-id="{{ $row->id }}" data-name="{{ $row->name }}"
                                     data-code="{{ $row->code }}" data-container_type="{{ $row->container_type }}"
-                                    data-capacity="{{ $row->capacity }}" data-description="{{ $row->description }}" data-status="{{ $row->status }}" data-unit_id="{{ $row->unit_id }}">
+                                    data-capacity="{{ $row->capacity }}" data-description="{{ $row->description }}"
+                                    data-status="{{ $row->status }}" data-unit_id="{{ $row->unit_id }}"
+                                    data-bin_id="{{ $row->bin_id }}"
+                                    data-length="{{ $row->length }}"
+                                    data-width="{{ $row->width }}"
+                                    data-height="{{ $row->height }}"
+                                    data-dimension_unit="{{ $row->dimension_unit }}">
                                     <i class="ri-edit-line"></i>
                                 </button>
                                 <form action="{{ route('containers.destroy',$row->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Deactivate?')">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="ri-forbid-line"></i></button>
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Deactivate"><i class="ri-forbid-line"></i></button>
+                                </form>
+                                <form action="{{ route('containers.delete',$row->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Permanently delete container \"{{ addslashes($row->name) }}\"? This cannot be undone.')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="ri-delete-bin-line"></i></button>
                                 </form>
                             </td>
                         </tr>
-                        @empty<tr><td colspan="6" class="text-center text-muted py-4">No containers found.</td></tr>
+                        @empty<tr><td colspan="9" class="text-center text-muted py-4">No containers found.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -370,6 +347,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const sections    = @json($allSections);
     const racks       = @json($allRacks);
+    const bins        = @json($allBins);
     const units       = @json($units);
     const warehouses  = @json($warehouses);
     const allStorages = @json($allStorages);
@@ -448,13 +426,46 @@ document.addEventListener('DOMContentLoaded', function () {
         return `<div class="mb-3"><label class="form-label">Rack</label><select class="form-select" name="rack_id">${opts}</select></div>`;
     }
 
+    function binSelect(val='', filterRackId='') {
+        const filtered = filterRackId
+            ? bins.filter(b => b.rack_id == filterRackId)
+            : bins;
+        let opts = '<option value="">— None —</option>';
+        filtered.forEach(b => opts += `<option value="${b.id}" data-rack="${b.rack_id}" ${b.id==val?'selected':''}>${b.name}</option>`);
+        return `<div class="mb-3"><label class="form-label">Bin</label><select class="form-select" id="containerBinSelect" name="bin_id">${opts}</select></div>`;
+    }
+
     function containerTypeField(d = {}) {
         const types = ['Packet','Pouch','Box','Jar','Envelope','Bag'];
         let opts = '<option value="">— Select —</option>';
         types.forEach(t => {
             opts += `<option value="${t}" ${t == d.container_type ? 'selected' : ''}>${t}</option>`;
         });
+
+        // Derive the rack from the assigned bin (for edit mode)
+        const assignedBin = d.bin_id ? bins.find(b => b.id == d.bin_id) : null;
+        const assignedRackId = assignedBin ? assignedBin.rack_id : '';
+
+        // Build rack options for the cascade select
+        let rackOpts = '<option value="">— None —</option>';
+        racks.forEach(r => rackOpts += `<option value="${r.id}" ${r.id == assignedRackId ? 'selected' : ''}>${r.name}</option>`);
+
+        // Build bin options (pre-filtered by rack when editing)
+        let binFiltered = assignedRackId ? bins.filter(b => b.rack_id == assignedRackId) : bins;
+        let binOpts = '<option value="">— None —</option>';
+        binFiltered.forEach(b => binOpts += `<option value="${b.id}" data-rack="${b.rack_id}" ${b.id == d.bin_id ? 'selected' : ''}>${b.name}</option>`);
+
         return `
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Rack</label>
+                <select class="form-select" id="containerRackSelect" name="_rack_id_for_bin">${rackOpts}</select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Bin</label>
+                <select class="form-select" id="containerBinSelect" name="bin_id">${binOpts}</select>
+            </div>
+        </div>
         <div class="mb-3">
             <label class="form-label">Container Type</label>
             <select class="form-select" name="container_type">${opts}</select>
@@ -465,31 +476,31 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="col">
                                 <div class="input-group">
                                     <span class="input-group-text text-muted" style="font-size:11px;">L</span>
-                                    <input type="number" class="form-control" id="BLength" name="length"
-                                           placeholder="Length" min="0" step="0.01">
+                                    <input type="number" class="form-control" name="length"
+                                           placeholder="Length" min="0" step="0.01" value="${d.length||''}">
                                 </div>
                             </div>
                             <div class="col-auto text-muted fw-bold">×</div>
                             <div class="col">
                                 <div class="input-group">
                                     <span class="input-group-text text-muted" style="font-size:11px;">W</span>
-                                    <input type="number" class="form-control" id="BWidth" name="width"
-                                           placeholder="Width" min="0" step="0.01">
+                                    <input type="number" class="form-control" name="width"
+                                           placeholder="Width" min="0" step="0.01" value="${d.width||''}">
                                 </div>
                             </div>
                             <div class="col-auto text-muted fw-bold">×</div>
                             <div class="col">
                                 <div class="input-group">
                                     <span class="input-group-text text-muted" style="font-size:11px;">H</span>
-                                    <input type="number" class="form-control" id="BHeight" name="height"
-                                           placeholder="Height" min="0" step="0.01">
+                                    <input type="number" class="form-control" name="height"
+                                           placeholder="Height" min="0" step="0.01" value="${d.height||''}">
                                 </div>
                             </div>
                             <div class="col-auto">
-                                <select class="form-select" id="pouchDimensionUnit" name="dimension_unit" style="min-width:75px;">
-                                    <option value="cm">cm</option>
-                                    <option value="mm">mm</option>
-                                    <option value="inch">inch</option>
+                                <select class="form-select" name="dimension_unit" style="min-width:75px;">
+                                    <option value="cm"   ${(d.dimension_unit||'cm')=='cm'  ?'selected':''}>cm</option>
+                                    <option value="mm"   ${d.dimension_unit=='mm'  ?'selected':''}>mm</option>
+                                    <option value="inch" ${d.dimension_unit=='inch'?'selected':''}>inch</option>
                                 </select>
                             </div>
                         </div>
@@ -545,11 +556,27 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // fix capacity field for container edit
-        if (type === 'container' && d.capacity) {
-            const cap = document.querySelector('[name="capacity"]');
-            if (cap) cap.value = d.capacity;
+        // Rack → Bin cascade for container modal
+        if (type === 'container') {
+            const rackSel = document.getElementById('containerRackSelect');
+            const binSel  = document.getElementById('containerBinSelect');
+            if (rackSel && binSel) {
+                rackSel.addEventListener('change', function () {
+                    const rid = this.value;
+                    const filtered = rid ? bins.filter(b => b.rack_id == rid) : bins;
+                    binSel.innerHTML = '<option value="">— None —</option>';
+                    filtered.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.textContent = b.name;
+                        opt.dataset.rack = b.rack_id;
+                        binSel.appendChild(opt);
+                    });
+                    binSel.value = '';
+                });
+            }
         }
+
         modal.show();
     }
 

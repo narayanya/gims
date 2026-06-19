@@ -48,6 +48,7 @@
                                         <thead class="table-light">
                                             <tr>
                                                 <th>Storage ID</th>
+                                                <th>Wharehouse</th>
                                                 <th>Image</th>
                                                 <th>Name</th>
                                                 <th>Type</th>
@@ -63,6 +64,9 @@
                                                 <tr>
                                                     <td>
                                                         <span class="badge bg-info">{{ $storage->storage_id }}</span>
+                                                    </td>
+                                                    <td>
+                                                        {{ $storage->warehouse?->name ?? 'N/A' }}
                                                     </td>
                                                     <td>
                                                         <img src="{{ $storage->image ? asset('storage/'.$storage->image) : asset('assets/images/storage-default.jpg') }}"

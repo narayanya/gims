@@ -187,7 +187,15 @@
                                         <a href="{{ route('lot-management.edit', $lot->id) }}" class="btn btn-sm btn-outline-warning" title="Edit">
                                             <i class="ri-edit-line"></i>
                                         </a>
+                                        <form action="{{ route('lot-management.delete', $lot->id) }}" method="POST" style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this lot?')">
+                                                <i class="ri-delete-bin-line"></i>
+                                            </button>
+                                        </form>
                                         @endif
+                                        
                                     @endauth
                                 </td>
                                 <td>

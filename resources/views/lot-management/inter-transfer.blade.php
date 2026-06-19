@@ -249,6 +249,7 @@
                     <th rowspan="2">Bin</th>
                     <th rowspan="2">Container</th>
                     <th rowspan="2">User</th>
+                    <th rowspan="2">Action</th>
                 </tr>
                 <tr>
                     <th>Name</th>
@@ -266,6 +267,7 @@
                      <th>Opening Qty(Bal)</th>
                     <th>Closing Qty(Trns)</th>
                     <th>Balance Qty</th>
+                    
                 </tr>  
             </thead>
             <tbody>
@@ -297,10 +299,19 @@
                         <td>{{ $t->toContainer->name ?? '-' }}</td>
                         
                         <td>{{ $t->user->name ?? '-' }}</td>
+                        <td>
+                            <form action="{{ route('lot-transfer.destroy', $t->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this transfer record?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Transfer Record">
+                                    <i class="ri-delete-bin-line"></i>
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="10" class="text-center">No transfers found</td>
+                        <td colspan="17" class="text-center">No transfers found</td>
                     </tr>
                 @endforelse
             </tbody>

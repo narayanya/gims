@@ -465,7 +465,7 @@
                                 </select>
                             </div>
 
-                            {{-- Container --}}
+                            {{-- Container (filtered by bin) --}}
                             <div class="col-md-3 mt-2">
                                 <label class="form-label">Container (Actual seed unit - box/tray)<span
                                         class="text-danger">*</span></label>
@@ -473,6 +473,7 @@
                                     <option value="">Select Container</option>
                                     @foreach ($containers as $container)
                                         <option value="{{ $container->id }}"
+                                            data-bin="{{ $container->bin_id }}"
                                             {{ $selectedContainer == $container->id ? 'selected' : '' }}>
                                             {{ $container->name }}
                                         </option>
@@ -1278,6 +1279,9 @@
 
                 // Filter racks by this storage
                 filterOptions('rackSelect', 'storage', id);
+                // Cascade reset bin and container when storage changes
+                filterOptions('binSelect', 'rack', '', false);
+                filterOptions('containerSelect', 'bin', '', false);
 
                 if (!id) {
                     box.classList.add('d-none');
@@ -1312,6 +1316,13 @@
             // ── Rack → filter Bin ─────────────────────────────────────────────────
             document.getElementById('rackSelect').addEventListener('change', function() {
                 filterOptions('binSelect', 'rack', this.value);
+                // Clear container when rack changes
+                filterOptions('containerSelect', 'bin', '', false);
+            });
+
+            // ── Bin → filter Container ────────────────────────────────────────────
+            document.getElementById('binSelect').addEventListener('change', function() {
+                filterOptions('containerSelect', 'bin', this.value);
             });
 
             // ── On page load: restore cascade state (edit mode) ───────────────────
@@ -1319,6 +1330,7 @@
                 const whSel = document.getElementById('warehouseSelect');
                 const stSel = document.getElementById('storageSelect');
                 const rkSel = document.getElementById('rackSelect');
+                const bnSel = document.getElementById('binSelect');
 
                 // Restore warehouse from pre-selected storage
                 if (stSel.value && !whSel.value) {
@@ -1334,6 +1346,9 @@
 
                 // Apply rack filter on bin options (no reset)
                 if (rkSel.value) filterOptions('binSelect', 'rack', rkSel.value, false);
+
+                // Apply bin filter on container options (no reset)
+                if (bnSel.value) filterOptions('containerSelect', 'bin', bnSel.value, false);
 
                 // Load storage details if pre-selected
                 if (stSel.value) stSel.dispatchEvent(new Event('change'));

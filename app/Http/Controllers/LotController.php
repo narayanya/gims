@@ -36,7 +36,7 @@ class LotController extends Controller
             'sections'   => \App\Models\Section::where('status',1)->orderBy('name')->get(['id','name','storage_id']),
             'racks'      => Rack::where('status',1)->orderBy('name')->get(['id','name','storage_id','warehouse_id']),
             'bins'       => Bin::where('status',1)->orderBy('name')->get(['id','name','rack_id']),
-            'containers' => Container::where('status',1)->orderBy('name')->get(['id','name']),
+            'containers' => Container::where('status',1)->orderBy('name')->get(['id','name','bin_id']),
             'warehouses' => Warehouse::where('status',1)->orderBy('name')->get(['id','name']),
             'users'      => User::orderBy('name')->get(['id','name']),
             'dispatches' => Dispatch::with(['request', 'accession', 'itn'])->latest()->paginate(10), 
@@ -526,6 +526,81 @@ class LotController extends Controller
             ]);
 
         return response()->json($rows);
+    }
+
+    // ── Delete ────────────────────────────────────────────────────────────
+
+    public function managementDelete($id)
+    {
+        if (!auth()->user()->hasRole(['super-admin', 'admin'])) {
+            abort(403, 'You do not have permission to delete lots.');
+        }
+
+        $lot = Lot::findOrFail($id);
+
+        // Check FK-constrained blockers
+        $blockers = [];
+
+        $transferCount = DB::table('lot_transfers')->where('lot_id', $id)->count();
+        if ($transferCount > 0) {
+            $blockers[] = "{$transferCount} lot transfer(s)";
+        }
+
+        $requestCount = DB::table('request_transactions')->where('lot_id', $id)->count();
+        if ($requestCount > 0) {
+            $blockers[] = "{$requestCount} request transaction(s)";
+        }
+
+        $itnCount = DB::table('itn_items')->where('lot_id', $id)->count();
+        if ($itnCount > 0) {
+            $blockers[] = "{$itnCount} ITN item(s)";
+        }
+
+        $regenCount = DB::table('lot_regenerations')->where('lot_id', $id)->count();
+        if ($regenCount > 0) {
+            $blockers[] = "{$regenCount} regeneration record(s)";
+        }
+
+        if (!empty($blockers)) {
+            return redirect()->back()->with('error',
+                "Cannot delete lot \"{$lot->lot_number}\" — it is linked to: "
+                . implode(', ', $blockers) . '. Remove those records first.'
+            );
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $storage = Storage::find($lot->storage_id);
+
+            // Delete child records without FK constraints first
+            SeedQuality::where('lot_id', $id)->delete();
+            SeedQuantity::where('lot_id', $id)->delete();
+
+            $lot->delete();
+
+            // Recalculate storage usage
+            if ($storage) {
+                $totalUsed = SeedQuantity::whereIn('lot_id', $storage->lots()->pluck('id'))->sum('quantity');
+                $storage->update(['current_usage' => $totalUsed]);
+            }
+
+            DB::commit();
+
+            return redirect()->route('lot-management')
+                ->with('success', "Lot \"{$lot->lot_number}\" deleted successfully.");
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error',
+                'Cannot delete this lot — it is still referenced by other records.'
+            );
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error',
+                'Failed to delete lot: ' . $e->getMessage()
+            );
+        }
     }
 
     // ── Legacy Lot Master delegates ───────────────────────────────────────
