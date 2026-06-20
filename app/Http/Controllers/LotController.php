@@ -36,7 +36,7 @@ class LotController extends Controller
             'sections'   => \App\Models\Section::where('status',1)->orderBy('name')->get(['id','name','storage_id']),
             'racks'      => Rack::where('status',1)->orderBy('name')->get(['id','name','storage_id','warehouse_id']),
             'bins'       => Bin::where('status',1)->orderBy('name')->get(['id','name','rack_id']),
-            'containers' => Container::where('status',1)->orderBy('name')->get(['id','name','bin_id']),
+            'containers' => Container::where('status',1)->orderBy('name')->get(['id','name','bin_id','rack_id']),
             'warehouses' => Warehouse::where('status',1)->orderBy('name')->get(['id','name']),
             'users'      => User::orderBy('name')->get(['id','name']),
             'dispatches' => Dispatch::with(['request', 'accession', 'itn'])->latest()->paginate(10), 

@@ -8,13 +8,18 @@ class Container extends Model
         'name', 'code', 'container_type',
         'length', 'width', 'height', 'dimension_unit',
         'capacity', 'unit_id',
-        'bin_id',
+        'rack_id', 'bin_id',
         'description', 'status',
     ];
 
     public function unit()
     {
         return $this->belongsTo(\App\Models\Unit::class);
+    }
+
+    public function rack()
+    {
+        return $this->belongsTo(\App\Models\Rack::class);
     }
 
     public function bin()

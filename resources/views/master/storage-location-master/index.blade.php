@@ -58,7 +58,7 @@
             </div>
             <div class="card-body p-0">
                 <table class="table table-hover mb-0">
-                    <thead class="table-light"><tr><th>Name</th><th>Code</th><th>Warehouse</th><th>Storage</th><th>Description</th><th>Status</th><th width="100">Actions</th></tr></thead>
+                    <thead class="table-light"><tr><th>Name</th><th>Code</th><th>Warehouse</th><th>Storage</th><th>Description</th><th>Status</th><th width="130">Actions</th></tr></thead>
                     <tbody>
                         @forelse($racks as $row)
                         <tr>
@@ -93,18 +93,16 @@
                         @endforelse
                     </tbody>
                 </table>
-                <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap p-2">
-                    <div>
-                        Showing {{ $racks->firstItem() }} to {{ $racks->lastItem() }}
-                        of {{ $racks->total() }} results
+                <div class="d-flex justify-content-between align-items-center px-3 py-2 flex-wrap">
+                    <div class="text-muted small">
+                        @if($racks->total())
+                            Showing {{ $racks->firstItem() }} to {{ $racks->lastItem() }} of {{ $racks->total() }} results
+                        @endif
                     </div>
-
-                    <div>
-                        {{ $racks->links() }}
-                    </div>
+                    <div>{{ $racks->appends(array_merge(request()->query(), ['tab' => 'rack']))->links() }}</div>
                 </div>
             </div>
-            @if($racks->hasPages())<div class="card-footer">{{ $racks->appends(['tab'=>'rack'])->links() }}</div>@endif
+            {{-- remove duplicate card-footer --}}
         </div>
         @endif
 
@@ -117,7 +115,7 @@
             </div>
             <div class="card-body p-0">
                 <table class="table table-hover mb-0">
-                    <thead class="table-light"><tr><th>Name</th><th>Code</th><th>Rack</th><th>Description</th><th>Status</th><th width="100">Actions</th></tr></thead>
+                    <thead class="table-light"><tr><th>Name</th><th>Code</th><th>Rack</th><th>Description</th><th>Status</th><th width="130">Actions</th></tr></thead>
                     <tbody>
                         @forelse($bins as $row)
                         <tr>
@@ -148,17 +146,16 @@
                     </tbody>
                 </table>
             </div>
-            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap p-2">
-                    <div>
-                        Showing {{ $bins->firstItem() }} to {{ $bins->lastItem() }}
-                        of {{ $bins->total() }} results
+                <div class="d-flex justify-content-between align-items-center px-3 py-2 flex-wrap">
+                    <div class="text-muted small">
+                        @if($bins->total())
+                            Showing {{ $bins->firstItem() }} to {{ $bins->lastItem() }} of {{ $bins->total() }} results
+                        @endif
                     </div>
-
-                    <div>
-                        {{ $bins->links() }}
-                    </div>
+                    <div>{{ $bins->appends(array_merge(request()->query(), ['tab' => 'bin']))->links() }}</div>
                 </div>
-            @if($bins->hasPages())<div class="card-footer">{{ $bins->appends(['tab'=>'bin'])->links() }}</div>@endif
+            </div>
+            {{-- remove duplicate card-footer --}}
         </div>
         @endif
 
@@ -171,11 +168,12 @@
             </div>
             <div class="card-body p-0">
                 <table class="table table-hover mb-0">
-                    <thead class="table-light"><tr><th>Name</th><th>Bin</th><th>Dimensions</th><th>Code</th><th>Type</th><th>Capacity(No of pouches)</th><th>Unit</th><th>Status</th><th width="120">Actions</th></tr></thead>
+                    <thead class="table-light"><tr><th>Name</th><th>Rack</th><th>Bin</th><th>Dimensions</th><th>Code</th><th>Type</th><th>Capacity(No of pouches)</th><th>Unit</th><th>Status</th><th width="130">Actions</th></tr></thead>
                     <tbody>
                         @forelse($containers as $row)
                         <tr>
                             <td>{{ $row->name }}</td>
+                            <td>{{ $row->rack?->name ?? '—' }}</td>
                             <td>{{ $row->bin?->name ?? '—' }}</td>
                             <td>{!! $row->length ? $row->length.' x '.$row->width.' x '.$row->height.' '.$row->dimension_unit : '—' !!}</td>
                             <td>{!! $row->code ? '<span class="badge bg-info">'.$row->code.'</span>' : '—' !!}</td>
@@ -189,6 +187,7 @@
                                     data-code="{{ $row->code }}" data-container_type="{{ $row->container_type }}"
                                     data-capacity="{{ $row->capacity }}" data-description="{{ $row->description }}"
                                     data-status="{{ $row->status }}" data-unit_id="{{ $row->unit_id }}"
+                                    data-rack_id="{{ $row->rack_id }}"
                                     data-bin_id="{{ $row->bin_id }}"
                                     data-length="{{ $row->length }}"
                                     data-width="{{ $row->width }}"
@@ -211,17 +210,16 @@
                     </tbody>
                 </table>
             </div>
-            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap p-2">
-                    <div>
-                        Showing {{ $containers->firstItem() }} to {{ $containers->lastItem() }}
-                        of {{ $containers->total() }} results
+                <div class="d-flex justify-content-between align-items-center px-3 py-2 flex-wrap">
+                    <div class="text-muted small">
+                        @if($containers->total())
+                            Showing {{ $containers->firstItem() }} to {{ $containers->lastItem() }} of {{ $containers->total() }} results
+                        @endif
                     </div>
-
-                    <div>
-                        {{ $containers->links() }}
-                    </div>
+                    <div>{{ $containers->appends(array_merge(request()->query(), ['tab' => 'container']))->links() }}</div>
                 </div>
-            @if($containers->hasPages())<div class="card-footer">{{ $containers->appends(['tab'=>'container'])->links() }}</div>@endif
+            </div>
+            {{-- remove duplicate card-footer --}}
         </div>
         @endif
 
@@ -325,7 +323,7 @@
                         </div>
                         <p class="text-muted small mb-0">
                             Required columns: <b>name</b><br>
-                            Optional: <b>code, container_type, capacity_no_of_pouches, unit, length, width, height, dimension_unit, description, status</b>
+                            Optional: <b>rack, bin, code, container_type, capacity_no_of_pouches, unit, length, width, height, dimension_unit, description, status</b>
                         </p>
                     </div>
                     <div class="modal-footer">
@@ -442,11 +440,15 @@ document.addEventListener('DOMContentLoaded', function () {
             opts += `<option value="${t}" ${t == d.container_type ? 'selected' : ''}>${t}</option>`;
         });
 
-        // Derive the rack from the assigned bin (for edit mode)
-        const assignedBin = d.bin_id ? bins.find(b => b.id == d.bin_id) : null;
-        const assignedRackId = assignedBin ? assignedBin.rack_id : '';
+        // In edit mode, rack_id comes directly from data-rack_id.
+        // If not set but bin_id is, derive it from the bins array.
+        let assignedRackId = d.rack_id || '';
+        if (!assignedRackId && d.bin_id) {
+            const assignedBin = bins.find(b => b.id == d.bin_id);
+            if (assignedBin) assignedRackId = assignedBin.rack_id;
+        }
 
-        // Build rack options for the cascade select
+        // Build rack options
         let rackOpts = '<option value="">— None —</option>';
         racks.forEach(r => rackOpts += `<option value="${r.id}" ${r.id == assignedRackId ? 'selected' : ''}>${r.name}</option>`);
 
@@ -459,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label class="form-label">Rack</label>
-                <select class="form-select" id="containerRackSelect" name="_rack_id_for_bin">${rackOpts}</select>
+                <select class="form-select" id="containerRackSelect" name="rack_id">${rackOpts}</select>
             </div>
             <div class="col-md-6 mb-3">
                 <label class="form-label">Bin</label>

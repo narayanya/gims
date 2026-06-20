@@ -143,9 +143,9 @@
                         const labelsR = ['Pending', 'Approved', 'Dispatched'];
 
                         const counts = [
-                            {{ $statusData['pending'] }},
-                            {{ $statusData['approved'] }},
-                            {{ $statusData['dispatched'] }}
+                            {{ $statusData['pending'] ?? 0 }},
+                            {{ $statusData['approved'] ?? 0 }},
+                            {{ $statusData['dispatched'] ?? 0 }}
                         ];
 
                         const centerTextPlugin = {

@@ -76,6 +76,13 @@
                                     </tr>
                                 @endforeach
                             @endforeach
+                            @if ($storage->lots->isEmpty())
+                                <tr>
+                                    <td colspan="8" class="text-center">
+                                        No content
+                                    </td>
+                                </tr>
+                            @endif
                             <!-- Grand Total Row -->
                                 <tr class="table-warning fw-bold">
                                     <td colspan="7" class="text-end">

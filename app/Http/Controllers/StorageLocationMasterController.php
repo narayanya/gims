@@ -24,7 +24,7 @@ class StorageLocationMasterController extends Controller
         return view('master.storage-location-master.index', [
             'racks'      => Rack::with(['warehouse', 'storage.warehouse'])->orderBy('name')->paginate(10, ['*'], 'racks_page'),
             'bins'       => Bin::with('rack')->orderBy('name')->paginate(10, ['*'], 'bins_page'),
-            'containers' => Container::with('bin')->orderBy('name')->paginate(10, ['*'], 'containers_page'),
+            'containers' => Container::with(['bin', 'rack'])->orderBy('name')->paginate(10, ['*'], 'containers_page'),
             'allSections'=> Section::where('status',1)->orderBy('name')->get(),
             'allRacks'   => Rack::where('status',1)->orderBy('name')->get(),
             'allBins'    => Bin::where('status',1)->orderBy('name')->get(['id','name','rack_id']),
@@ -175,14 +175,14 @@ class StorageLocationMasterController extends Controller
     public function containerStore(Request $request)
     {
         $request->validate(['name'=>'required|string|max:255|unique:containers,name','code'=>'nullable|string|max:50|unique:containers,code', 'unit_id' => 'nullable|exists:units,id',]);
-        Container::create($request->only('name','code','container_type','capacity', 'length', 'width', 'height', 'dimension_unit', 'unit_id', 'bin_id', 'description','status'));
+        Container::create($request->only('name','code','container_type','capacity', 'length', 'width', 'height', 'dimension_unit', 'unit_id', 'rack_id', 'bin_id', 'description','status'));
         return back()->with('success','Container added.');
     }
 
     public function containerUpdate(Request $request, Container $container)
     {
         $request->validate(['name'=>'required|string|max:255|unique:containers,name,'.$container->id,'code'=>'nullable|string|max:50|unique:containers,code,'.$container->id]);
-        $container->update($request->only('name','code','container_type','capacity', 'length', 'width', 'height', 'dimension_unit', 'unit_id', 'bin_id', 'description','status'));
+        $container->update($request->only('name','code','container_type','capacity', 'length', 'width', 'height', 'dimension_unit', 'unit_id', 'rack_id', 'bin_id', 'description','status'));
         return back()->with('success','Container updated.');
     }
 
