@@ -43,11 +43,9 @@ class AccessionsExport implements FromQuery, WithHeadings, WithMapping, WithStyl
             // Basic
             '#',
             'Accession Number',
-            'Accession Name',
             'Sample ID',
             'Year of Arrival',
-            'Regeneration Cut of Year',
-            'Source Type',
+            'Source Type- Internal',
             'External Source',
             'Requester Show',
             'Status',
@@ -69,7 +67,6 @@ class AccessionsExport implements FromQuery, WithHeadings, WithMapping, WithStyl
             'City / Village',
             'Latitude',
             'Longitude',
-            'Altitude',
             'Pincode',
 
             // Biological
@@ -78,12 +75,7 @@ class AccessionsExport implements FromQuery, WithHeadings, WithMapping, WithStyl
             'Reproductive Type',
 
             // Storage
-            'Warehouse',
-            'Storage Location',
-            'Storage Type',
-            'Storage Condition',
             'Storage Time',
-            'Capacity Unit',
 
             // Documentation
             'Barcode Type',
@@ -105,10 +97,8 @@ class AccessionsExport implements FromQuery, WithHeadings, WithMapping, WithStyl
             // Basic
             $index,
             $accession->accession_number,
-            $accession->accession_name,
             $accession->sample_id,
             $accession->year_of_arrival,
-            $accession->regen_year,
             $accession->acc_source,
             $accession->ext_source,
             $accession->requester_show,
@@ -131,7 +121,6 @@ class AccessionsExport implements FromQuery, WithHeadings, WithMapping, WithStyl
             $accession->city?->city_village_name,
             $accession->latitude,
             $accession->longitude,
-            $accession->altitude,
             $accession->pincode,
 
             // Biological
@@ -140,12 +129,8 @@ class AccessionsExport implements FromQuery, WithHeadings, WithMapping, WithStyl
             $accession->reproductive_type,
 
             // Storage
-            $accession->warehouse?->name,
-            $accession->storageLocation?->name,
-            $accession->storageType?->name,
-            $accession->storageCondition?->name,
+            
             $accession->storageTime?->name,
-            $accession->capacityUnit?->name,
 
             // Documentation
             $accession->barcode_type,

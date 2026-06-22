@@ -39,6 +39,7 @@ class AccessionImport implements ToCollection, WithHeadingRow
     /**
      * Parse dates in common formats: d-m-Y, d/m/Y, Y-m-d, m/d/Y
      * Also handles Excel numeric serial dates.
+     * Year-only values (e.g. 2024) are stored as 2024-01-01.
      */
     private function parseDate(mixed $value): ?string
     {
@@ -48,6 +49,14 @@ class AccessionImport implements ToCollection, WithHeadingRow
 
         // Excel numeric serial date (e.g. 45792)
         if (is_numeric($value)) {
+            $intVal = (int) $value;
+
+            // 4-digit year only → use Jan 1st of that year
+            if ($intVal >= 1900 && $intVal <= 2100 && strlen((string) $intVal) === 4) {
+                return $intVal . '-01-01';
+            }
+
+            // Otherwise treat as Excel serial date
             try {
                 return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float) $value)
                     ->format('Y-m-d');
@@ -55,6 +64,11 @@ class AccessionImport implements ToCollection, WithHeadingRow
         }
 
         $value = trim((string) $value);
+
+        // Year-only string (e.g. "2024")
+        if (preg_match('/^\d{4}$/', $value)) {
+            return $value . '-01-01';
+        }
 
         foreach (['d-m-Y', 'd/m/Y', 'Y-m-d', 'm/d/Y', 'd.m.Y'] as $fmt) {
             $date = \DateTime::createFromFormat($fmt, $value);
@@ -73,11 +87,24 @@ class AccessionImport implements ToCollection, WithHeadingRow
     {
         Log::info('AccessionImport: Starting import', ['total_rows' => $rows->count()]);
 
+        // ── Pre-load existing accessions for fast duplicate lookup ─────────────
+        // Key: "{sample_id}|{crop_id}|{collection_number}"
+        // collection_number is nullable — treat NULL as empty string so rows
+        // with no collection_number still deduplicate against each other.
+        $existing = Accession::select('sample_id', 'crop_id', 'collection_number')
+            ->get()
+            ->mapWithKeys(fn($a) => [
+                "{$a->sample_id}|{$a->crop_id}|" . ($a->collection_number ?? '') => true
+            ]);
+
+        // Track keys inserted in THIS batch to catch duplicates within the file
+        $batchKeys = [];
+
         foreach ($rows as $rowIndex => $row) {
 
             $lineNum = $rowIndex + 2; // +2 because row 1 is header
 
-            // Log every row keys once (first row only) so we can see exact column names
+            // Log column names once (first row only)
             if ($rowIndex === 0) {
                 Log::info('AccessionImport: Column keys from file', ['keys' => array_keys($row->toArray())]);
             }
@@ -125,6 +152,25 @@ class AccessionImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
+            // ── Duplicate check ────────────────────────────────────────────
+            // Unique combination: sample_id + crop_id + collection_number
+            // collection_number is optional — NULL treated as '' so two rows
+            // with the same sample_id/crop but no collection_number are still
+            // caught as duplicates.
+            $collectionNumber = $this->str($row['collection_number'] ?? null) ?? '';
+            $dedupKey = "{$sampleId}|{$crop->id}|{$collectionNumber}";
+
+            if (isset($existing[$dedupKey]) || isset($batchKeys[$dedupKey])) {
+                $this->skip(
+                    $lineNum,
+                    "Duplicate skipped — sample_id '{$sampleId}', crop '{$crop->crop_name}', collection_number '" . ($collectionNumber ?: 'NULL') . "' already exists"
+                );
+                continue;
+            }
+
+            // Mark as seen for within-file dedup
+            $batchKeys[$dedupKey] = true;
+
             // ── Location lookups ───────────────────────────────────────────
             $countryName = $this->normalize($row['country_name'] ?? '');
             $country = $countryName
@@ -144,7 +190,6 @@ class AccessionImport implements ToCollection, WithHeadingRow
             // city_id column: CSV may have 'city_id' (direct FK) OR 'city_name' (lookup)
             $cityId = null;
             if (!empty($row['city_id']) && is_numeric($row['city_id'])) {
-                // Direct ID provided
                 $cityId = (int) $row['city_id'];
             } elseif (!empty($row['city_name'])) {
                 $cityName = $this->normalize($row['city_name']);
@@ -153,15 +198,12 @@ class AccessionImport implements ToCollection, WithHeadingRow
             }
 
             // ── Storage time ───────────────────────────────────────────────
-            // Accepts: numeric ID (1/2/3), code (STS/MTS/LTS), or partial name
             $storageTimeId = null;
             $stRaw = trim((string) ($row['storage_time_id'] ?? ''));
             if ($stRaw !== '') {
                 if (is_numeric($stRaw)) {
-                    // Numeric → match by primary key
                     $storageTimeId = StorageTime::find((int) $stRaw)?->id;
                 } else {
-                    // Text → match by code first (STS, MTS, LTS), then by name
                     $st = StorageTime::whereRaw('UPPER(code) = ?', [strtoupper($stRaw)])->first()
                        ?? StorageTime::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($stRaw) . '%'])->first();
                     $storageTimeId = $st?->id;
@@ -187,7 +229,7 @@ class AccessionImport implements ToCollection, WithHeadingRow
                     'accession_name'  => $this->str($row['accession_name'] ?? null),
                     'crop_id'         => $crop->id,
 
-                    'collection_number' => $this->str($row['collection_number'] ?? null),
+                    'collection_number' => $collectionNumber !== '' ? $collectionNumber : null,
                     'collection_date'   => $this->parseDate($row['collection_date'] ?? null),
                     'collector_name'    => $this->str($row['collector_name'] ?? null),
                     'donor_name'        => $this->str($row['donor_name'] ?? null),
@@ -214,7 +256,7 @@ class AccessionImport implements ToCollection, WithHeadingRow
                     'status' => $statusValue,
                     'notes'  => $this->str($row['notes'] ?? null),
 
-                    'entry_date' => now(),
+                    'entry_date' => $this->parseDate($row['entry_date'] ?? null) ?? now()->format('Y-m-d'),
                     'entered_by' => auth()->id() ?? 1,
                     'created_by' => auth()->id() ?? 1,
                 ]);
@@ -228,6 +270,9 @@ class AccessionImport implements ToCollection, WithHeadingRow
 
                 $accession->update(['accession_number' => $accessionNumber]);
 
+                // Mark as existing so re-running the same file won't re-insert
+                $existing[$dedupKey] = true;
+
                 $this->inserted++;
 
                 Log::info('AccessionImport: Inserted', [
@@ -240,7 +285,7 @@ class AccessionImport implements ToCollection, WithHeadingRow
             }
         }
 
-        // Store summary for the controller to show in flash message
+        // Store summary for the controller to flash
         Cache::put(
             'import_results_' . (auth()->id() ?? 0),
             ['inserted' => $this->inserted, 'skipped' => $this->skipped],

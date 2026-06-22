@@ -701,7 +701,10 @@
                             <div class="card-body">
                                 <div class="row g-3">
                                     <div class="col-md-4">
-                                        <label class="form-label mb-0 mt-2">Entry Date: {{ date('d M Y') }}</label>
+                                        <label class="form-label mb-0 mt-2">Entry Date: </label>
+                                        <input type="date" max="{{ date('Y-m-d') }}" name="entry_date"
+                                            value="{{ old('entry_date', isset($accession->entry_date) ? \Carbon\Carbon::parse($accession->entry_date)->format('Y-m-d') : date('Y-m-d')) }}"
+                                            class="form-control">
                                         <label class="form-label">Entered By: {{ auth()->user()->name }}</label>
                                         <input type="hidden" name="entered_by" value="{{ auth()->id() }}">
                                     </div>

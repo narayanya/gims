@@ -247,6 +247,7 @@ class AccessionController extends Controller
             // Other
             'notes'  => 'nullable|string',
             'status' => 'required',
+            'entry_date' => 'nullable|date',
         ]);
 
         DB::beginTransaction();
@@ -437,7 +438,7 @@ class AccessionController extends Controller
             DB::beginTransaction();
 
             // Set defaults
-            if (!$request->entry_date) $validated['entry_date'] = now();
+            if (!$request->entry_date) $validated['entry_date'] = date('Y-m-d');
             if (!$request->entered_by) $validated['entered_by'] = Auth::id();
             
             $passportData    = $request->input('passport', []);

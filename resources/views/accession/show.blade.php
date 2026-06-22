@@ -45,7 +45,7 @@
             </div>
             <div>
                 <small class="text-success ">
-                <b>Entry: {{ $accession->created_at ? $accession->created_at->format('d F Y') : '-' }}</b>
+                <b>Entry: {{ $accession->entry_date ? \Carbon\Carbon::parse($accession->entry_date)->format('d F Y') : '-' }}</b>
                 </small><br>
             </div>
         </div>

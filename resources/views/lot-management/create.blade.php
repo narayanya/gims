@@ -474,6 +474,7 @@
                                     @foreach ($containers as $container)
                                         <option value="{{ $container->id }}"
                                             data-bin="{{ $container->bin_id }}"
+                                            data-rack="{{ $container->rack_id }}"
                                             {{ $selectedContainer == $container->id ? 'selected' : '' }}>
                                             {{ $container->name }}
                                         </option>
@@ -1325,12 +1326,45 @@
                 filterOptions('containerSelect', 'bin', this.value);
             });
 
+            // ── Container → auto-fill Rack & Bin ─────────────────────────────────
+            document.getElementById('containerSelect').addEventListener('change', function() {
+                const opt = this.options[this.selectedIndex];
+                if (!this.value) return;
+
+                const rackId = opt.dataset.rack || '';
+                const binId  = opt.dataset.bin  || '';
+
+                const rackSel = document.getElementById('rackSelect');
+                const binSel  = document.getElementById('binSelect');
+
+                // ── Auto-fill Rack if container has one ───────────────────────
+                if (rackId && rackSel.value !== rackId) {
+                    rackSel.value = rackId;
+                    // Re-filter bins for this rack (no reset so bin stays selectable)
+                    filterOptions('binSelect', 'rack', rackId, false);
+                }
+
+                // ── Auto-fill Bin if container has one ────────────────────────
+                if (binId && binSel.value !== binId) {
+                    binSel.value = binId;
+                }
+            });
+
             // ── On page load: restore cascade state (edit mode) ───────────────────
             (function initCascade() {
-                const whSel = document.getElementById('warehouseSelect');
-                const stSel = document.getElementById('storageSelect');
-                const rkSel = document.getElementById('rackSelect');
-                const bnSel = document.getElementById('binSelect');
+                const whSel  = document.getElementById('warehouseSelect');
+                const stSel  = document.getElementById('storageSelect');
+                const rkSel  = document.getElementById('rackSelect');
+                const bnSel  = document.getElementById('binSelect');
+                const cnSel  = document.getElementById('containerSelect');
+
+                // If container is pre-selected but rack/bin are not,
+                // derive them from the container's data attributes
+                if (cnSel.value && (!rkSel.value || !bnSel.value)) {
+                    const cnOpt = cnSel.options[cnSel.selectedIndex];
+                    if (!rkSel.value && cnOpt.dataset.rack) rkSel.value = cnOpt.dataset.rack;
+                    if (!bnSel.value && cnOpt.dataset.bin)  bnSel.value = cnOpt.dataset.bin;
+                }
 
                 // Restore warehouse from pre-selected storage
                 if (stSel.value && !whSel.value) {
