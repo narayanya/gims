@@ -11,7 +11,11 @@
                 <p class="text-muted mb-0" style="font-size:13px">Select a lot to view and manage its seed quality information</p>
             </div>
             <div class="">
+                <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#importLotQualityModal">
+                            <i class="ri-upload-line me-1"></i>Import
+                        </button>
                 <a href="{{ route('quality-control.history') }}" class="btn btn-sm btn-outline-secondary">Lot Quality History</a>
+                
                 <a href="{{ route('lot-management') }}" class="btn btn-sm btn-outline-secondary">
                     <i class="ri-arrow-left-line me-1"></i> Back to Lot List
                 </a>
@@ -20,6 +24,26 @@
 
         {{-- Alerts --}}
         <div id="alertBox" class="d-none"></div>
+
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show">
+                <i class="ri-checkbox-circle-line me-1"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="ri-error-warning-line me-1"></i>{{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+        @if(session('import_skipped'))
+            <div class="alert alert-warning alert-dismissible fade show">
+                <strong><i class="ri-alert-line me-1"></i>Import Warnings:</strong>
+                {{ session('import_skipped') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
 
         {{-- ── STEP 1: Lot Selection ── --}}
         <div class="card mb-3">
@@ -169,6 +193,64 @@
 
         </div>{{-- /lotSection --}}
 
+    </div>
+</div>
+{{-- Import Lot Quality Modal --}}
+<div class="modal fade" id="importLotQualityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header bg-light text-dark">
+                <h5 class="modal-title"><i class="ri-upload-line me-2"></i>Import Lot Quality Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ route('quality-control.import') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    @if(session('success'))
+                        <div class="alert alert-success alert-dismissible fade show py-2">
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+                    @if(session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show py-2">
+                            {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+                    @if(session('import_skipped'))
+                        <div class="alert alert-warning alert-dismissible fade show py-2">
+                            <strong><i class="ri-alert-line me-1"></i>Skipped rows:</strong>
+                            {{ session('import_skipped') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Upload File <span class="text-danger">*</span></label>
+                        <input type="file" name="file" class="form-control" accept=".csv,.xlsx,.xls" required>
+                        <div class="form-text">Accepted: CSV, XLSX, XLS &mdash; Max 10 MB.</div>
+                    </div>
+                    <div class="alert alert-info small py-2 mb-2">
+                        <i class="ri-information-line me-1"></i>
+                        <strong>Required columns:</strong> <code>lot_number</code>, and at least one quality value (<code>germination_percent</code>, <code>moisture_content</code>, <code>purity_percent</code>, etc.)
+                        <br>
+                        <i class="ri-alert-line me-1 text-warning"></i>
+                        <strong>lot_number</strong> must exactly match an existing lot (e.g. <code>2-AccA/1-AGSN1-01</code>).
+                    </div>
+                    <div>
+                        <a href="{{ route('quality-control.template') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="ri-download-line me-1"></i>Download Sample Template
+                        </a>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="ri-upload-line me-1"></i>Import
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 @endsection

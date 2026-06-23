@@ -145,11 +145,15 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
         ->name('lot-regeneration.getLot');
     
     Route::get('/quality-control', [LotController::class, 'qualityControl'])->name('quality-control.index');
+    Route::post('/quality-control/import', [LotController::class, 'qualityImport'])->name('quality-control.import');
+    Route::get('/quality-control/template', [LotController::class, 'downloadQualityTemplate'])->name('quality-control.template');
     Route::get('/quality-control-history', [LotController::class, 'qualityHistoryControl'])->name('quality-control.history');
     Route::post('/quality-control/{lotId}/save', [LotController::class, 'qualityControlSave'])->name('quality-control.save');
     Route::get('/quality-control/{lotId}/qualities', [LotController::class, 'getLotQualities'])->name('quality-control.qualities');
     Route::get('/get-lot-by-number', [LotController::class, 'getLotByNumber']);
     Route::get('/lot/export',         [LotController::class, 'export'])->name('lot.export')->middleware('permission:lot.export');
+    Route::post('/lot/import',        [LotController::class, 'import'])->name('lot.import');
+    Route::get('/lot/sample-template', [LotController::class, 'downloadLotTemplate'])->name('lot.template');
     Route::get('/get-lot-details', [LotController::class, 'getLotDetails']);
     Route::get('/lot-management/qrprint-all', [LotController::class, 'qrprintAll'])
     ->name('lot.qrprint.all');
@@ -235,6 +239,8 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     ->name('warehouse-transfer.itn.print');
     Route::get('/dispatch/itn/{id}', [DispatchController::class, 'showITN'])
     ->name('dispatch.itn.show');
+    Route::get('/dispatch-management/old', [DispatchController::class, 'oldDispatches'])
+    ->name('dispatch-management.old');
 
     // Lot Master
     Route::resource('lots', App\Http\Controllers\LotMasterController::class)->except(['show', 'create', 'edit']);

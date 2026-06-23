@@ -1,0 +1,3 @@
+lot_number,germination_percent,moisture_content,purity_percent,chlorophyll_percentage,water_level_percentage,viability_test_date,seed_health_status,researcher_id,research_date
+2-AccA/1-AGSN1-01,92,8,99,25,10,31/12/2026,Healthy,Onkar,23/06/2026
+2-AccA/1-AGSN2-01,88,9,97,20,12,31/12/2026,Healthy,,

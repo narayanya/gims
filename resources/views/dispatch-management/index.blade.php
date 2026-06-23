@@ -204,9 +204,14 @@
                 <div class="table-responsive">
                     <div class="d-flex justify-content-between">
                         <h5 class="mb-3">Dispatched Orders</h5>
+                        <div>
                         <a href="" class="btn btn-sm btn-outline-primary mb-2">
                             <i class="ri-download-line me-1"></i>Export
                         </a>
+                        <a href="{{ route('dispatch-management.old') }}" class="btn btn-sm btn-success mb-2">
+                            <i class="ri-history-line me-1"></i>Old Dispatches
+                        </a>
+                        </div>
                     </div>
                     <table class="table table-hover mb-0">
                         <thead class="table-light">

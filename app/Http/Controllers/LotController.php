@@ -16,6 +16,7 @@ use App\Models\Bin;
 use App\Models\Container;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\LotExport;
+use App\Imports\LotImport;
 use App\Models\Dispatch;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
@@ -157,15 +158,15 @@ class LotController extends Controller
                         break;
                     case 'Accession Arrival':
                         $middleSegment = "AccA/{$rowNum}";
-                        $base          = "AccA-{$sampleId}-";
+                        $base          = "{$reference}-AccA-{$sampleId}-";
                         break;
                     case 'Return From Field':
                         $middleSegment = "RTN/{$rowNum}";
-                        $base          = "RTN-{$sampleId}-";
+                        $base          = "{$reference}-RTN-{$sampleId}-";
                         break;
                     default:
                         $middleSegment = "{$rowNum}";
-                        $base          = "{$sampleId}-";
+                        $base          = "{$reference}-{$sampleId}-";
                 }
 
                 // Fetch running sequence once per batch
@@ -632,6 +633,96 @@ class LotController extends Controller
         return Excel::download(new LotExport, 'lot.xlsx');
     }
 
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:csv,xlsx,xls|max:10240',
+        ]);
+
+        try {
+            Excel::import(new \App\Imports\LotImport(), $request->file('file'));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Lot import failed: ' . $e->getMessage());
+            return redirect()->route('lot-management')
+                ->with('error', 'Import failed: ' . $e->getMessage());
+        }
+
+        $results  = \Illuminate\Support\Facades\Cache::get('lot_import_results_' . auth()->id(), []);
+        \Illuminate\Support\Facades\Cache::forget('lot_import_results_' . auth()->id());
+
+        $inserted = $results['inserted'] ?? 0;
+        $skipped  = $results['skipped']  ?? [];
+
+        if ($inserted === 0 && empty($skipped)) {
+            return redirect()->route('lot-management')
+                ->with('error', 'No data found in the file. Please check the file format and ensure the header row matches the template.');
+        }
+
+        $msg = "{$inserted} lot(s) imported successfully.";
+
+        if (!empty($skipped)) {
+            $skipDetails = implode(' | ', array_map(
+                fn($s) => "Row {$s['row']}: {$s['reason']}",
+                $skipped
+            ));
+            session()->flash('import_skipped', "Skipped " . count($skipped) . " row(s): " . $skipDetails);
+        }
+
+        return redirect()->route('lot-management')
+            ->with($inserted > 0 ? 'success' : 'error', $msg);
+    }
+
+    public function downloadLotTemplate()
+    {
+        $path = public_path('templates/lots_sample.csv');
+        return response()->download($path, 'lots_sample.csv');
+    }
+
+    public function qualityImport(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:csv,xlsx,xls|max:10240',
+        ]);
+
+        try {
+            Excel::import(new \App\Imports\LotQualityImport(), $request->file('file'));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Lot quality import failed: ' . $e->getMessage());
+            return redirect()->route('quality-control.index')
+                ->with('error', 'Import failed: ' . $e->getMessage());
+        }
+
+        $results  = \Illuminate\Support\Facades\Cache::get('lot_quality_import_results_' . auth()->id(), []);
+        \Illuminate\Support\Facades\Cache::forget('lot_quality_import_results_' . auth()->id());
+
+        $inserted = $results['inserted'] ?? 0;
+        $skipped  = $results['skipped']  ?? [];
+
+        if ($inserted === 0 && empty($skipped)) {
+            return redirect()->route('quality-control.index')
+                ->with('error', 'No data found in the file. Please check the format matches the template.');
+        }
+
+        $msg = "{$inserted} quality record(s) imported successfully.";
+
+        if (!empty($skipped)) {
+            $skipDetails = implode(' | ', array_map(
+                fn($s) => "Row {$s['row']}: {$s['reason']}",
+                $skipped
+            ));
+            session()->flash('import_skipped', 'Skipped ' . count($skipped) . ' row(s): ' . $skipDetails);
+        }
+
+        return redirect()->route('quality-control.index')
+            ->with($inserted > 0 ? 'success' : 'error', $msg);
+    }
+
+    public function downloadQualityTemplate()
+    {
+        $path = public_path('templates/lot_quality_sample.csv');
+        return response()->download($path, 'lot_quality_sample.csv');
+    }
+
     public function getLotByNumber(Request $request)
     {
         $lot = \App\Models\Lot::with([
@@ -688,6 +779,11 @@ class LotController extends Controller
         $users      = User::orderBy('name')->get(['id','name']);
 
         return view('lot-management.quality-control', compact('crops', 'accessions', 'storages', 'users'));
+    }
+
+    public function qualityControlImport()
+    {
+        return view('lot-management.quality-control-import');
     }
     
     public function qualityHistoryControl()

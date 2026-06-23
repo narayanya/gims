@@ -270,4 +270,14 @@ class DispatchController extends Controller
 
         return view('report.dispatch_report', compact('dispatches'));
     }
+
+    public function oldDispatches()
+    {
+        $dispatches = Dispatch::with(['request'])
+            ->where('created_at', '<', now()->subYears(1))
+            ->latest()
+            ->paginate(20);
+
+        return view('dispatch-management.dispatch-list', compact('dispatches'));
+    }
 }

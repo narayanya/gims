@@ -64,7 +64,8 @@
 
                             <div class="col-md-3 mt-2">
                                 <label class="form-label">Arrival Type <span class="text-danger">*</span></label>
-                                <select name="arrival_type" id="arrivalType" class="form-select" required>
+                                <select name="arrival_type" id="arrivalType" class="form-select" required
+                                    {{ isset($lot) ? 'disabled' : '' }}>
                                     <option value="">Select Arrival Type</option>
                                     @foreach (\App\Models\ArrivalType::where('status', 1)->orderBy('name')->get() as $type)
                                         <option value="{{ $type->name }}"
@@ -73,7 +74,20 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                {{-- Keep value on submit when disabled --}}
+                                @if(isset($lot))
+                                    <input type="hidden" name="arrival_type" value="{{ $lot->arrival_type }}">
+                                @endif
                             </div>
+
+                            {{-- Edit mode: show current lot number as read-only --}}
+                            @if(isset($lot))
+                            <div class="col-md-3 mt-2">
+                                <label class="form-label">Lot Number</label>
+                                <input type="text" class="form-control" value="{{ $lot->lot_number }}"
+                                    readonly style="background-color:#e9ecef; font-weight:600; color:#198754;">
+                            </div>
+                            @endif
                             <div class="col-md-3 mt-2" id="dispatchnField" style="display:none;">
                                 <label class="form-label">
                                     Dispatch Number or Request Number <span class="text-danger">*</span>
@@ -310,7 +324,7 @@
                                                                 <option value="">Unit</option>
                                                                 @foreach ($units as $unit)
                                                                     <option value="{{ $unit->id }}"
-                                                                        {{ ($row->unit_id ?? '') == $unit->id ? 'selected' : '' }}>
+                                                                        {{ ($row->unit_id ?? $row->capacity_unit_id ?? '') == $unit->id ? 'selected' : '' }}>
                                                                         {{ $unit->name }} ({{ $unit->code }})
                                                                     </option>
                                                                 @endforeach
@@ -617,8 +631,15 @@
                                                                     </option>
                                                                 @endforeach
 
-                                                                <option value="Other"
-                                                                    {{ ($row->researcher_id ?? '') == 'Other' ? 'selected' : '' }}>
+                                                                @php
+                                                                    // "Other" is active when:
+                                                                    // 1. researcher_id is null but researcher_other has a value (DB state)
+                                                                    // 2. researcher_id is literally 'Other' (old() state)
+                                                                    $isOther = (($row->researcher_id ?? null) === null && !empty($row->researcher_other ?? null))
+                                                                            || ($row->researcher_id ?? '') === 'Other';
+                                                                @endphp
+
+                                                                <option value="Other" {{ $isOther ? 'selected' : '' }}>
                                                                     Other
                                                                 </option>
                                                             </select>
@@ -628,12 +649,11 @@
                                                             @enderror
 
                                                             <!-- Other Input -->
-
                                                             <input type="text" name="researcher_other[]"
                                                                 class="form-control form-control-sm mt-1 other-input"
                                                                 placeholder="Enter researcher name"
                                                                 value="{{ $row->researcher_other ?? '' }}"
-                                                                style="{{ ($row->researcher_id ?? '') == 'Other' ? '' : 'display:none;' }}">
+                                                                style="{{ $isOther ? '' : 'display:none;' }}">
                                                         </td>
                                                         <td>
                                                             <input type="date" name="research_date[]"
@@ -1217,9 +1237,27 @@
             // On edit: trigger unit filter for the pre-selected storage
             @if (isset($lot) && $lot->storage_id)
                 (function() {
+                    // Capture server-rendered selected values BEFORE the filter rebuilds options
+                    const preSelected = {};
+                    document.querySelectorAll('select[name="unit_id[]"]').forEach((sel, i) => {
+                        // Read the selected option value directly from the DOM (set by server)
+                        preSelected[i] = sel.querySelector('option[selected]')?.value
+                                      ?? sel.value
+                                      ?? '';
+                    });
+
                     fetch(`/lot-management/storage/{{ $lot->storage_id }}`)
                         .then(r => r.json())
-                        .then(d => filterUnitsByCapacity(d.capacity_in_grams, d.unit_code));
+                        .then(d => {
+                            filterUnitsByCapacity(d.capacity_in_grams, d.unit_code);
+                            // Restore server-rendered selections after filter rebuild
+                            document.querySelectorAll('select[name="unit_id[]"]').forEach((sel, i) => {
+                                const saved = preSelected[i];
+                                if (saved && [...sel.options].some(o => o.value == saved)) {
+                                    sel.value = saved;
+                                }
+                            });
+                        });
                 })();
             @endif
 

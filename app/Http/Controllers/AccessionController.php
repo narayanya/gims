@@ -36,7 +36,7 @@ class AccessionController extends Controller
             $query->where('requester_show', 'yes');
         }
 
-        $accessions = $query->paginate(15);
+        $accessions = $query->paginate(20);
 
         $crops = Crop::where([
                 ['is_active', 1],

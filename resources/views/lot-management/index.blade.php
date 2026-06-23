@@ -50,6 +50,13 @@
                 <a href="{{ route('lot.export') }}" class="btn btn-sm btn-success">
                             <i class="ri-download-line me-1"></i>Export
                         </a>
+                        @auth
+                        @if(auth()->user()->hasRole(['super-admin', 'admin']))
+                        <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#importLotModal">
+                            <i class="ri-upload-line me-1"></i>Import
+                        </button>
+                        @endif
+                        @endauth
                <a href="{{ route('lot.qrprint.all') }}"
                 target="_blank"
                 class="btn btn-success btn-sm">
@@ -66,6 +73,19 @@
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show">
                 {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="ri-error-warning-line me-1"></i>{{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+        @if(session('import_skipped'))
+            <div class="alert alert-warning alert-dismissible fade show">
+                <strong><i class="ri-alert-line me-1"></i>Import Warnings:</strong>
+                {{ session('import_skipped') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
@@ -389,6 +409,46 @@
 </div>
 
 
+
+{{-- Import Lot Modal --}}
+<div class="modal fade" id="importLotModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="ri-upload-line me-2"></i>Import Lots</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ route('lot.import') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Upload File <span class="text-danger">*</span></label>
+                        <input type="file" name="file" class="form-control" accept=".csv,.xlsx,.xls" required>
+                        <div class="form-text">Accepted formats: CSV, XLSX, XLS. Max 10 MB.</div>
+                    </div>
+                    <div class="alert alert-info small py-2 mb-2">
+                        <i class="ri-information-line me-1"></i>
+                        <strong>Required columns:</strong> <code>accession_number</code>, <code>storage_id</code> (or <code>storage_name</code>), <code>quantity</code>
+                        <br>
+                        <i class="ri-alert-line me-1 text-warning"></i>
+                        <strong>accession_number</strong> must match exactly as shown in the Accession List (e.g. <code>AG-2021-ACC-AGSN1-00001</code>).
+                    </div>
+                    <div>
+                        <a href="{{ route('lot.template') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="ri-download-line me-1"></i>Download Sample Template
+                        </a>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="ri-upload-line me-1"></i>Import
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="disposeModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
