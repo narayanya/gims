@@ -1,0 +1,3 @@
+crop,month,year,prefix,sample_id,seed_weight,no_packets,remarks,concerned_person,location,request_date,dispatch_date,tracking_id,courier_service
+Wheat,January,2020,WH,SAMP-001,1.5,10,Sample remark,John Doe,New Delhi,15/01/2020,20/01/2020,TRK123456,FedEx
+Rice,March,2019,RC,SAMP-002,2.0,5,Old dispatch,Jane Smith,Mumbai,10/03/2019,15/03/2019,TRK789012,DHL

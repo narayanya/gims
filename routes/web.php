@@ -241,6 +241,8 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     ->name('dispatch.itn.show');
     Route::get('/dispatch-management/old', [DispatchController::class, 'oldDispatches'])
     ->name('dispatch-management.old');
+    Route::post('/dispatch-list/import', [DispatchController::class, 'import'])->name('dispatch-list.import');
+    Route::get('/dispatch-list/template', [DispatchController::class, 'template'])->name('dispatch-list.template');
 
     // Lot Master
     Route::resource('lots', App\Http\Controllers\LotMasterController::class)->except(['show', 'create', 'edit']);

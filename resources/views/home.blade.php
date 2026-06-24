@@ -1136,7 +1136,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 </table>
                             </div>
                         </section>
-                        
+                        @if($lotTransfers->isNotEmpty())
                         <section
     class="bg-white dark:bg-background-dark rounded-xl border border-sage-light dark:border-sage-deep/30 shadow-sm overflow-hidden mt-4">
 
@@ -1246,6 +1246,7 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 
 </section>
+@endif
 @endif
                     </div>
 
