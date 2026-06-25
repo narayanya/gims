@@ -12,6 +12,7 @@ use App\Models\StorageTime;
 use App\Models\StorageCondition;
 use App\Models\StorageLocation;
 use App\Models\Warehouse;
+use App\Models\Lot;
 
 
 class StorageController extends Controller
@@ -297,5 +298,38 @@ class StorageController extends Controller
         }
 
         return view('report.storage_report', compact('storages'));
+    }
+
+   public function storageContainerReport()
+    {
+        $allLots = Lot::with([
+            'accession.crop',
+            'crop',
+            'rack',
+            'bin',
+            'container',
+            'seedQuantities'
+        ])->orderBy('id')->get();
+
+        $boxes = [];
+
+        foreach ($allLots->chunk(10) as $index => $chunk) {
+
+            $startRef = ($index * 10) + 1;
+            $endRef   = $startRef + $chunk->count() - 1;
+
+            $firstLot = $chunk->first();
+
+            $boxes[] = [
+                'box_no'          => 'Box-' . str_pad($index + 1, 2, '0', STR_PAD_LEFT),
+                'reference_range' => $startRef . '-' . $endRef,
+                'lot_count'       => $chunk->count(),
+                'rack_name'       => $firstLot?->rack?->name ?? '-',
+                'bin_name'        => $firstLot?->bin?->name ?? '-',
+                'lots'            => $chunk,
+            ];
+        }
+
+        return view('report.storage_container_report', compact('boxes'));
     }
 }

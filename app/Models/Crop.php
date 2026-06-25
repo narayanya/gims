@@ -45,6 +45,14 @@ class Crop extends Model
     ];
 
     /**
+     * Accessor so $crop->name maps to crop_name column.
+     */
+    public function getNameAttribute(): string
+    {
+        return $this->crop_name ?? '';
+    }
+
+    /**
      * Get accessions that use this crop
      */
     public function accessions()

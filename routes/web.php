@@ -402,6 +402,8 @@ Route::get('/get-crop-details/{id}', [CropController::class,'getCropDetails']);
     ->name('dispatch.report');
     Route::get('/storage-report', [StorageController::class, 'storageReport'])
     ->name('storage.report');
+    Route::get('/storage-container-report', [StorageController::class, 'storageContainerReport'])
+    ->name('storage.container-report');
 
     Route::post('/requests/{id}/return', [SeedReturnController::class, 'store'])->name('requests.return');
 

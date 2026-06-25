@@ -290,6 +290,11 @@
                                                 class="nav-link {{ request()->routeIs('storage.report') ? 'active' : '' }}"
                                                 href="{{ route('storage.report') }}">Storage Report</a></li>
                                     @endif
+                                    @if (auth()->user()->hasPermission('report.expiry'))
+                                    <li class="nav-item"><a
+                                                class="nav-link {{ request()->routeIs('storage.container-report') ? 'active' : '' }}"
+                                                href="{{ route('storage.container-report') }}">Storage Container Report</a></li>
+                                    @endif
                                 </ul>
                             </div>
                         </li>

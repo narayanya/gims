@@ -118,6 +118,7 @@
                                 <th>Unit</th>
                                 <th>Expiry Date</th>
                                 <th>Regeneration Date</th>
+                                <th>Container</th>
                                 <th>Created Date</th>
                                 <th>Status</th>
                                 <th width="100">Actions</th>
@@ -170,6 +171,7 @@
                                     ? \Carbon\Carbon::parse($lot->recheck_date)->format('d M Y') 
                                     : '—' 
                                 }}</td>
+                                <td>{{ $lot->container?->name ?? '—' }}</td>
                                 <td>{{ $lot->created_at->format('d M Y') }}</td>
                                 <td>
                                     <span class="badge {{ $lot->status == 'active' ? 'bg-success' : 'bg-secondary' }}">
