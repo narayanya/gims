@@ -78,6 +78,7 @@ class CropController extends Controller
         $request->validate([
             'crop_name' => 'nullable',
             'crop_code' => 'nullable',
+            'crop_name_elias' => 'nullable',
             'category_id' => 'required',
             'crop_category_id' => 'required',
             'crop_type_id' => 'required',
@@ -103,6 +104,7 @@ class CropController extends Controller
         $request->validate([
             'crop_name' => 'nullable',
             'crop_code' => 'nullable',
+            'crop_name_elias' => 'nullable',
             'category_id' => 'required',
             'crop_category_id' => 'required',
             'crop_type_id' => 'required',

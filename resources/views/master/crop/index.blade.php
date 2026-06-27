@@ -132,6 +132,7 @@
                                                 <!-- VIEW BUTTON -->
                                                 <button class="btn btn-sm btn-outline-info viewCropBtn"
                                                     data-name="{{ $crop->crop_name }}" data-code="{{ $crop->crop_code }}"
+                                                    data-elias-name="{{$crop->crop_name_elias}}"
                                                     data-is_active="{{ $crop->is_active }}"
                                                     data-scientific="{{ $crop->scientific_name }}"
                                                     data-common="{{ $crop->common_name }}"
@@ -174,6 +175,7 @@
                                                 <button class="btn btn-sm btn-outline-warning editCropBtn"
                                                     data-id="{{ $crop->id }}" data-name="{{ $crop->crop_name }}"
                                                     data-code="{{ $crop->crop_code }}"
+                                                    data-elias-name="{{ $crop->crop_name_elias }}"
                                                     data-is_active="{{ $crop->is_active }}"
                                                     data-scientific="{{ $crop->scientific_name }}"
                                                     data-common="{{ $crop->common_name }}"
@@ -265,6 +267,8 @@
 
                     document.getElementsByName('crop_name')[0].value = this.dataset.name;
                     document.getElementsByName('crop_code')[0].value = this.dataset.code || '';
+                    document.getElementsByName('crop_name_elias')[0].value = this.dataset.elias_name;
+                    
                     document.getElementsByName('scientific_name')[0].value = this.dataset
                         .scientific || '';
                     document.getElementsByName('common_name')[0].value = this.dataset.common || '';
@@ -621,6 +625,15 @@
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Crop Name(Elias) </label>
+                                        <input type="text" name="crop_name_elias" class="form-control"
+                                            placeholder="Enter name" value="{{ old('crop_name_elias') }}" >
+                                        @error('crop_name_elias')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
 
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Scientific Name</label>

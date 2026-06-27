@@ -11,6 +11,7 @@ class Crop extends Model
     protected $fillable = [
         'crop_name',
         'crop_code',
+        'crop_name_elias',
         'vertical_id',
         'numeric_code',
         'effective_date',
