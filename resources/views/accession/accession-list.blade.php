@@ -182,7 +182,13 @@
                                                 <span class="text-muted small">—</span>
                                             @endif
                                         </td>
-                                        <td>{{ $accession->crop->crop_name ?? 'N/A' }}</td>
+                                        <td class="fw-500">
+                                            @if(!empty($crop->crop_name_elias))
+                                                {{ $accession->crop->crop_name_elias }}
+                                            @else
+                                                {{ $accession->crop->crop_name }}
+                                            @endif
+                                        </td>
                                         <td>{{ $accession->requester_show == 'yes' ? 'Yes' : 'No' }}</td>
                                         <td>
                                             @if ($accession->status == '1')

@@ -107,7 +107,13 @@
                                 <tbody>
                                     @foreach ($crops as $crop)
                                         <tr data-id="{{ $crop->id }}" data-category="{{ $crop->category_id }}">
-                                            <td class="fw-500">{{ $crop->crop_name }}</td>
+                                            <td class="fw-500">
+                                                @if(!empty($crop->crop_name_elias))
+                                                    {{ $crop->crop_name_elias }}
+                                                @else
+                                                    {{ $crop->crop_name }}
+                                                @endif
+                                            </td>
                                             <td>
                                                 @if ($crop->crop_code)
                                                     <span class="badge bg-info">{{ $crop->crop_code }}</span>
@@ -267,7 +273,7 @@
 
                     document.getElementsByName('crop_name')[0].value = this.dataset.name;
                     document.getElementsByName('crop_code')[0].value = this.dataset.code || '';
-                    document.getElementsByName('crop_name_elias')[0].value = this.dataset.elias_name;
+                    document.getElementsByName('crop_name_elias')[0].value = this.dataset.eliasName || '';
                     
                     document.getElementsByName('scientific_name')[0].value = this.dataset
                         .scientific || '';

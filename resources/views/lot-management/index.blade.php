@@ -129,7 +129,14 @@
                             @foreach($lots as $lot)
                             <tr>
                                 <td><span class="badge bg-success">{{ $lot->lot_number }}</span></td>
-                                <td>{{ $lot->accession?->crop?->crop_name ?? '—' }}</td>
+                                
+                                <td>
+                                    @if(!empty($crop->crop_name_elias))
+                                        {{ $lot->accession?->crop?->crop_name_elias ?? '—' }}
+                                    @else
+                                        {{ $lot->accession?->crop?->crop_name ?? '—' }}
+                                    @endif
+                                </td>
                                 <td>{{ $lot->reference_number ?? '—' }}</td>
                                 <td>{{ $lot->sample_id ?? '—' }}</td>
                                  <td>{{ $lot->storage?->name ?? '—' }}</td>
